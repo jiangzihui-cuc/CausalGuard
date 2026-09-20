@@ -1,0 +1,46 @@
+# Android / Gradle
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+app/build/
+demo-app/build/
+*.apk.idsig
+
+# Kotlin
+*.kotlin_module
+
+# 构建产物（APK 需通过 Release 流程单独归档，不直接入库）
+*.apk
+*.aab
+
+# 密钥与签名
+*.jks
+*.keystore
+keystore.properties
+secrets.properties
+
+# 环境与凭据
+.env
+.env.*
+*.pem
+
+# 日志与临时文件
+*.log
+*.tmp
+/tmp/
+*.hprof
+
+# 编辑器
+.vscode/
+*.swp
+
+# 提交材料大文件（视频、PDF 通过归档目录管理）
+*.mp4
+*.pdf
