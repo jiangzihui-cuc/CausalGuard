@@ -3,8 +3,40 @@
 > 项目：隐私因果哨兵（Privacy Causal Sentinel）
 > 文档基线版本：`v0.1`
 > 最后更新：2026-09-20
+> 依据：《软件工程实施规划-隐私因果哨兵》第 2 章“开发前必须先完成的文档”
 
 本目录是编码前的设计基线。所有文档先冻结到 `v0.1`，两人确认后再进入开发。
+
+## 依据规划的产出对照
+
+本目录严格按《软件工程实施规划-隐私因果哨兵》第 2 章列出的产出文件建立。
+
+| 规划中的产出文件 | 仓库对应 | 状态 |
+|---|---|---|
+| `docs/01-project-charter.md` | [01 项目章程](01-project-charter.md) | ✅ |
+| `docs/02-android-capability-matrix.md` | [02 Android 能力边界表](02-android-capability-matrix.md) | ✅ |
+| `docs/03-permission-and-consent-flow.md` | [03 权限与授权流程](03-permission-and-consent-flow.md) | ✅ |
+| `docs/04-product-requirements.md` | [04 PRD](04-product-requirements.md) | ✅ |
+| `docs/05-system-architecture.md` | [05 系统架构](05-system-architecture.md) | ✅ |
+| `docs/06-module-design.md` | [06 模块设计](06-module-design.md) | ✅ |
+| `docs/07-data-model.md` | [07 数据模型](07-data-model.md) | ✅ |
+| `docs/08-database-schema.sql` | [08 数据库表结构](08-database-schema.sql) | ✅ |
+| `docs/09-event-contract.md` | [09 事件契约](09-event-contract.md) | ✅ |
+| `docs/10-risk-rule-contract.md` | [10 风险规则契约](10-risk-rule-contract.md) | ✅ |
+| `docs/11-ai-explanation-contract.md` | [11 AI 解释契约](11-ai-explanation-contract.md) | ✅ |
+| `docs/12-privacy-security-design.md` | [12 隐私与安全设计](12-privacy-security-design.md) | ✅ |
+| `docs/13-test-plan.md` | [13 测试计划](13-test-plan.md) | ✅ |
+| `docs/14-evaluation-dataset.md` | [14 评测数据集方案](14-evaluation-dataset.md) | ✅ |
+| `docs/15-acceptance-checklist.md` | [15 验收清单](15-acceptance-checklist.md) | ✅ |
+| `docs/16-demo-and-release-plan.md` | [16 演示与发布方案](16-demo-and-release-plan.md) | ✅ |
+
+规划提到但未编号、由本仓库补充的文档：
+
+| 仓库对应 | 来源 |
+|---|---|
+| [00 文档索引](00-index.md) | 规划要求“docs/ 目录 + 版本 v0.1” |
+| [17 任务看板](17-task-board.md) | 规划阶段0要求“建立任务看板” |
+| [18 风险清单](18-risk-register.md) | 规划阶段0要求“建立风险清单” |
 
 ## 阅读顺序
 
@@ -28,6 +60,42 @@
 | 16 | [演示与发布方案](16-demo-and-release-plan.md) | 现场演示与提交 | 两人共同 |
 | 17 | [任务看板](17-task-board.md) | 每日任务状态 | 成员 B |
 | 18 | [风险清单](18-risk-register.md) | 风险与应对 | 成员 B |
+
+## 按成员职责的文档对照
+
+**成员 A（技术实现主责）负责看/改的文档**
+
+| 文件 | 一句话说明 |
+|---|---|
+| [05 系统架构](05-system-architecture.md) | 分层、调用关系、数据流；你定模块边界 |
+| [06 模块设计](06-module-design.md) | 每模块输入输出、接口、权限、测试；你写主要类/接口 |
+| [07 数据模型](07-data-model.md) | 事件和证据的字段；你冻结数据结构 |
+| [08 数据库表结构](08-database-schema.sql) | Room/SQLite 建表 SQL；你写 |
+| [09 事件契约](09-event-contract.md) | 采集→事件库写入 JSON 格式；你定，让页面和规则可并行 |
+| [10 风险规则契约](10-risk-rule-contract.md) | 规则引擎输入输出格式；你与成员 B 一起定 |
+| [13 测试计划](13-test-plan.md) | 怎么测（VPN、权限拒绝、断网）；技术侧你验证 |
+| [16 演示与发布](16-demo-and-release-plan.md) | 固定设备、版本一致性、打包；APK 归你 |
+
+**成员 A 负责理解、照着做（成员 B 设计的输入）**
+
+| 文件 | 一句话说明 |
+|---|---|
+| [01 项目章程](01-project-charter.md) | 做啥不做啥、P0 范围；你按它的范围做 |
+| [02 能力边界表](02-android-capability-matrix.md) | 哪些能力真实可拿、哪些只能演示/标“无法确认”；你实现 |
+| [03 权限授权流程](03-permission-and-consent-flow.md) | 申请哪些权限、拒绝怎么办；你写代码处理 |
+| [04 PRD](04-product-requirements.md) | 功能需求 F1~F10；你要实现的功能清单 |
+| [11 AI 解释契约](11-ai-explanation-contract.md) | AI 输入/输出、防编造；你实现接口与本地兜底 |
+| [12 隐私安全](12-privacy-security-design.md) | 不存什么、怎么脱敏；你遵守的底线 |
+| [14 评测集](14-evaluation-dataset.md) | 30-50 条样例与指标；你跑规则出结果 |
+| [15 验收清单](15-acceptance-checklist.md) | 完成/提交判定标准；你对照自查 |
+| [17 任务看板](17-task-board.md) | 你 T 开头的任务与状态 |
+| [18 风险清单](18-risk-register.md) | 技术风险（VPN/UID/域名）；你重点关注 |
+
+**成员 B（产品与智能分析主责）主写、成员 A 复核**：01、02、03、04、11、12、14（需求、场景、隐私、AI）——成员 A 按设计落地。
+
+**两人共同复核**：15 验收清单、16 演示与发布、17 任务看板、18 风险清单。
+
+> 核心区分：**架构和数据你定（05/06/07/08/09/10/13/16），需求、场景、隐私、AI 按成员 B 的设计落地（01/02/03/04/11/12/14）。**
 
 ## 契约冻结原则
 
