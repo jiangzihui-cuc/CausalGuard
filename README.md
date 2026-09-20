@@ -5,6 +5,8 @@
 > 当前阶段：**P0 设计基线（v0.1）**
 > 首版基线：Android 10 / API 29+
 
+> **新上手必读** → [docs/19-work-guide.md](docs/19-work-guide.md)：30 秒看清现状、下一步做什么、改哪个文件。
+
 隐私因果哨兵是一款运行在 Android 移动设备上的**隐私行为解释与处置智能体**：它结合 App 使用场景、敏感数据访问、网络元数据和用户授权状态，判断行为是否合理，构建可追溯的隐私因果链，并指导用户完成处置和复查。
 
 产品核心闭环：
@@ -43,13 +45,15 @@ CausalGuard/
 │  ├─ 15-acceptance-checklist.md 验收清单
 │  ├─ 16-demo-and-release-plan.md 演示与发布方案
 │  ├─ 17-task-board.md          任务看板
-│  └─ 18-risk-register.md       风险清单
+│  ├─ 18-risk-register.md       风险清单
+│  └─ 19-work-guide.md          工作导引（打开仓库先看）
 └─ （后续）app/                 Android 工程（Kotlin + Room + Jetpack Compose）
     （后续）demo-app/           自研 Demo App / 演示沙箱
 ```
 
 ## 文档阅读顺序
 
+0. `docs/19-work-guide.md`（先看这个，知道下一步做什么）
 1. `docs/00-index.md`
 2. `docs/01-project-charter.md`（先看做什么、不做什么）
 3. `docs/04-product-requirements.md`（P0 功能范围）
