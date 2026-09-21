@@ -5,7 +5,7 @@
 > 责任人：成员 A
 > 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**未完成**（静态分析部分完成，设备构建/运行结果待 A 在真机回填）
+> 状态：**进行中**（静态分析完成；A1-1 构建成功；设备联网验证与 A1-3~A1-8 待真机回填）
 
 ---
 
@@ -50,22 +50,25 @@
 
 > 环境要求明显高于普通 App（AGP 9.x + compileSdk 37 + NDK + 可选 Rust）。这是 24h 止损的主要风险。
 
-### 2.3 演示机与环境记录（待 A 回填）
+### 2.3 演示机与环境记录（构建部分已完成）
 
 | 项 | 值 |
 |---|---|
-| 构建主机 OS | _待填_ |
-| JDK 版本 | _待填_ |
-| Android SDK / Build Tools | _待填_ |
-| NDK 版本 | _待填_ |
-| 是否需要 Rust / WireGuard | _待填_ |
-| 演示机型号 | _待填_ |
-| Android 版本 | _待填_（基线 API 29+） |
-| 构建命令 | `./gradlew assembleFdroidDebug`（待确认 flavor） |
-| 构建结果 | _待填（成功/失败 + 报错）_ |
-| APK 路径 | _待填_ |
+| 构建主机 OS | Ubuntu 22.04.5 LTS (x86_64) |
+| JDK | Temurin 17.0.13+11 |
+| Android SDK / Build Tools | platform `android-37.0`、build-tools `37.0.0`、platform-tools `37.0.1` |
+| CMake | 3.22.1（SDK 包） |
+| NDK | 27.2.12479018 |
+| Rust / WireGuard | rustup 1.29.1 + Rust 1.95.0（4 个 Android target）+ cargo-ndk 4.1.2；APK 打包必须构建 `libwgbridge.so` |
+| 演示机型号 | _待填（当前无真机/模拟器）_ |
+| Android 版本 | _待填（基线 API 29+）_ |
+| 构建命令 | `gradle --no-daemon assembleFdroidDebug`（Gradle 9.6.1；wrapper 分发地址被网络策略拦截，改用系统安装的 9.6.1） |
+| 构建结果 | **成功**，BUILD SUCCESSFUL in 9m 6s |
+| APK 路径 | `app/build/outputs/apk/fdroid/debug/TrackerControl-fdroidDebug-latest.apk` |
+| APK 大小 / SHA-256 | 24,711,138 bytes / `ed2b6d7b80bb7ff0b2d623686ce9c09708af5f3f4cf83545f9908806f8d222c8` |
 
-> flavor：`play` / `fdroid` 两个 dimension（`app/build.gradle`）。演示建议用 `fdroid` 避免 Play 依赖。
+> 网络受限环境下的镜像替换（仅本构建机，不改本仓库）：Adoptium/rustup/static.crates.io/services.gradle.org/repo1.maven.org 不可达。
+> 改用：JDK 从 GitHub Releases；rustup 与 crates 用 `rsproxy.cn`（`RUSTUP_DIST_SERVER=https://rsproxy.cn`，cargo sparse 源替换）；Gradle 发行包用腾讯镜像（`mirrors.cloud.tencent.com/gradle`）；Maven Central 用阿里云镜像（Gradle init script 注入），google() 可直连。
 
 ---
 
@@ -73,9 +76,10 @@
 
 ### A1-1 VPN 启动后可联网
 
-- [ ] 待验证
-- 结果：_待填_
-- 证据：_截图/日志路径_
+- [x] 固定版本构建成功（2026-09-21，本构建机）
+- [ ] VPN 启动后可联网（需真机/模拟器验证）
+- 结果：构建成功；联网验证待设备。安装命令：`adb install -r app/build/outputs/apk/fdroid/debug/TrackerControl-fdroidDebug-latest.apk`
+- 证据：`/tmp/opencode/build1.log`（BUILD SUCCESSFUL in 9m 6s）
 
 ### A1-3 PackageManager（包名/权限）
 
@@ -129,5 +133,5 @@
 
 ## 5. 未决/阻塞
 
-1. 本仓库开发环境无 JDK / Android SDK / Gradle / NDK，**构建在 A 的本机完成**（步骤见 `docs/spike-build-guide.md`）。
-2. 设备验证数据（A1-1/A1-3/A1-4/A1-5/A1-6/A1-8）待 A 回填本文件第 3 节。
+1. A1-1 构建已在开发机完成（见 2.3）；联网验证需真机/模拟器。
+2. 设备验证数据（A1-1 联网、A1-3/A1-4/A1-5/A1-6/A1-8）待 A 回填本文件第 3 节。
