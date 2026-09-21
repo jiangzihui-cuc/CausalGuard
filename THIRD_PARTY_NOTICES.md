@@ -67,6 +67,7 @@
 | 组件 | 仓库 | 许可证（需按具体版本复核） | 计划用途 | 主责 |
 |---|---|---|---|---|
 | TrackerControl Android | https://github.com/TrackerControl/tracker-control-android | GPL-3.0（部分第三方组件/数据另有许可） | VPN/TUN、DNS、连接记录、域名阻断底座 | 成员 A |
+| ↳ 已固定版本 | tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（2026-08-05），根 `LICENSE` 为 GPL-3.0 | 构建链：AGP 9.3.1 / Gradle 9.6.1 / compileSdk 37 / NDK / 可选 Rust 1.95.0 | 阶段 1 静态分析已完成，见 `docs/network-core-map.md`；源码尚未导入本仓库 | 成员 A |
 | NetGuard | https://github.com/M66B/NetGuard | GPL-3.0 | TrackerControl 上游参考；本地网络转发研究 | 成员 A |
 | android/architecture-templates | https://github.com/android/architecture-templates | Apache-2.0 | 工程分层骨架参考 | 成员 A |
 | android/architecture-samples | https://github.com/android/architecture-samples | Apache-2.0 | Repository/ViewModel/UI State 参考 | 成员 A |
