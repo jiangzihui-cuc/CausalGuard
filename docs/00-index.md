@@ -42,6 +42,13 @@
 | [21 双人并行开发分工与 Git 协作规范](21-parallel-work-allocation-plan.md) | 阶段1起：分工、契约、分支与 PR 规范 |
 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) | 规划要求“第三方代码/素材/模型注明来源和许可” |
 
+阶段产物（随阶段推进新增）：
+
+| 文件 | 说明 | 主责 |
+|---|---|---|
+| [network-core-map](network-core-map.md) | 阶段1 A1-2：TrackerControl 网络底座核心地图 | 成员 A |
+| [spike-results](spike-results.md) | 阶段1 A1-1/A1-3/A1-4/A1-6/A1-8：技术 Spike 结果（设备部分待回填） | 成员 A |
+
 ## 阅读顺序
 
 | 编号 | 文档 | 作用 | 主要责任人 |
