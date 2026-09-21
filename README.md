@@ -26,6 +26,7 @@
 CausalGuard/
 ├─ README.md                    本文件
 ├─ CONTRIBUTING.md              Git 分支与协作规则
+├─ THIRD_PARTY_NOTICES.md       第三方源码/数据来源与许可证登记
 ├─ docs/                        设计基线文档（v0.1）
 │  ├─ 00-index.md               文档索引与阅读顺序
 │  ├─ 01-project-charter.md     项目章程与范围说明
@@ -46,7 +47,9 @@ CausalGuard/
 │  ├─ 16-demo-and-release-plan.md 演示与发布方案
 │  ├─ 17-task-board.md          任务看板
 │  ├─ 18-risk-register.md       风险清单
-│  └─ 19-work-guide.md          工作导引（打开仓库先看）
+│  ├─ 19-work-guide.md          工作导引（打开仓库先看）
+│  ├─ 20-open-source-reuse-guide.md        开源代码复用调研与接入建议
+│  └─ 21-parallel-work-allocation-plan.md  双人并行分工与 Git 协作规范
 └─ （后续）app/                 Android 工程（Kotlin + Room + Jetpack Compose）
     （后续）demo-app/           自研 Demo App / 演示沙箱
 ```
@@ -57,7 +60,8 @@ CausalGuard/
 1. `docs/00-index.md`
 2. `docs/01-project-charter.md`（先看做什么、不做什么）
 3. `docs/04-product-requirements.md`（P0 功能范围）
-4. 其余按索引顺序阅读。
+4. `docs/20-open-source-reuse-guide.md` 与 `docs/21-parallel-work-allocation-plan.md`（开源选型、分工与 Git 规范）
+5. 其余按索引顺序阅读。
 
 ## 首版绝对不做
 
@@ -77,4 +81,12 @@ CausalGuard/
 
 ## 第三方与许可
 
-本项目优先自研上层模块。涉及第三方开源代码时，必须单独记录来源、版本和许可证（如参考 TrackerControl 需注明 GPL-3.0 及代码边界），详见 `docs/12-privacy-security-design.md`。
+本项目采用“成熟开源底座 + 上层原创”的策略：
+
+- **网络底座**优先采用 TrackerControl / NetGuard（GPL-3.0），解决 VPN/TUN、DNS 和阻断等高风险基础设施；接受 GPL 路线并明确开源与原创边界。构建链持续失败时评估 MIT 的 hev-socks5-tunnel / tun2socks 备选。
+- **通用能力**使用 Android 官方模板/示例与宽松许可证库（Room、Compose、kotlinx.serialization、Retrofit/OkHttp、AndroidX Test、Turbine 等）。
+- **团队原创**：统一事件模型、使用上下文关联、场景知识库、证据等级、因果解释、处置复查、UI、Demo 与评测集。
+
+任何第三方源码、二进制或数据引入前，必须固定 tag/完整 commit、核对具体版本内的 LICENSE/NOTICE 与文件头声明，并在 `THIRD_PARTY_NOTICES.md` 登记来源、版本、许可证、使用范围、修改内容与原创边界。选型与许可证判定见 `docs/20-open-source-reuse-guide.md`，合规底线见 `docs/12-privacy-security-design.md`。
+
+> 所有第三方组件必须固定版本，禁止长期跟随浮动 `main`；第三方源码首次导入与团队修改分属不同 commit。

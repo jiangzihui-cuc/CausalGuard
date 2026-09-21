@@ -49,6 +49,22 @@
 - 涉及地图时标注有效地图审图号（本项目 P0 不涉及地图底图）；
 - 现场演示前核对大赛官网对时间、材料和公网连通性的最新要求。
 
+## 5.1 开源许可证合规底线
+
+选型与许可证判定详见 [20 开源代码复用调研与接入建议](20-open-source-reuse-guide.md)，登记表见 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。底线：
+
+| 项 | 要求 |
+|---|---|
+| 版本固定 | 所有第三方组件固定 tag 或完整 commit SHA，禁止跟随浮动 `main`；引入前核对具体版本内的 `LICENSE`、`NOTICE` 和文件头声明 |
+| 网络底座 | TrackerControl / NetGuard 为 GPL-3.0；整合进 APK 后保留版权与许可证，按要求提供对应源码，并记录实际使用与修改文件 |
+| 宽松库 | Room、Compose、kotlinx.serialization、Retrofit/OkHttp、AndroidX Test、Turbine 等 Apache-2.0 库保留版权与许可证文本 |
+| 数据许可 | tracker 数据（DuckDuckGo / Disconnect）常见为 CC BY-NC-SA 4.0，必须固定版本、署名并隔离数据许可；本竞赛为非商业用途，未来商业化需替换或另行授权 |
+| 登记 | 每个引入项在 `THIRD_PARTY_NOTICES.md` 记录来源、版本、许可证、使用范围、修改内容和团队原创边界 |
+| 审计 | 使用 AboutLibraries 与 Gradle-License-Report 生成清单，人工复核 Unknown、GPL、AGPL 和非商业许可证 |
+| 原创边界 | 统一事件、使用上下文关联、场景规则、证据等级、因果解释、处置复查、UI、Demo、评测集均为团队原创，答辩不得把第三方网络底座声称为原创 |
+
+明确不引入：AGPL-3.0 的 Exodus Core、TLS MITM 项目、本地大模型运行时、大型图数据库/规则 DSL（P0）。
+
 ## 6. AI 合规
 
 - 记录模型名称、版本、调用时间、输入字段白名单、输出状态，不保存敏感原文；

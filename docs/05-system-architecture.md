@@ -87,10 +87,12 @@
 | UI | Jetpack Compose 或 XML（冻结一种） | 避免混用导致返工 |
 | 状态管理 | ViewModel + StateFlow | 页面与逻辑解耦 |
 | 数据库 | Room / SQLite | 类型安全、便于迁移 |
-| 网络观测 | VpnService + 成熟转发核心 | 不从零实现 TCP/IP 栈 |
+| 网络观测 | VpnService + TrackerControl/NetGuard 适配层 | 不从零实现 TCP/IP 栈；事件经适配器转为 PrivacyEvent |
 | 依赖注入 | Hilt 或手工构造（冻结一种） | 便于测试 |
 | AI | 可选接口，本地模板兜底 | 核心不依赖在线 |
-| 转发核心 | 成熟用户态方案 | 降低断网风险 |
+| 转发核心 | TrackerControl/NetGuard（GPL-3.0）；备选 MIT tun2socks | 成熟稳定、降低断网风险；许可证边界见 20 与 THIRD_PARTY_NOTICES |
+| JSON | kotlinx.serialization | 契约、规则、fixture、评测统一序列化 |
+| HTTP | Retrofit + OkHttp | 仅在线 AI 增强，失败回退本地模板 |
 
 ## 6. 真实/演示模式标识
 
