@@ -178,9 +178,9 @@ isAddressAllowed(Packet)                                [第 2304 行]
 
 ### 8.2 需要向 B 确认/同步的契约差异（集成点）
 
-1. **字节数字段**：`docs/09` 的 network 事件含 `bytesIn/bytesOut`，但 `Packet` 不提供。选项：(a) Spike 阶段先置 0 并在契约标注“P0 可空”；(b) 从 `Usage` 聚合；(c) 从 `DatabaseHelper` 读取。**待决策**。
+1. **字节数字段**：`docs/09` 的 network 事件含 `bytesIn/bytesOut`，但 `Packet` 不提供。**已决策**：P0 置空/0，`docs/09` 已加标注，P1 再补。
 2. **`category` / `evidenceLevel`**：底座有 tracker 分类，但项目的 `evidenceLevel`（E1~E5）是原创概念，适配层固定映射 E2（网络元数据）即可，不把底座分类当结论。
-3. **包名 vs `network` vs `vpn` 目录命名**：`docs/05`/`docs/06` 用“M3 VPN 网络观测”，`docs/19` 用 `vpn/`，`docs/20` 第 3.1 节用 `network`。**需统一后建目录**（见第 9 节）。
+3. **包名 vs `network` vs `vpn` 目录命名**：已决策统一使用 `network/`（`docs/19` 已同步；事件类型本身即 `network`）。
 
 ---
 
@@ -190,7 +190,7 @@ isAddressAllowed(Packet)                                [第 2304 行]
 
 ```text
 app/src/main/java/<our.pkg>/
-├─ vpn/ (或 network/)   NetworkEventCollector / ServiceSinkhole 回调适配
+├─ network/             NetworkEventCollector / ServiceSinkhole 回调适配
 ├─ event/               NetworkEvent → ContractEvent（docs/09）转换
 ├─ profile/             PackageManager 采集（A1-3）
 └─ usage/               UsageStats 采集（A1-4）

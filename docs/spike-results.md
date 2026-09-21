@@ -119,13 +119,15 @@
 |---|---|---|
 | 网络底座 | 方案 A：TrackerControl（GPL-3.0），tag `2026080501` | 2026-09-21 |
 | 是否修改 native | 否，保留原生核心 | 2026-09-21 |
-| 适配层侵入方式 | 倾向方案 1：在 `ServiceSinkhole` 回调追加适配（待确认） | 2026-09-21 |
+| 适配层侵入方式 | 方案 1：在 `ServiceSinkhole` 回调追加适配 | 2026-09-21 |
+| 包目录命名 | 统一用 `network/`（已同步 `docs/19`，事件类型为 `network`） | 2026-09-21 |
+| `bytesIn/bytesOut` | P0 置空/0，`docs/09` 已加标注，P1 再补 | 2026-09-21 |
+| 第三方源码 | 外部保留，仅登记固定 commit，不导入本仓库 | 2026-09-21 |
+| 构建环境 | A 本机构建，步骤见 `docs/spike-build-guide.md` | 2026-09-21 |
 
 ---
 
 ## 5. 未决/阻塞
 
-1. 本仓库开发环境无 JDK / Android SDK / Gradle / NDK，**构建必须在 A 的构建机完成**。
-2. `bytesIn/bytesOut` 数据源与契约冲突（`docs/09` vs `Packet`）。
-3. 包目录命名 `vpn/` vs `network/` 需统一。
-4. 第三方源码是否在本仓库单独 commit 导入，待决策。
+1. 本仓库开发环境无 JDK / Android SDK / Gradle / NDK，**构建在 A 的本机完成**（步骤见 `docs/spike-build-guide.md`）。
+2. 设备验证数据（A1-1/A1-3/A1-4/A1-5/A1-6/A1-8）待 A 回填本文件第 3 节。

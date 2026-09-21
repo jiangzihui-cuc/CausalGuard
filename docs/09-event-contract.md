@@ -59,6 +59,8 @@
 
 约束：`domainHint` 可为空；`packageName` 无法归属时为 `unknown`，`uid` 为 -1。
 
+> P0 标注：底座（TrackerControl/NetGuard）的 `Packet` 只提供连接元数据，不含字节数。`bytesIn`/`bytesOut` 在阶段 1 Spike 阶段允许为 `0` 或 `null`；待 P1 从 Usage 统计补齐后再启用。静态依据见 [network-core-map](network-core-map.md) 第 8 节。
+
 ### 2.2 usage_context（附 `usage_context_event`）
 
 ```json
