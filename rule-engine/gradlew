@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GRADLE_VERSION="8.10.2"
+DIST_NAME="gradle-${GRADLE_VERSION}-bin"
+INSTALL_NAME="gradle-${GRADLE_VERSION}"
+CACHE_DIR="${HOME}/.gradle/caches/causalguard-wrapper"
+DIST_DIR="${CACHE_DIR}/${INSTALL_NAME}"
+ZIP_PATH="${CACHE_DIR}/${DIST_NAME}.zip"
+GRADLE_URL="https://services.gradle.org/distributions/${DIST_NAME}.zip"
+
+if [ ! -x "${DIST_DIR}/bin/gradle" ]; then
+  mkdir -p "${CACHE_DIR}"
+  if [ ! -f "${ZIP_PATH}" ]; then
+    curl -L --fail --retry 3 --output "${ZIP_PATH}" "${GRADLE_URL}"
+  fi
+  rm -rf "${DIST_DIR}"
+  unzip -q "${ZIP_PATH}" -d "${CACHE_DIR}"
+fi
+
+exec "${DIST_DIR}/bin/gradle" "$@"
