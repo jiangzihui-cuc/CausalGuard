@@ -39,6 +39,29 @@
 
 无。
 
+### 1.1 构建与运行时技术依赖（阶段 1 / A1-7 登记）
+
+> 这些是构建底座 APK 时实际使用的工具链与运行时依赖；许可证以各版本内 `LICENSE`/`NOTICE` 为准。
+
+| 组件 | 版本 | 许可证 | 用途 |
+|---|---|---|---|
+| Android Gradle Plugin | 9.4.1（底座用 9.3.1） | Apache-2.0 | Android 构建 |
+| Gradle | 9.6.1 | Apache-2.0 | 构建系统 |
+| Kotlin（AGP 9 内置） | 随 AGP | Apache-2.0 | Kotlin 编译 |
+| Android SDK Platform | android-37.0 | Android SDK 条款 | 编译目标 |
+| Android SDK Build-Tools | 37.0.0 | Android SDK 条款 | 打包 |
+| Android SDK Platform-Tools | 37.0.1 | Apache-2.0（含 adb） | 设备工具 |
+| Android NDK | 27.2.12479018 | 见 NDK 内 NOTICE（含 LLVM/clang，Apache-2.0 with LLVM exceptions 等） | JNI/CMake 原生编译 |
+| CMake | 3.22.1 | BSD-3-Clause | 原生构建 |
+| Rust 工具链 | 1.95.0 | MIT OR Apache-2.0 | 编译 WireGuard 桥 |
+| cargo-ndk | 4.1.2 | MIT OR Apache-2.0 | Rust 交叉编译到 Android |
+| wgbridge-rs（TrackerControl 内） | 随底座 commit | GPL-3.0-only | WireGuard 桥接库 |
+| gotatun | 0.8.1 | MPL-2.0 | WireGuard 协议实现（Rust） |
+| tokio / base64 / hex / ipnetwork / getrandom / libc / log / jni / android_logger | 见 `wgbridge-rs/Cargo.lock` | MIT / Apache-2.0（各 crate 为准） | Rust 运行时依赖 |
+
+- TrackerControl 内部集成的 tracker/域名数据管线随底座引入，其数据来源与许可证以底座对应 commit 内的说明为准（另见 `docs/20-open-source-reuse-guide.md` 第 7 节）。
+- 数据依赖若要单独精简或替换，按 `docs/20` 第 7.3 节单独登记数据集。
+
 ---
 
 ## 2. 已导入的第三方数据集

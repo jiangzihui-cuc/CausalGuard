@@ -5,7 +5,7 @@
 > 责任人：成员 A
 > 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**进行中**（A1-1、A1-3、A1-4、A1-5、A1-6 通过；A1-8 待补）
+> 状态：**进行中**（A1-1、A1-3、A1-4、A1-5、A1-6 通过；A1-7 已登记；A1-8 待真机自测）
 
 ---
 
@@ -111,6 +111,71 @@
   - 时间轴样本：微信、企业微信、小红书、畅课 → `Tencent · Content` / `Alibaba · Content`（放行）；鲨鱼记账 → `Baidu Analytics`/`ByteDance`/`Alibaba`；京东 → `JD.com`；夸克 → `Alibaba`/`AlibabaGroup Fingerprinting`/`Cloudflare Analytics`；支付宝 → `Alibaba`
 - 结论：底座能产出“时间、App、域名/公司、类目、放行/屏蔽”级别的连接事件，可作为 `NetworkEvent` 数据源。
 - 待补：导出脱敏 JSON 样例（时间、协议、IP/域名线索、端口、UID/unknown）。
+
+#### A1-5 脱敏 JSON 样例（按 `docs/09` 契约整理）
+
+> 说明：字段形态按事件契约整理；`remoteIp`/`domainHint`/`uid` 为**脱敏示意值**，真机已捕获同类事实（见上）。`bytesIn/bytesOut` 按 P0 约定置 0；`category` 等由规则引擎回填。
+
+放行样本（内容类，Minimal 不拦）：
+
+```json
+{
+  "eventId": "e-20260923-a1-5-0001",
+  "appId": "com.tencent.mm",
+  "appName": "微信",
+  "eventType": "network",
+  "timestamp": 1790156945627,
+  "foregroundState": "foreground",
+  "source": "vpn",
+  "evidenceLevel": "E2",
+  "evidenceSummary": "网络连接：Tencent · Content，已放行",
+  "category": "unknown",
+  "isDemo": false,
+  "dedupKey": "com.tencent.mm|network|tencent|1790156945",
+  "network": {
+    "protocol": "TCP",
+    "remoteIp": "203.0.113.10",
+    "remotePort": 443,
+    "domainHint": "example.tencent.com",
+    "uid": 10123,
+    "packageName": "com.tencent.mm",
+    "bytesIn": 0,
+    "bytesOut": 0,
+    "blocked": false
+  }
+}
+```
+
+拦截样本（分析类，Minimal 已拦）：
+
+```json
+{
+  "eventId": "e-20260923-a1-5-0002",
+  "appId": "com.shark.jizhang",
+  "appName": "鲨鱼记账",
+  "eventType": "network",
+  "timestamp": 1790152719372,
+  "foregroundState": "background",
+  "source": "vpn",
+  "evidenceLevel": "E2",
+  "evidenceSummary": "网络连接：Baidu Analytics，已屏蔽",
+  "category": "unknown",
+  "isDemo": false,
+  "dedupKey": "com.shark.jizhang|network|baidu-analytics|1790152719",
+  "network": {
+    "protocol": "TCP",
+    "remoteIp": "203.0.113.20",
+    "remotePort": 443,
+    "domainHint": "example.baidu-analytics.com",
+    "uid": 10441,
+    "packageName": "com.shark.jizhang",
+    "bytesIn": 0,
+    "bytesOut": 0,
+    "blocked": true
+  }
+}
+```
+
 - 注意：`Packet` 不含字节数，见 `docs/network-core-map.md` 第 8 节差异项。
 
 ### A1-6 最小阻断验证
@@ -156,6 +221,6 @@
 
 ## 5. 未决/阻塞
 
-1. A1-1、A1-3、A1-4、A1-6 已完成，见第 2、3 节。
-2. 待补设备数据：演示机型号/Android 版本（真机为 OPPO Reno12 Pro）、A1-8（UID 归属成功率）。
-3. 待导出 A1-5 的脱敏 JSON 样例（可复用采集器的 `toJson()` 输出）。
+1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）。
+2. 待补：A1-8 UID 归属真机结果（APK 已更新，待真机自测）。
+3. 演示机型号 OPPO Reno12 Pro；Android 版本待补。
