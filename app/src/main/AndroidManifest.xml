@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- A1-8：UID 归属自测需要建立 TCP/UDP 连接 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- A1-3：读取已安装应用的包名/版本/声明权限（Android 11+ 需要包可见性） -->
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"

@@ -56,8 +56,16 @@
             android:id="@+id/btn_usage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
             android:minHeight="56dp"
             android:text="3) 采集使用上下文（A1-4）" />
+
+        <Button
+            android:id="@+id/btn_uid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="56dp"
+            android:text="4) UID 归属自测（A1-8）" />
     </LinearLayout>
 
     <!-- 下半区：结果输出 -->
