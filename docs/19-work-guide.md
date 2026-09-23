@@ -49,14 +49,14 @@
 | A1-2 | 定位 VPN、连接、DNS、UID、阻断入口 | 新建 `docs/network-core-map.md` | 能指出类、回调、数据流 |
 | A1-3 | 验证 PackageManager 读包名/权限 | `app/.../profile/` 下新建采集类 | App、UID、版本、声明权限、授权状态可输出 |
 | A1-4 | 验证 Usage Access 前后台 | `app/.../usage/` | 授权后能读到前后台或明确 unknown/失败原因 |
-| A1-5 | 输出最小 NetworkEvent | `app/.../vpn/` 适配层 | 脱敏 JSON 含时间、协议、IP/域名线索、端口、UID/unknown |
-| A1-6 | 最小阻断验证 | `app/.../vpn/` | 至少一个测试域名可阻断并保留尝试记录 |
+| A1-5 | 输出最小 NetworkEvent | `app/.../network/` 适配层 | 脱敏 JSON 含时间、协议、IP/域名线索、端口、UID/unknown |
+| A1-6 | 最小阻断验证 | `app/.../network/` | 至少一个测试域名可阻断并保留尝试记录 |
 | A1-7 | 开源技术登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) | NDK/JNI/Rust/数据依赖可追溯 |
 | A1-8 | 记录 UID 归属成功率 | 更新 [02 能力边界表](02-android-capability-matrix.md) | 记录 IP/端口/流量/UID 成功率 |
 
 > 优先级：TrackerControl 能否构建联网 → 能否产生连接事件 → 能否阻断 → PackageManager / UsageStats 补充验证。
 > 止损：24 小时内 TrackerControl 必须能构建并联网；48 小时内必须得到连接事件或明确失败原因；失败先换固定旧 tag，仍失败则缩小网络范围。
-> 建议按 [05 系统架构](05-system-architecture.md) 的模块划分建目录：`profile/`（M1）、`usage/`（M2）、`vpn/`（M3）、`event/`（M4）。
+> 建议按 [05 系统架构](05-system-architecture.md) 的模块划分建目录：`profile/`（M1）、`usage/`（M2）、`network/`（M3）、`event/`（M4）。
 
 ### 成员 B（产品与智能分析主责）——现在做阶段 1 设计输入（9/21-9/22）
 
@@ -91,9 +91,10 @@ CausalGuard/
 │  ├─ 19-work-guide.md          本文件
 │  ├─ 20-open-source-reuse-guide.md        开源选型、许可证、接入与止损
 │  ├─ 21-parallel-work-allocation-plan.md  分工、契约、Git 与 PR 规范
-│  └─ （新）demo-scenarios.md、network-core-map.md、spike-results.md、fixtures/ 等阶段产物
+│  └─ （新）demo-scenarios.md、network-core-map.md、spike-results.md、spike-build-guide.md、fixtures/ 等阶段产物
+├─ scripts/                     （新）构建/校验脚本，如 build-trackercontrol-spike.sh
 ├─ app/                         （待建）Android 主工程，Kotlin 代码
-│  └─ src/main/java/…           按模块建包：profile / usage / vpn / event / rules / ui
+│  └─ src/main/java/…           按模块建包：profile / usage / network / event / rules / ui
 └─ demo-app/                    （待建）自研 Demo App，提供演示真值
 ```
 

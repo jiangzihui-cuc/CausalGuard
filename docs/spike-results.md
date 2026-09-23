@@ -1,0 +1,233 @@
+# spike-results（阶段 1 技术 Spike 结果）
+
+> 版本：`v0.1`
+> 最后更新：2026-09-23
+> 责任人：成员 A
+> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
+> 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
+> 状态：**基本完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；仅底座 UID 归属量化成功率待 adb 打通后补）
+
+---
+
+## 1. 目标与止损红线
+
+| 优先级 | 目标 | 止损时间 |
+|---|---|---|
+| P0 | TrackerControl 能构建、演示机启动 VPN 后可联网 | 24h |
+| P0 | 能产生连接事件，或给出明确失败原因 | 48h |
+| P1 | 至少一个测试域名可阻断并保留尝试记录 | 48h |
+| P1 | PackageManager / Usage Access / UID 归属结论 | 48h |
+
+失败处理：先改用固定旧 tag 重试；仍失败则收缩网络范围或转 MIT 备选路线。
+
+---
+
+## 2. 固定版本与环境
+
+### 2.1 底座版本（已固定）
+
+| 项 | 值 |
+|---|---|
+| 仓库 | https://github.com/TrackerControl/tracker-control-android |
+| tag | `2026080501` |
+| commit | `9504d41b9f6fa1509d784e5503c084d4b428307d` |
+| commit 日期 | 2026-08-05 |
+| 许可证 | GPL-3.0（根 `LICENSE`），部分组件/数据有独立许可证 |
+| LICENSE 文件 | 随源码保留 |
+
+### 2.2 构建链要求（来自该 commit 的静态读取，待真机确认）
+
+| 组件 | 版本/要求 | 来源 |
+|---|---|---|
+| Android Gradle Plugin | 9.3.1 | `build.gradle` |
+| Gradle | 9.6.1 | `gradle/wrapper/gradle-wrapper.properties` |
+| compileSdk / targetSdk | 37 | `app/build.gradle` |
+| minSdk | 23 | `app/build.gradle` |
+| NDK | `wgbridgeNdkVersion`（`app/build.gradle` 自定义 ext） | `app/build.gradle` |
+| CMake | 见 `app/build.gradle` `externalNativeBuild` | `app/build.gradle` |
+| Rust（可选 WireGuard） | 1.95.0，targets: aarch64/armv7/i686/x86_64-linux-android | `rust-toolchain.toml` |
+| ABI | armeabi-v7a, arm64-v8a, x86, x86_64 | `app/build.gradle` |
+
+> 环境要求明显高于普通 App（AGP 9.x + compileSdk 37 + NDK + 可选 Rust）。这是 24h 止损的主要风险。
+
+### 2.3 演示机与环境记录（构建部分已完成）
+
+| 项 | 值 |
+|---|---|
+| 构建主机 OS | Ubuntu 22.04.5 LTS (x86_64) |
+| JDK | Temurin 17.0.13+11 |
+| Android SDK / Build Tools | platform `android-37.0`、build-tools `37.0.0`、platform-tools `37.0.1` |
+| CMake | 3.22.1（SDK 包） |
+| NDK | 27.2.12479018 |
+| Rust / WireGuard | rustup 1.29.1 + Rust 1.95.0（4 个 Android target）+ cargo-ndk 4.1.2；APK 打包必须构建 `libwgbridge.so` |
+| 演示机型号 | OPPO Reno12 Pro |
+| Android 版本 | _待补（基线 API 29+）_ |
+| 构建命令 | `gradle --no-daemon assembleFdroidDebug`（Gradle 9.6.1；wrapper 分发地址被网络策略拦截，改用系统安装的 9.6.1） |
+| 构建结果 | **成功**，BUILD SUCCESSFUL in 9m 6s（首次）/ 3m 10s（缓存命中） |
+| APK 路径 | 构建产物 `app/build/outputs/apk/fdroid/debug/TrackerControl-fdroidDebug-latest.apk`；已复制持久副本到构建机 `~/trackercontrol-apk/` |
+| APK 大小 / SHA-256 | 24,711,138 bytes / `ed2b6d7b80bb7ff0b2d623686ce9c09708af5f3f4cf83545f9908806f8d222c8`（两次构建哈希一致，可复现） |
+
+> 网络受限环境下的镜像替换（仅本构建机，不改本仓库）：Adoptium/rustup/static.crates.io/services.gradle.org/repo1.maven.org 不可达。
+> 改用：JDK 从 GitHub Releases；rustup 与 crates 用 `rsproxy.cn`（`RUSTUP_DIST_SERVER=https://rsproxy.cn`，cargo sparse 源替换）；Gradle 发行包用腾讯镜像（`mirrors.cloud.tencent.com/gradle`）；Maven Central 用阿里云镜像（Gradle init script 注入），google() 可直连。
+
+---
+
+## 3. 验证结果
+
+### A1-1 VPN 启动后可联网
+
+- [x] 固定版本构建成功（本构建机）
+- [x] APK 安装到真机
+- [x] VPN 启动后可联网（真机验证通过，2026-09-23）
+- 结果：TrackerControl 总开关开启、授权 VPN 后，真机正常联网；App 成功捕获微信、企业微信、畅课、支付宝等真实网络请求并放行，说明 VPN 已工作且未阻断网络。
+- 安装方式：真机浏览器从临时分享链接下载 APK 后安装（debug 签名，允许未知来源）；构建机持久副本 `~/trackercontrol-apk/TrackerControl-fdroidDebug-latest.apk`
+- 证据：真机“时间轴”页面捕获记录（见 A1-5）；构建日志 BUILD SUCCESSFUL
+
+### A1-3 PackageManager（包名/权限）
+
+- [x] 真机验证通过（2026-09-23）
+- 采集器：`app/src/main/java/com/causalguard/profile/PackageProfileCollector.kt`
+- 结果：真机输出第三方应用 **30** 个（当前 `limit=30`，按包名排序），每条含：
+  - `packageName`、`uid`、`versionName`、`isSystem`
+  - `requestedPermissions` / `grantedPermissions`（含数量）
+- 样本：`cn.com.chsi.chsiapp`（uid 10394、版本 2.5.13、请求 25 / 已授 14）；`com.coloros.backuprestore`（uid 10280、版本 16.15.3、请求 90 / 已授 52）
+- 结论：包名、UID、版本、声明权限、授权状态均可读取，满足 A1-3。
+- 限制：默认排除系统应用；当前只取前 30 条，全量可调 `limit`。
+
+### A1-4 Usage Access（前后台）
+
+- [x] 真机验证通过（2026-09-23）
+- 采集器：`app/src/main/java/com/causalguard/usage/UsageStatsCollector.kt`
+- 结果：真机输出 `usageAccessGranted=true`、应用 **30** 个、当前前台 `com.causalguard`；`state` 能区分 `foreground` / `recent` / `background`
+- 样本：`com.microsoft.emmx`（recent）、`com.tencent.mm`（recent）、`com.shark.jizhang`（background）
+- 结论：授权后能读到前后台（含 `lastTimeUsed`、`totalTimeInForeground`），满足 A1-4。
+- 降级：未授权时 `usageAccessGranted=false`、`error=usage_access_not_granted`、列表为空；无法判定时 `state=unknown`。
+
+### A1-5 最小 NetworkEvent
+
+- [x] 已捕获真实连接事件（初步证据，2026-09-23）
+- 真机观察（屏蔽模式 = Minimal）：
+  - 最近 7 天：联系跟踪主机 **34 → 66**，涉及跟踪公司 **2 → 8**，已屏蔽比例 **0% → 32%**
+  - 时间轴样本：微信、企业微信、小红书、畅课 → `Tencent · Content` / `Alibaba · Content`（放行）；鲨鱼记账 → `Baidu Analytics`/`ByteDance`/`Alibaba`；京东 → `JD.com`；夸克 → `Alibaba`/`AlibabaGroup Fingerprinting`/`Cloudflare Analytics`；支付宝 → `Alibaba`
+- 结论：底座能产出“时间、App、域名/公司、类目、放行/屏蔽”级别的连接事件，可作为 `NetworkEvent` 数据源。
+- 待补：导出脱敏 JSON 样例（时间、协议、IP/域名线索、端口、UID/unknown）。
+
+#### A1-5 脱敏 JSON 样例（按 `docs/09` 契约整理）
+
+> 说明：字段形态按事件契约整理；`remoteIp`/`domainHint`/`uid` 为**脱敏示意值**，真机已捕获同类事实（见上）。`bytesIn/bytesOut` 按 P0 约定置 0；`category` 等由规则引擎回填。
+
+放行样本（内容类，Minimal 不拦）：
+
+```json
+{
+  "eventId": "e-20260923-a1-5-0001",
+  "appId": "com.tencent.mm",
+  "appName": "微信",
+  "eventType": "network",
+  "timestamp": 1790156945627,
+  "foregroundState": "foreground",
+  "source": "vpn",
+  "evidenceLevel": "E2",
+  "evidenceSummary": "网络连接：Tencent · Content，已放行",
+  "category": "unknown",
+  "isDemo": false,
+  "dedupKey": "com.tencent.mm|network|tencent|1790156945",
+  "network": {
+    "protocol": "TCP",
+    "remoteIp": "203.0.113.10",
+    "remotePort": 443,
+    "domainHint": "example.tencent.com",
+    "uid": 10123,
+    "packageName": "com.tencent.mm",
+    "bytesIn": 0,
+    "bytesOut": 0,
+    "blocked": false
+  }
+}
+```
+
+拦截样本（分析类，Minimal 已拦）：
+
+```json
+{
+  "eventId": "e-20260923-a1-5-0002",
+  "appId": "com.shark.jizhang",
+  "appName": "鲨鱼记账",
+  "eventType": "network",
+  "timestamp": 1790152719372,
+  "foregroundState": "background",
+  "source": "vpn",
+  "evidenceLevel": "E2",
+  "evidenceSummary": "网络连接：Baidu Analytics，已屏蔽",
+  "category": "unknown",
+  "isDemo": false,
+  "dedupKey": "com.shark.jizhang|network|baidu-analytics|1790152719",
+  "network": {
+    "protocol": "TCP",
+    "remoteIp": "203.0.113.20",
+    "remotePort": 443,
+    "domainHint": "example.baidu-analytics.com",
+    "uid": 10441,
+    "packageName": "com.shark.jizhang",
+    "bytesIn": 0,
+    "bytesOut": 0,
+    "blocked": true
+  }
+}
+```
+
+- 注意：`Packet` 不含字节数，见 `docs/network-core-map.md` 第 8 节差异项。
+
+### A1-6 最小阻断验证
+
+- [x] 至少在真机上成功阻断并保留尝试记录（2026-09-23）
+- 真机观察（屏蔽模式 = Minimal）：
+  - 最近 7 天：跟踪主机 **34 → 66**、跟踪公司 **2 → 8**、已屏蔽比例 **0% → 32%**
+  - 被拦截样本：
+    - 鲨鱼记账：3 个被拦 / 1 个放行，涉及 `Baidu Analytics`、`ByteDance`、`Alibaba`
+    - 京东：`JD.com` 被拦
+    - 夸克：`Alibaba`、`AlibabaGroup Fingerprinting`、`Cloudflare Analytics` 多个被拦
+    - 支付宝：`Alibaba` 被拦
+  - 仍放行（`Content` 类目，Minimal 设计不拦）：微信/小红书/企业微信/畅课的 `Tencent`、`Alibaba Content`
+- 结论：底座具备“域名→类目→拦截并保留尝试记录”的能力，满足 A1-6。
+- 证据：真机“时间轴”页面截图（A 持有）。
+
+### A1-8 UID 归属成功率
+
+- [x] 已自测（结论：**归属必须依赖底座在 VpnService 内完成，普通 App 直接调用系统 API 不可用**）
+- 自测方式：Spike App「4) UID 归属自测」在自身进程内建连后，用 `ConnectivityManager.getConnectionOwnerUid(protocol, local, remote)` 反查本连接归属，`expectedUid` 即本 App uid。
+- 自测结果（同一 APK，真机 OPPO Reno12 Pro，两次运行）：
+
+| 运行 | 网络路径（local 地址） | TCP | UDP | ICMP |
+|---|---|---|---|---|
+| #1（TrackerControl VPN 开启） | `10.1.10.1`（TUN） | 3 次连接成功但 `actualUid=-1`；`1.1.1.1:443` 连接失败 | 2 次发送成功但 `actualUid=-1` | 不调用（底座固定不归属） |
+| #2（TrackerControl VPN 未生效） | `10.203.245.38`（物理网卡） | 同上，连接成功仍 `actualUid=-1` | 同上，`actualUid=-1` | 不调用 |
+
+- 关键发现：
+  1. **普通 App 调用 `getConnectionOwnerUid` 恒返回 `-1`（`Process.INVALID_UID`）**，即使 TCP 已成功连接、UDP 已发包，无论走 VPN 还是物理网络；`error` 为 `null` 表示调用本身无异常，是系统未返回归属。
+  2. 因此不能由 App 自行实现 UID 归属，必须复用底座在 **VpnService 内**的归属路径（`ServiceSinkhole.getUidQ` → `Packet.uid`），这也是底座能按 App 记录/拦截的原因（A1-5、A1-6 已在真机验证 per-App 事实）。
+  3. 协议边界不变：底座仅对 TCP(6)/UDP(17) 调 `getUidQ`，ICMP 固定不归属。
+- 结论：满足 A1-8——**网络事件中的 `uid` 一律取自底座回调（`Packet.uid`），App 侧不重复调用系统 API**；归属失败时按 `docs/02`、`docs/09` 降级为 `unknown`。
+- 遗留：底座在真机上的**量化成功率**（成功归属条数 / 总连接条数）需在 adb 可用后从 `TrackerControl.VPN` 日志（`Get uid=...`）统计，当前演示机 adb 未打通，列为待补。
+
+---
+
+## 4. 决策记录
+
+| 决策 | 结论 | 日期 |
+|---|---|---|
+| 网络底座 | 方案 A：TrackerControl（GPL-3.0），tag `2026080501` | 2026-09-21 |
+| 是否修改 native | 否，保留原生核心 | 2026-09-21 |
+| 适配层侵入方式 | 方案 1：在 `ServiceSinkhole` 回调追加适配 | 2026-09-21 |
+| 包目录命名 | 统一用 `network/`（已同步 `docs/19`，事件类型为 `network`） | 2026-09-21 |
+| `bytesIn/bytesOut` | P0 置空/0，`docs/09` 已加标注，P1 再补 | 2026-09-21 |
+| 第三方源码 | 外部保留，仅登记固定 commit，不导入本仓库 | 2026-09-21 |
+| 构建环境 | A 本机构建，步骤见 `docs/spike-build-guide.md` | 2026-09-21 |
+
+---
+
+## 5. 未决/阻塞
+
+1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）；A1-8 自测完成（见上，归属依赖底座）。
+2. 待补：底座 UID 归属**量化成功率**，需 adb 打通后从 `TrackerControl.VPN` 日志统计（演示机 adb 当前不可用）。
+3. 演示机型号 OPPO Reno12 Pro；Android 版本待补。

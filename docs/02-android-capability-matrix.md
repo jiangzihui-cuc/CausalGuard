@@ -22,7 +22,7 @@
 | 网络连接元数据 | `VpnService`（TrackerControl/NetGuard 底座） | 是（VPN 授权） | Android 10+ 可用；用户可在系统随时断开 | 是（观测到的连接） | 无法归属时显示 unknown | “观测到网络连接” |
 | 域名线索 | VPN 会话中解析（不含 TLS 中间人） | 是 | 加密 DNS/DoH 时不可见 | 部分 | 只能显示 IP/类别 | “域名线索（可能不完整）” |
 | 流量/端口/协议 | `VpnService` | 是 | 稳定 | 是 | 无 | “网络流量” |
-| UID 归属 | 自建 UID→包名映射 + `ConnectivityManager` | 是 | 多用户/工作资料差异 | 部分 | 显示“无法归属” | “无法归属到具体应用” |
+| UID 归属 | 底座在 VpnService 内 `getConnectionOwnerUid`（`ServiceSinkhole.getUidQ`），App 侧不直接调用 | 是（仅对 TCP/UDP），仅底座进程内有效 | 普通 App 直接调用恒返回 `-1`（A1-8 真机验证）；ICMP 固定不归属；多用户/工作资料差异 | 部分 | 显示“无法归属” | “无法归属到具体应用” |
 | 阻断规则是否生效 | TrackerControl/NetGuard 本地转发/丢弃计数 | 是 | 依赖转发核心 | 是（本机规则事实） | 记录尝试但无法判定结果 | “已阻断/仍有尝试” |
 | 剪贴板读取 | Android 官方限制，第三方 App 无法可靠后台读取他人剪贴板 | — | Android 10+ 后台剪贴板访问被限制 | **仅 Demo App 可提供真值** | 只能走演示沙箱 | “演示事件：后台读取剪贴板” |
 | 位置调用历史 | 第三方 App 无法可靠读取他人完整定位历史 | — | — | **否** | 走 Demo App 真值 | “演示事件/有限观测” |

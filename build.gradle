@@ -1,0 +1,21 @@
+// CausalGuard 顶层构建脚本
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:9.4.1'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}

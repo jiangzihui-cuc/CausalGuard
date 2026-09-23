@@ -39,6 +39,29 @@
 
 无。
 
+### 1.1 构建与运行时技术依赖（阶段 1 / A1-7 登记）
+
+> 这些是构建底座 APK 时实际使用的工具链与运行时依赖；许可证以各版本内 `LICENSE`/`NOTICE` 为准。
+
+| 组件 | 版本 | 许可证 | 用途 |
+|---|---|---|---|
+| Android Gradle Plugin | 9.4.1（底座用 9.3.1） | Apache-2.0 | Android 构建 |
+| Gradle | 9.6.1 | Apache-2.0 | 构建系统 |
+| Kotlin（AGP 9 内置） | 随 AGP | Apache-2.0 | Kotlin 编译 |
+| Android SDK Platform | android-37.0 | Android SDK 条款 | 编译目标 |
+| Android SDK Build-Tools | 37.0.0 | Android SDK 条款 | 打包 |
+| Android SDK Platform-Tools | 37.0.1 | Apache-2.0（含 adb） | 设备工具 |
+| Android NDK | 27.2.12479018 | 见 NDK 内 NOTICE（含 LLVM/clang，Apache-2.0 with LLVM exceptions 等） | JNI/CMake 原生编译 |
+| CMake | 3.22.1 | BSD-3-Clause | 原生构建 |
+| Rust 工具链 | 1.95.0 | MIT OR Apache-2.0 | 编译 WireGuard 桥 |
+| cargo-ndk | 4.1.2 | MIT OR Apache-2.0 | Rust 交叉编译到 Android |
+| wgbridge-rs（TrackerControl 内） | 随底座 commit | GPL-3.0-only | WireGuard 桥接库 |
+| gotatun | 0.8.1 | MPL-2.0 | WireGuard 协议实现（Rust） |
+| tokio / base64 / hex / ipnetwork / getrandom / libc / log / jni / android_logger | 见 `wgbridge-rs/Cargo.lock` | MIT / Apache-2.0（各 crate 为准） | Rust 运行时依赖 |
+
+- TrackerControl 内部集成的 tracker/域名数据管线随底座引入，其数据来源与许可证以底座对应 commit 内的说明为准（另见 `docs/20-open-source-reuse-guide.md` 第 7 节）。
+- 数据依赖若要单独精简或替换，按 `docs/20` 第 7.3 节单独登记数据集。
+
 ---
 
 ## 2. 已导入的第三方数据集
@@ -67,6 +90,7 @@
 | 组件 | 仓库 | 许可证（需按具体版本复核） | 计划用途 | 主责 |
 |---|---|---|---|---|
 | TrackerControl Android | https://github.com/TrackerControl/tracker-control-android | GPL-3.0（部分第三方组件/数据另有许可） | VPN/TUN、DNS、连接记录、域名阻断底座 | 成员 A |
+| ↳ 已固定版本 | tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（2026-08-05），根 `LICENSE` 为 GPL-3.0 | 构建链：AGP 9.3.1 / Gradle 9.6.1 / compileSdk 37 / NDK / 可选 Rust 1.95.0 | 阶段 1 静态分析已完成，见 `docs/network-core-map.md`；源码尚未导入本仓库 | 成员 A |
 | NetGuard | https://github.com/M66B/NetGuard | GPL-3.0 | TrackerControl 上游参考；本地网络转发研究 | 成员 A |
 | android/architecture-templates | https://github.com/android/architecture-templates | Apache-2.0 | 工程分层骨架参考 | 成员 A |
 | android/architecture-samples | https://github.com/android/architecture-samples | Apache-2.0 | Repository/ViewModel/UI State 参考 | 成员 A |
