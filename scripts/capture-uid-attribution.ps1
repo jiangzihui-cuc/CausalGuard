@@ -16,19 +16,29 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-if (-not (Get-Command adb -ErrorAction SilentlyContinue)) {
-    Write-Host "找不到 adb。请先安装 Android platform-tools 并把其目录加入 PATH。" -ForegroundColor Red
+# 定位 adb：优先 PATH，其次脚本目录 / 当前目录
+$adbCmd = (Get-Command adb -ErrorAction SilentlyContinue)
+$adb = $null
+if ($adbCmd) { $adb = $adbCmd.Source }
+if (-not $adb) {
+    foreach ($cand in @("$PSScriptRoot\adb.exe", "$PWD\adb.exe", ".\adb.exe")) {
+        if (Test-Path $cand) { $adb = (Resolve-Path $cand).Path; break }
+    }
+}
+if (-not $adb) {
+    Write-Host "找不到 adb。请先安装 Android platform-tools 并把其目录加入 PATH，或把本脚本放到 platform-tools 目录下运行。" -ForegroundColor Red
     exit 1
 }
+Write-Host "使用 adb: $adb" -ForegroundColor DarkGray
 
 Write-Host "已连接设备：" -ForegroundColor Cyan
-adb devices
+& $adb devices
 
 Write-Host "清空 logcat 缓冲..." -ForegroundColor Cyan
-adb logcat -c
+& $adb logcat -c
 
 Write-Host "开始抓取 $Seconds 秒，请在此期间正常使用手机..." -ForegroundColor Green
-$proc = Start-Process -FilePath "adb" `
+$proc = Start-Process -FilePath $adb `
     -ArgumentList @("logcat", "-v", "time", "-s", "TrackerControl.VPN") `
     -RedirectStandardOutput $OutFile -PassThru -NoNewWindow
 
