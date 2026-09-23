@@ -5,7 +5,7 @@
 > 责任人：成员 A
 > 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**进行中**（A1-1 构建+真机联网、A1-5 真实事件捕获、A1-6 真机阻断均通过；A1-3/A1-4/A1-8 待补）
+> 状态：**进行中**（A1-1、A1-3、A1-4、A1-5、A1-6 通过；A1-8 待补）
 
 ---
 
@@ -60,7 +60,7 @@
 | CMake | 3.22.1（SDK 包） |
 | NDK | 27.2.12479018 |
 | Rust / WireGuard | rustup 1.29.1 + Rust 1.95.0（4 个 Android target）+ cargo-ndk 4.1.2；APK 打包必须构建 `libwgbridge.so` |
-| 演示机型号 | 真机 _（型号待补）_ |
+| 演示机型号 | OPPO Reno12 Pro |
 | Android 版本 | _待补（基线 API 29+）_ |
 | 构建命令 | `gradle --no-daemon assembleFdroidDebug`（Gradle 9.6.1；wrapper 分发地址被网络策略拦截，改用系统安装的 9.6.1） |
 | 构建结果 | **成功**，BUILD SUCCESSFUL in 9m 6s（首次）/ 3m 10s（缓存命中） |
@@ -85,14 +85,23 @@
 
 ### A1-3 PackageManager（包名/权限）
 
-- [ ] 待验证
-- 输出字段：App、UID、版本、声明权限、授权状态
-- 结果：_待填_
+- [x] 真机验证通过（2026-09-23）
+- 采集器：`app/src/main/java/com/causalguard/profile/PackageProfileCollector.kt`
+- 结果：真机输出第三方应用 **30** 个（当前 `limit=30`，按包名排序），每条含：
+  - `packageName`、`uid`、`versionName`、`isSystem`
+  - `requestedPermissions` / `grantedPermissions`（含数量）
+- 样本：`cn.com.chsi.chsiapp`（uid 10394、版本 2.5.13、请求 25 / 已授 14）；`com.coloros.backuprestore`（uid 10280、版本 16.15.3、请求 90 / 已授 52）
+- 结论：包名、UID、版本、声明权限、授权状态均可读取，满足 A1-3。
+- 限制：默认排除系统应用；当前只取前 30 条，全量可调 `limit`。
 
 ### A1-4 Usage Access（前后台）
 
-- [ ] 待验证
-- 结果：_待填_（能读到前后台 / 明确 unknown 或失败原因）
+- [x] 真机验证通过（2026-09-23）
+- 采集器：`app/src/main/java/com/causalguard/usage/UsageStatsCollector.kt`
+- 结果：真机输出 `usageAccessGranted=true`、应用 **30** 个、当前前台 `com.causalguard`；`state` 能区分 `foreground` / `recent` / `background`
+- 样本：`com.microsoft.emmx`（recent）、`com.tencent.mm`（recent）、`com.shark.jizhang`（background）
+- 结论：授权后能读到前后台（含 `lastTimeUsed`、`totalTimeInForeground`），满足 A1-4。
+- 降级：未授权时 `usageAccessGranted=false`、`error=usage_access_not_granted`、列表为空；无法判定时 `state=unknown`。
 
 ### A1-5 最小 NetworkEvent
 
@@ -147,6 +156,6 @@
 
 ## 5. 未决/阻塞
 
-1. A1-1（构建 + 真机联网）、A1-6（真机阻断 32%）已完成，见 2.3 与第 3 节。
-2. 待补设备数据：演示机型号/Android 版本、A1-3、A1-4、A1-8（UID 归属成功率）。
-3. 待导出 A1-5 的脱敏 JSON 样例。
+1. A1-1、A1-3、A1-4、A1-6 已完成，见第 2、3 节。
+2. 待补设备数据：演示机型号/Android 版本（真机为 OPPO Reno12 Pro）、A1-8（UID 归属成功率）。
+3. 待导出 A1-5 的脱敏 JSON 样例（可复用采集器的 `toJson()` 输出）。
