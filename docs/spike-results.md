@@ -5,7 +5,7 @@
 > 责任人：成员 A
 > 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**进行中**（A1-1、A1-3、A1-4、A1-5、A1-6 通过；A1-7 已登记；A1-8 待真机自测）
+> 状态：**基本完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；仅底座 UID 归属量化成功率待 adb 打通后补）
 
 ---
 
@@ -194,14 +194,21 @@
 
 ### A1-8 UID 归属成功率
 
-- [ ] 待验证
-- 建议按协议统计：
+- [x] 已自测（结论：**归属必须依赖底座在 VpnService 内完成，普通 App 直接调用系统 API 不可用**）
+- 自测方式：Spike App「4) UID 归属自测」在自身进程内建连后，用 `ConnectivityManager.getConnectionOwnerUid(protocol, local, remote)` 反查本连接归属，`expectedUid` 即本 App uid。
+- 自测结果（同一 APK，真机 OPPO Reno12 Pro，两次运行）：
 
-| 协议 | 成功 | 失败/unknown | 成功率 |
-|---|---|---|---|
-| TCP | _待填_ | _待填_ | _待填_ |
-| UDP | _待填_ | _待填_ | _待填_ |
-| ICMP | 不适用 | _待填_ | - |
+| 运行 | 网络路径（local 地址） | TCP | UDP | ICMP |
+|---|---|---|---|---|
+| #1（TrackerControl VPN 开启） | `10.1.10.1`（TUN） | 3 次连接成功但 `actualUid=-1`；`1.1.1.1:443` 连接失败 | 2 次发送成功但 `actualUid=-1` | 不调用（底座固定不归属） |
+| #2（TrackerControl VPN 未生效） | `10.203.245.38`（物理网卡） | 同上，连接成功仍 `actualUid=-1` | 同上，`actualUid=-1` | 不调用 |
+
+- 关键发现：
+  1. **普通 App 调用 `getConnectionOwnerUid` 恒返回 `-1`（`Process.INVALID_UID`）**，即使 TCP 已成功连接、UDP 已发包，无论走 VPN 还是物理网络；`error` 为 `null` 表示调用本身无异常，是系统未返回归属。
+  2. 因此不能由 App 自行实现 UID 归属，必须复用底座在 **VpnService 内**的归属路径（`ServiceSinkhole.getUidQ` → `Packet.uid`），这也是底座能按 App 记录/拦截的原因（A1-5、A1-6 已在真机验证 per-App 事实）。
+  3. 协议边界不变：底座仅对 TCP(6)/UDP(17) 调 `getUidQ`，ICMP 固定不归属。
+- 结论：满足 A1-8——**网络事件中的 `uid` 一律取自底座回调（`Packet.uid`），App 侧不重复调用系统 API**；归属失败时按 `docs/02`、`docs/09` 降级为 `unknown`。
+- 遗留：底座在真机上的**量化成功率**（成功归属条数 / 总连接条数）需在 adb 可用后从 `TrackerControl.VPN` 日志（`Get uid=...`）统计，当前演示机 adb 未打通，列为待补。
 
 ---
 
@@ -221,6 +228,6 @@
 
 ## 5. 未决/阻塞
 
-1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）。
-2. 待补：A1-8 UID 归属真机结果（APK 已更新，待真机自测）。
+1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）；A1-8 自测完成（见上，归属依赖底座）。
+2. 待补：底座 UID 归属**量化成功率**，需 adb 打通后从 `TrackerControl.VPN` 日志统计（演示机 adb 当前不可用）。
 3. 演示机型号 OPPO Reno12 Pro；Android 版本待补。
