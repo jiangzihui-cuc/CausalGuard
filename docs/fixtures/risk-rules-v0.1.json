@@ -1,0 +1,264 @@
+{
+  "schema": {
+    "name": "risk-rules-v0.1",
+    "purpose": "Fixture rule asset for evaluating privacy-events-v0.1.json. This file describes deterministic P0 rule expectations and does not implement a rule engine.",
+    "ruleVersion": "rules-v0.1",
+    "contract": "../10-risk-rule-contract.md",
+    "eventFixture": "privacy-events-v0.1.json",
+    "expectationFixture": "privacy-events-v0.1.expected.json"
+  },
+  "rules": [
+    {
+      "id": "R-001",
+      "ruleVersion": "rules-v0.1",
+      "name": "前台合理访问",
+      "priority": 10,
+      "condition": {
+        "eventTypes": ["location", "network"],
+        "foregroundStates": ["foreground"],
+        "scenarioMatchRequired": "match",
+        "notes": "Use only when the app scene explains the event, such as map foreground location or map tile network access."
+      },
+      "output": {
+        "riskLevel": "low",
+        "category": "necessary",
+        "scenarioMatch": "match",
+        "confidence": "medium"
+      },
+      "explanationBoundary": "该行为与前台使用场景匹配；仍不读取通信内容或敏感原文。",
+      "recommendation": {
+        "action": "none",
+        "title": "无需处置"
+      },
+      "degradation": {
+        "shouldShowUnknownDegradation": false,
+        "unknownHandling": "not_applicable"
+      },
+      "fixtureEventIds": ["e-20260921-0001", "e-20260921-0002"]
+    },
+    {
+      "id": "R-002",
+      "ruleVersion": "rules-v0.1",
+      "name": "后台访问敏感数据",
+      "priority": 80,
+      "condition": {
+        "eventTypes": ["clipboard", "location", "contacts"],
+        "foregroundStates": ["background"],
+        "notes": "Matches sensitive access while the app is not foreground."
+      },
+      "output": {
+        "riskLevel": "medium",
+        "category": "high_risk",
+        "scenarioMatch": "mismatch",
+        "confidence": "medium"
+      },
+      "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。",
+      "recommendation": {
+        "action": "review_permission",
+        "title": "检查权限和后台活动"
+      },
+      "degradation": {
+        "shouldShowUnknownDegradation": false,
+        "unknownHandling": "not_applicable"
+      },
+      "fixtureEventIds": ["e-20260921-0003", "e-20260921-0007", "e-20260921-0009"]
+    },
+    {
+      "id": "R-003",
+      "ruleVersion": "rules-v0.1",
+      "name": "场景不匹配后台联网",
+      "priority": 75,
+      "condition": {
+        "eventTypes": ["network"],
+        "foregroundStates": ["background"],
+        "sceneTypes": ["calculator"],
+        "notes": "Matches background network traffic from an app whose declared scene does not require networking."
+      },
+      "output": {
+        "riskLevel": "high",
+        "category": "high_risk",
+        "scenarioMatch": "mismatch",
+        "confidence": "medium"
+      },
+      "explanationBoundary": "只能确认后台联网与场景不匹配，不能确认请求内容或数据泄露。",
+      "recommendation": {
+        "action": "limit_background_network",
+        "title": "限制后台网络"
+      },
+      "degradation": {
+        "shouldShowUnknownDegradation": false,
+        "unknownHandling": "not_applicable"
+      },
+      "fixtureEventIds": ["e-20260921-0004"]
+    },
+    {
+      "id": "R-005",
+      "ruleVersion": "rules-v0.1",
+      "name": "已知分析追踪器",
+      "priority": 70,
+      "condition": {
+        "eventTypes": ["network"],
+        "domainHints": ["analytics.example.test", "tracker.example.test"],
+        "notes": "Matches domains classified by the v0.1 fixture tracker list as analytics or tracker-like services."
+      },
+      "output": {
+        "riskLevel": "high",
+        "category": "analytics",
+        "scenarioMatch": "mismatch",
+        "confidence": "medium"
+      },
+      "explanationBoundary": "域名命中公开或演示分类只能说明服务类别，不代表已发生隐私泄露。",
+      "recommendation": {
+        "action": "limit_background_network",
+        "title": "限制分析追踪连接"
+      },
+      "degradation": {
+        "shouldShowUnknownDegradation": false,
+        "unknownHandling": "If domainHint is empty, do not infer tracker category from IP alone."
+      },
+      "fixtureEventIds": ["e-20260921-0004", "e-20260921-0005"]
+    },
+    {
+      "id": "R-006",
+      "ruleVersion": "rules-v0.1",
+      "name": "长期未使用仍联网",
+      "priority": 75,
+      "condition": {
+        "eventTypes": ["network"],
+        "foregroundStates": ["unused"],
+        "notes": "Matches network activity after a long-unused app state."
+      },
+      "output": {
+        "riskLevel": "high",
+        "category": "analytics",
+        "scenarioMatch": "mismatch",
+        "confidence": "medium"
+      },
+      "explanationBoundary": "只能说明长期未使用状态下仍有联网元数据，不能确认请求内容。",
+      "recommendation": {
+        "action": "limit_background_network",
+        "title": "限制长期未使用应用联网"
+      },
+      "degradation": {
+        "shouldShowUnknownDegradation": false,
+        "unknownHandling": "If last-used context is unavailable, do not apply this rule."
+      },
+      "fixtureEventIds": ["e-20260921-0005"]
+    },
+    {
+      "id": "R-007",
+      "ruleVersion": "rules-v0.1",
+      "name": "敏感数据伴随网络",
+      "priority": 85,
+      "condition": {
+        "eventTypes": ["clipboard", "network"],
+        "timeWindowMs": 60000,
+        "relatedEventTypes": ["clipboard", "location", "contacts", "network"],
+        "notes": "Matches a sensitive event and a network event from the same app within the evaluation time window."
+      },
+      "output": {
+        "riskLevel": "high",
+        "category": "high_risk",
+        "scenarioMatch": "mismatch",
+        "confidence": "medium"
+      },
+      "explanationBoundary": "时间相关只能作为伴随证据，不能证明敏感内容被发送。",
+      "recommendation": {
+        "action": "limit_background_network",
+        "title": "结合敏感访问检查联网行为"
+      },
+      "degradation": {
+        "shouldShowUnknownDegradation": false,
+        "unknownHandling": "If app attribution is unknown, do not correlate sensitive access and network traffic."
+      },
+      "fixtureEventIds": ["e-20260921-0003", "e-20260921-0004"]
+    },
+    {
+      "id": "R-008",
+      "ruleVersion": "rules-v0.1",
+      "name": "无法归属网络",
+      "priority": 40,
+      "condition": {
+        "eventTypes": ["network"],
+        "packageName": "unknown",
+        "uid": -1,
+        "notes": "Matches network metadata that cannot be reliably attributed to an app."
+      },
+      "output": {
+        "riskLevel": "low",
+        "category": "unknown",
+        "scenarioMatch": "unknown",
+        "confidence": "low"
+      },
+      "explanationBoundary": "无法可靠归属到具体 App，不得生成确定性归因、数据流向结论或处置建议。",
+      "recommendation": {
+        "action": "none",
+        "title": "仅展示未知网络事件"
+      },
+      "degradation": {
+        "shouldShowUnknownDegradation": true,
+        "unknownHandling": "Show unknown attribution and avoid deterministic mitigation."
+      },
+      "fixtureEventIds": ["e-20260921-0006"]
+    },
+    {
+      "id": "R-009",
+      "ruleVersion": "rules-v0.1",
+      "name": "权限已撤销仍观测",
+      "priority": 80,
+      "condition": {
+        "eventTypes": ["location"],
+        "foregroundStates": ["background"],
+        "requiresPriorEvents": [
+          {
+            "eventType": "permission",
+            "evidenceSummaryContains": "revoked"
+          }
+        ],
+        "notes": "Matches sensitive access after a permission revocation context event for the same app."
+      },
+      "output": {
+        "riskLevel": "high",
+        "category": "high_risk",
+        "scenarioMatch": "mismatch",
+        "confidence": "medium"
+      },
+      "explanationBoundary": "演示事件说明权限撤销后的异常场景，但仍不能声称真实系统权限被绕过。",
+      "recommendation": {
+        "action": "review_permission",
+        "title": "复查权限与演示状态"
+      },
+      "degradation": {
+        "shouldShowUnknownDegradation": false,
+        "unknownHandling": "If prior permission state is missing, do not apply this rule."
+      },
+      "fixtureEventIds": ["e-20260921-0009"]
+    },
+    {
+      "id": "R-010",
+      "ruleVersion": "rules-v0.1",
+      "name": "证据不足",
+      "priority": 30,
+      "condition": {
+        "evidenceLevels": ["E5"],
+        "notes": "Matches events with insufficient evidence or missing key attribution fields."
+      },
+      "output": {
+        "riskLevel": "low",
+        "category": "unknown",
+        "scenarioMatch": "unknown",
+        "confidence": "low"
+      },
+      "explanationBoundary": "关键字段缺失，只能展示无法确认结论。",
+      "recommendation": {
+        "action": "none",
+        "title": "无法确认，暂不处置"
+      },
+      "degradation": {
+        "shouldShowUnknownDegradation": true,
+        "unknownHandling": "Keep the event visible as unknown evidence without app attribution."
+      },
+      "fixtureEventIds": ["e-20260921-0006"]
+    }
+  ]
+}

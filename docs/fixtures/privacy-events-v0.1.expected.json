@@ -1,0 +1,140 @@
+{
+  "schema": {
+    "name": "privacy-events-v0.1.expected",
+    "purpose": "Test/evaluation sidecar for privacy-events-v0.1.json. This file is not part of PrivacyEvent and must not be written into the event store.",
+    "eventFixture": "privacy-events-v0.1.json",
+    "ruleVersion": "rules-v0.1"
+  },
+  "expectations": [
+    {
+      "eventId": "e-20260921-0001",
+      "expectedCategory": "necessary",
+      "expectedRiskLevel": "low",
+      "expectedScenarioMatch": "match",
+      "expectedConfidence": "high",
+      "expectedMatchedRules": ["R-001"],
+      "expectedAction": "none",
+      "shouldShowUnknownDegradation": false,
+      "kind": "normal",
+      "demoExpectation": "Demo truth should be evaluated like an equivalent real foreground map location access.",
+      "expectedBasis": "Foreground map/navigation location access matches the app scene and has no network or background concern in this event."
+    },
+    {
+      "eventId": "e-20260921-0002",
+      "expectedCategory": "necessary",
+      "expectedRiskLevel": "low",
+      "expectedScenarioMatch": "match",
+      "expectedConfidence": "medium",
+      "expectedMatchedRules": ["R-001"],
+      "expectedAction": "none",
+      "shouldShowUnknownDegradation": false,
+      "kind": "normal",
+      "demoExpectation": "not_demo",
+      "expectedBasis": "Foreground map network access to a map tile domain is consistent with the scene; VPN metadata cannot inspect request content."
+    },
+    {
+      "eventId": "e-20260921-0003",
+      "expectedCategory": "high_risk",
+      "expectedRiskLevel": "medium",
+      "expectedScenarioMatch": "mismatch",
+      "expectedConfidence": "medium",
+      "expectedMatchedRules": ["R-002", "R-007"],
+      "expectedAction": "limit_background_activity",
+      "shouldShowUnknownDegradation": false,
+      "kind": "scenario_mismatch",
+      "demoExpectation": "Demo truth should be evaluated like an equivalent real background clipboard access.",
+      "expectedBasis": "Calculator background clipboard access is sensitive and scene-mismatched; nearby network evidence may raise concern without proving leakage."
+    },
+    {
+      "eventId": "e-20260921-0004",
+      "expectedCategory": "analytics",
+      "expectedRiskLevel": "high",
+      "expectedScenarioMatch": "mismatch",
+      "expectedConfidence": "medium",
+      "expectedMatchedRules": ["R-003", "R-005", "R-007"],
+      "expectedAction": "limit_background_network",
+      "shouldShowUnknownDegradation": false,
+      "kind": "scenario_mismatch",
+      "demoExpectation": "not_demo",
+      "expectedBasis": "Calculator background network access to an analytics domain is not scene-matched and occurs near a sensitive clipboard event."
+    },
+    {
+      "eventId": "e-20260921-0005",
+      "expectedCategory": "analytics",
+      "expectedRiskLevel": "high",
+      "expectedScenarioMatch": "mismatch",
+      "expectedConfidence": "medium",
+      "expectedMatchedRules": ["R-005", "R-006"],
+      "expectedAction": "limit_background_network",
+      "shouldShowUnknownDegradation": false,
+      "kind": "abnormal",
+      "demoExpectation": "not_demo",
+      "expectedBasis": "A long-unused flashlight app connecting to a tracker-like domain should be treated as high-risk background analytics behavior."
+    },
+    {
+      "eventId": "e-20260921-0006",
+      "expectedCategory": "unknown",
+      "expectedRiskLevel": "low",
+      "expectedScenarioMatch": "unknown",
+      "expectedConfidence": "low",
+      "expectedMatchedRules": ["R-008", "R-010"],
+      "expectedAction": "none",
+      "shouldShowUnknownDegradation": true,
+      "kind": "unknown_boundary",
+      "demoExpectation": "not_demo",
+      "expectedBasis": "UID, package name and domain are unavailable, so the UI may show an unknown network event but must not assign it to an app or recommend deterministic mitigation."
+    },
+    {
+      "eventId": "e-20260921-0007",
+      "expectedCategory": "high_risk",
+      "expectedRiskLevel": "medium",
+      "expectedScenarioMatch": "mismatch",
+      "expectedConfidence": "medium",
+      "expectedMatchedRules": ["R-002"],
+      "expectedAction": "review_permission",
+      "shouldShowUnknownDegradation": false,
+      "kind": "abnormal",
+      "demoExpectation": "Demo truth should be evaluated like an equivalent real background contacts access.",
+      "expectedBasis": "Background contacts access is sensitive and should be flagged, while the evidence only records count and not contact content."
+    },
+    {
+      "eventId": "e-20260921-0008",
+      "expectedCategory": "necessary",
+      "expectedRiskLevel": "low",
+      "expectedScenarioMatch": "match_with_concern",
+      "expectedConfidence": "high",
+      "expectedMatchedRules": [],
+      "expectedAction": "none",
+      "shouldShowUnknownDegradation": false,
+      "kind": "normal",
+      "demoExpectation": "not_demo",
+      "expectedBasis": "A permission revocation system fact is not risky by itself; it is useful context for evaluating later sensitive events."
+    },
+    {
+      "eventId": "e-20260921-0009",
+      "expectedCategory": "high_risk",
+      "expectedRiskLevel": "high",
+      "expectedScenarioMatch": "mismatch",
+      "expectedConfidence": "medium",
+      "expectedMatchedRules": ["R-002", "R-009"],
+      "expectedAction": "review_permission",
+      "shouldShowUnknownDegradation": false,
+      "kind": "abnormal",
+      "demoExpectation": "Demo truth should be evaluated like an equivalent real post-revocation background location access, while still labeled as demo evidence.",
+      "expectedBasis": "The event follows a permission revocation fact and shows background location access, so it should be highlighted without claiming data leakage."
+    },
+    {
+      "eventId": "e-20260921-0010",
+      "expectedCategory": "necessary",
+      "expectedRiskLevel": "low",
+      "expectedScenarioMatch": "match",
+      "expectedConfidence": "medium",
+      "expectedMatchedRules": [],
+      "expectedAction": "none",
+      "shouldShowUnknownDegradation": false,
+      "kind": "normal",
+      "demoExpectation": "not_demo",
+      "expectedBasis": "UsageStats context alone is supporting evidence and should not produce a risk alert without a concerning privacy or network event."
+    }
+  ]
+}
