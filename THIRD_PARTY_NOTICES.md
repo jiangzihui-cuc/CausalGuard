@@ -20,7 +20,7 @@
 
 ## 1. 已导入的第三方组件
 
-> 当前仓库尚未导入任何第三方源码。每次实际导入后，复制下面的模板追加条目。
+> 当前仓库未复制第三方源码。以下条目登记已通过构建系统引入的第三方依赖。
 
 <!-- 模板：
 ## <组件名称>
@@ -37,7 +37,18 @@
 - Registered by / date: <成员 / 日期>
 -->
 
-无。
+## kotlinx.serialization
+
+- Repository: https://github.com/Kotlin/kotlinx.serialization
+- Commit/Tag: 1.9.0（Maven artifact `org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0`）
+- License: Apache-2.0
+- Used files/modules: `rule-engine` 模块的 JSON 反序列化依赖
+- Local modifications: 无；未复制、改写或移植第三方源码
+- Purpose: 读取并反序列化 v0.1 风险规则 JSON 资产，供本地确定性规则引擎测试使用
+- Included license file: NO（当前仅通过 Maven 依赖引入；发布前需由许可证报告或人工清单补齐）
+- Source availability: Maven Central / 官方仓库
+- Team-original boundary: 规则资产契约、校验逻辑、领域对象、规则匹配与测试均由团队实现
+- Registered by / date: 成员 B / 2026-09-23
 
 ### 1.1 构建与运行时技术依赖（阶段 1 / A1-7 登记）
 

@@ -121,7 +121,7 @@ class RuleEvaluatorTest {
     }
 }
 
-private object FixtureEvents {
+internal object FixtureEvents {
     val mapLocation = PrivacyEvent(
         eventId = "e-20260921-0001",
         appId = "com.demo.map",
@@ -283,7 +283,7 @@ private object FixtureEvents {
     )
 }
 
-private object FixtureRules {
+internal object FixtureRules {
     val rules = listOf(
         RiskRule(
             id = "R-001",
