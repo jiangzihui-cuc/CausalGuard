@@ -49,6 +49,7 @@
 | [network-core-map](network-core-map.md) | 阶段1 A1-2：TrackerControl 网络底座核心地图 | 成员 A |
 | [spike-results](spike-results.md) | 阶段1 A1-1/A1-3/A1-4/A1-6/A1-8：技术 Spike 结果（设备部分待回填） | 成员 A |
 | [spike-build-guide](spike-build-guide.md) | 阶段1 A1-1：本地固定版本构建步骤与降级 | 成员 A |
+| [uid-attribution-capture](uid-attribution-capture.md) | 阶段1 A1-8：UID 归属成功率抓取与统计操作 | 成员 A |
 
 ## 阅读顺序
 
