@@ -1,11 +1,11 @@
 # spike-results（阶段 1 技术 Spike 结果）
 
 > 版本：`v0.1`
-> 最后更新：2026-09-21
+> 最后更新：2026-09-23
 > 责任人：成员 A
 > 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**进行中**（静态分析完成；A1-1 构建成功；设备联网验证与 A1-3~A1-8 待真机回填）
+> 状态：**进行中**（A1-1 构建+真机联网通过；A1-5 已有初步真实事件证据；A1-3/A1-4/A1-6/A1-8 待补）
 
 ---
 
@@ -60,12 +60,12 @@
 | CMake | 3.22.1（SDK 包） |
 | NDK | 27.2.12479018 |
 | Rust / WireGuard | rustup 1.29.1 + Rust 1.95.0（4 个 Android target）+ cargo-ndk 4.1.2；APK 打包必须构建 `libwgbridge.so` |
-| 演示机型号 | _待填（当前无真机/模拟器）_ |
-| Android 版本 | _待填（基线 API 29+）_ |
+| 演示机型号 | 真机 _（型号待补）_ |
+| Android 版本 | _待补（基线 API 29+）_ |
 | 构建命令 | `gradle --no-daemon assembleFdroidDebug`（Gradle 9.6.1；wrapper 分发地址被网络策略拦截，改用系统安装的 9.6.1） |
-| 构建结果 | **成功**，BUILD SUCCESSFUL in 9m 6s |
-| APK 路径 | `app/build/outputs/apk/fdroid/debug/TrackerControl-fdroidDebug-latest.apk` |
-| APK 大小 / SHA-256 | 24,711,138 bytes / `ed2b6d7b80bb7ff0b2d623686ce9c09708af5f3f4cf83545f9908806f8d222c8` |
+| 构建结果 | **成功**，BUILD SUCCESSFUL in 9m 6s（首次）/ 3m 10s（缓存命中） |
+| APK 路径 | 构建产物 `app/build/outputs/apk/fdroid/debug/TrackerControl-fdroidDebug-latest.apk`；已复制持久副本到构建机 `~/trackercontrol-apk/` |
+| APK 大小 / SHA-256 | 24,711,138 bytes / `ed2b6d7b80bb7ff0b2d623686ce9c09708af5f3f4cf83545f9908806f8d222c8`（两次构建哈希一致，可复现） |
 
 > 网络受限环境下的镜像替换（仅本构建机，不改本仓库）：Adoptium/rustup/static.crates.io/services.gradle.org/repo1.maven.org 不可达。
 > 改用：JDK 从 GitHub Releases；rustup 与 crates 用 `rsproxy.cn`（`RUSTUP_DIST_SERVER=https://rsproxy.cn`，cargo sparse 源替换）；Gradle 发行包用腾讯镜像（`mirrors.cloud.tencent.com/gradle`）；Maven Central 用阿里云镜像（Gradle init script 注入），google() 可直连。
@@ -76,10 +76,12 @@
 
 ### A1-1 VPN 启动后可联网
 
-- [x] 固定版本构建成功（2026-09-21，本构建机）
-- [ ] VPN 启动后可联网（需真机/模拟器验证）
-- 结果：构建成功；联网验证待设备。安装命令：`adb install -r app/build/outputs/apk/fdroid/debug/TrackerControl-fdroidDebug-latest.apk`
-- 证据：`/tmp/opencode/build1.log`（BUILD SUCCESSFUL in 9m 6s）
+- [x] 固定版本构建成功（本构建机）
+- [x] APK 安装到真机
+- [x] VPN 启动后可联网（真机验证通过，2026-09-23）
+- 结果：TrackerControl 总开关开启、授权 VPN 后，真机正常联网；App 成功捕获微信、企业微信、畅课、支付宝等真实网络请求并放行，说明 VPN 已工作且未阻断网络。
+- 安装方式：真机浏览器从临时分享链接下载 APK 后安装（debug 签名，允许未知来源）；构建机持久副本 `~/trackercontrol-apk/TrackerControl-fdroidDebug-latest.apk`
+- 证据：真机“时间轴”页面捕获记录（见 A1-5）；构建日志 BUILD SUCCESSFUL
 
 ### A1-3 PackageManager（包名/权限）
 
@@ -94,15 +96,20 @@
 
 ### A1-5 最小 NetworkEvent
 
-- [ ] 待验证
-- 结果：_待填_（脱敏 JSON 示例）
+- [x] 已捕获真实连接事件（初步证据，2026-09-23）
+- 真机观察（屏蔽模式 = Minimal）：
+  - 最近 7 天：联系 **34** 个跟踪主机，涉及 **2** 家跟踪公司，已屏蔽比例 **0%**
+  - 时间轴样本：微信、企业微信 → `Tencent · Content`；畅课、支付宝 → `Alibaba · Content`，全部标记为“已放行”
+- 结论：底座能产出“时间、App、域名/公司、类目、放行/屏蔽”级别的连接事件，可作为 `NetworkEvent` 数据源。
+- 待补：导出脱敏 JSON 样例（时间、协议、IP/域名线索、端口、UID/unknown）；0% 屏蔽是 Minimal 模式预期（Content 类目不拦）。
 - 注意：`Packet` 不含字节数，见 `docs/network-core-map.md` 第 8 节差异项。
 
 ### A1-6 最小阻断验证
 
 - [ ] 待验证
-- 测试域名：_待填_
-- 结果：_待填_（是否阻断成功、是否保留尝试记录）
+- 进展：真机当前 Minimal 模式下已屏蔽比例 0%，符合设计（Content 类目不拦）。
+- 下一步：切换到 **Standard** 模式后再使用若干 App，观察时间轴是否出现“已屏蔽”且比例 > 0%；记录测试域名与尝试记录。
+- 结果：_待填_
 
 ### A1-8 UID 归属成功率
 
@@ -133,5 +140,6 @@
 
 ## 5. 未决/阻塞
 
-1. A1-1 构建已在开发机完成（见 2.3）；联网验证需真机/模拟器。
-2. 设备验证数据（A1-1 联网、A1-3/A1-4/A1-5/A1-6/A1-8）待 A 回填本文件第 3 节。
+1. A1-1（构建 + 真机联网）已完成，见 2.3 与第 3 节。
+2. 待补设备数据：演示机型号/Android 版本、A1-3、A1-4、A1-6（切 Standard 验证拦截）、A1-8（UID 归属成功率）。
+3. 待导出 A1-5 的脱敏 JSON 样例。
