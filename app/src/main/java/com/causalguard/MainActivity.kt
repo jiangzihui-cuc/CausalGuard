@@ -5,10 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.view.Gravity
 import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
 import com.causalguard.profile.PackageProfileCollector
 import com.causalguard.usage.UsageStatsCollector
@@ -24,49 +21,20 @@ class MainActivity : Activity() {
 
     private val executor = Executors.newSingleThreadExecutor()
     private lateinit var output: TextView
-
     private val tag = "CausalGuardSpike"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(32, 32, 32, 32)
+        output = findViewById(R.id.tv_output)
+
+        findViewById<Button>(R.id.btn_usage_settings).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
-
-        root.addView(Button(this).apply {
-            text = "1) 打开“使用情况访问”设置（A1-4 前置）"
-            setOnClickListener {
-                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-            }
-        })
-        root.addView(Button(this).apply {
-            text = "2) 采集应用画像 PackageManager（A1-3）"
-            setOnClickListener { runPackageCollect() }
-        })
-        root.addView(Button(this).apply {
-            text = "3) 采集使用上下文 UsageStats（A1-4）"
-            setOnClickListener { runUsageCollect() }
-        })
-        root.addView(Button(this).apply {
-            text = "清空"
-            setOnClickListener { output.text = "" }
-        })
-
-        output = TextView(this).apply {
-            typeface = android.graphics.Typeface.MONOSPACE
-            textSize = 11f
-            gravity = Gravity.START
-            setTextIsSelectable(true)
-        }
-        root.addView(ScrollView(this).apply { addView(output) }, LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            0,
-            1f,
-        ))
-
-        setContentView(root)
+        findViewById<Button>(R.id.btn_package).setOnClickListener { runPackageCollect() }
+        findViewById<Button>(R.id.btn_usage).setOnClickListener { runUsageCollect() }
+        findViewById<Button>(R.id.btn_clear).setOnClickListener { output.text = "" }
     }
 
     private fun runPackageCollect() {
