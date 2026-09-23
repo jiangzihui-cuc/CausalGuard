@@ -1,7 +1,7 @@
 # 17 任务看板
 
-> 版本：`v0.2`
-> 最后更新：2026-09-21
+> 版本：`v0.3`
+> 最后更新：2026-09-23
 > 责任人：成员 B（协作：成员 A）
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
 > 依据：[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)。阶段内任务按 A（平台/网络/系统/发布）与 B（产品/规则/证据/UI/评测）两条并行链拆分；每人每天最多保留“今日必须完成 1 项 + 完成后再做 1 项 + 阻塞替代 1 项”。
@@ -16,7 +16,7 @@
 | T0-4 | 建立 Git 仓库、分支规则与 docs/ 目录 | 成员 A | 成员 B | 已完成 |
 | T0-5 | 项目章程与范围排除表 | 成员 B | 成员 A | 已完成 |
 | T0-6 | 任务看板与风险清单 | 成员 B | 成员 A | 已完成 |
-| T0-7 | 设计基线 01~16 已形成 v0.1 草案；阶段 1 Spike 后修订，阶段 2 正式冻结跨模块契约 | 两人 | - | 待验证 |
+| T0-7 | 设计基线 01~16 已形成 v0.1 草案；阶段 1 Spike 后修订，阶段 2 正式冻结跨模块契约 | 两人 | - | 进行中 |
 | T0-8 | 确认 TrackerControl/NetGuard GPL 路线并建立 THIRD_PARTY_NOTICES 模板 | 成员 A | 成员 B | 已完成 |
 
 ## 阶段 1：技术可行性 Spike（9/21-9/22）
@@ -25,14 +25,16 @@
 
 | 编号 | 任务 | 交付物 | 状态 |
 |---|---|---|---|
-| A1-1 | 固定 TrackerControl commit/tag 并构建 | commit、环境记录、可联网 APK | 未开始 |
-| A1-2 | 定位 VPN、连接、DNS、UID、阻断入口 | `docs/network-core-map.md` | 未开始 |
-| A1-3 | PackageManager Spike | 日志/JSON：App、UID、版本、声明权限、授权状态 | 未开始 |
-| A1-4 | UsageStats Spike | 前后台或明确 unknown/失败原因 | 未开始 |
-| A1-5 | 输出最小 NetworkEvent | 脱敏 JSON：时间、协议、IP/域名线索、端口、UID/unknown | 未开始 |
-| A1-6 | 最小阻断验证 | 日志：至少一个测试域名可阻断并保留尝试记录 | 未开始 |
-| A1-7 | 开源技术登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 条目 | 未开始 |
-| A1-8 | 记录 UID 归属成功率 | 更新 [02 能力边界表](02-android-capability-matrix.md) | 未开始 |
+| A1-1 | 固定 TrackerControl commit/tag 并构建 | commit、环境记录、可联网 APK | 已完成 |
+| A1-2 | 定位 VPN、连接、DNS、UID、阻断入口 | `docs/network-core-map.md` | 已完成 |
+| A1-3 | PackageManager Spike | 日志/JSON：App、UID、版本、声明权限、授权状态 | 已完成 |
+| A1-4 | UsageStats Spike | 前后台或明确 unknown/失败原因 | 已完成 |
+| A1-5 | 输出最小 NetworkEvent | 脱敏 JSON：时间、协议、IP/域名线索、端口、UID/unknown | 已完成 |
+| A1-6 | 最小阻断验证 | 日志：至少一个测试域名可阻断并保留尝试记录 | 已完成 |
+| A1-7 | 开源技术登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 条目 | 已完成 |
+| A1-8 | 记录 UID 归属成功率 | 更新 [02 能力边界表](02-android-capability-matrix.md) | 待验证 |
+
+> 阶段 1 进展（A 回填，证据见 [Spike 结果](spike-results.md)）：A1-1～A1-7 已完成；A1-8 结论已出——普通 App 直接调用 `getConnectionOwnerUid` 恒为 `-1`，归属必须复用底座 VpnService 内路径，`docs/02` 已更新。仅“底座 UID 归属**量化成功率**”待补，需 adb 抓取 `TrackerControl.VPN` 的 `Get uid=` 日志；当前演示机 adb 不可用，转入 A4-4 一并统计。
 
 止损：24 小时内 TrackerControl 必须能构建并联网；48 小时内必须得到连接事件或明确失败原因；失败先换固定旧 tag，仍失败则缩小网络范围。
 
@@ -100,7 +102,7 @@
 | A4-1 | PackageManager Provider | 成员 A | - | 未开始 |
 | A4-2 | UsageStats Provider | 成员 A | - | 未开始 |
 | A4-3 | TrackerControl/NetGuard Network Adapter | 成员 A | - | 未开始 |
-| A4-4 | UID/包名/域名/时间窗口关联 | 成员 A | - | 未开始 |
+| A4-4 | UID/包名/域名/时间窗口关联（含补 A1-8 遗留：adb 抓 `Get uid=` 统计底座归属量化成功率） | 成员 A | - | 未开始 |
 | A4-5 | VPN 生命周期、前台服务、网络切换和异常恢复 | 成员 A | - | 未开始 |
 | B4-1 | 只选一套 tracker 数据，固定版本并生成 50~200 条精简离线表 | 成员 B | 成员 A | 未开始 |
 | B4-2 | `TrackerClassifier` 和域名归一化 | 成员 B | 成员 A | 未开始 |
