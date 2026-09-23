@@ -5,7 +5,7 @@
 > 责任人：成员 A
 > 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**进行中**（A1-1 构建+真机联网通过；A1-5 已有初步真实事件证据；A1-3/A1-4/A1-6/A1-8 待补）
+> 状态：**进行中**（A1-1 构建+真机联网、A1-5 真实事件捕获、A1-6 真机阻断均通过；A1-3/A1-4/A1-8 待补）
 
 ---
 
@@ -98,18 +98,25 @@
 
 - [x] 已捕获真实连接事件（初步证据，2026-09-23）
 - 真机观察（屏蔽模式 = Minimal）：
-  - 最近 7 天：联系 **34** 个跟踪主机，涉及 **2** 家跟踪公司，已屏蔽比例 **0%**
-  - 时间轴样本：微信、企业微信 → `Tencent · Content`；畅课、支付宝 → `Alibaba · Content`，全部标记为“已放行”
+  - 最近 7 天：联系跟踪主机 **34 → 66**，涉及跟踪公司 **2 → 8**，已屏蔽比例 **0% → 32%**
+  - 时间轴样本：微信、企业微信、小红书、畅课 → `Tencent · Content` / `Alibaba · Content`（放行）；鲨鱼记账 → `Baidu Analytics`/`ByteDance`/`Alibaba`；京东 → `JD.com`；夸克 → `Alibaba`/`AlibabaGroup Fingerprinting`/`Cloudflare Analytics`；支付宝 → `Alibaba`
 - 结论：底座能产出“时间、App、域名/公司、类目、放行/屏蔽”级别的连接事件，可作为 `NetworkEvent` 数据源。
-- 待补：导出脱敏 JSON 样例（时间、协议、IP/域名线索、端口、UID/unknown）；0% 屏蔽是 Minimal 模式预期（Content 类目不拦）。
+- 待补：导出脱敏 JSON 样例（时间、协议、IP/域名线索、端口、UID/unknown）。
 - 注意：`Packet` 不含字节数，见 `docs/network-core-map.md` 第 8 节差异项。
 
 ### A1-6 最小阻断验证
 
-- [ ] 待验证
-- 进展：真机当前 Minimal 模式下已屏蔽比例 0%，符合设计（Content 类目不拦）。
-- 下一步：切换到 **Standard** 模式后再使用若干 App，观察时间轴是否出现“已屏蔽”且比例 > 0%；记录测试域名与尝试记录。
-- 结果：_待填_
+- [x] 至少在真机上成功阻断并保留尝试记录（2026-09-23）
+- 真机观察（屏蔽模式 = Minimal）：
+  - 最近 7 天：跟踪主机 **34 → 66**、跟踪公司 **2 → 8**、已屏蔽比例 **0% → 32%**
+  - 被拦截样本：
+    - 鲨鱼记账：3 个被拦 / 1 个放行，涉及 `Baidu Analytics`、`ByteDance`、`Alibaba`
+    - 京东：`JD.com` 被拦
+    - 夸克：`Alibaba`、`AlibabaGroup Fingerprinting`、`Cloudflare Analytics` 多个被拦
+    - 支付宝：`Alibaba` 被拦
+  - 仍放行（`Content` 类目，Minimal 设计不拦）：微信/小红书/企业微信/畅课的 `Tencent`、`Alibaba Content`
+- 结论：底座具备“域名→类目→拦截并保留尝试记录”的能力，满足 A1-6。
+- 证据：真机“时间轴”页面截图（A 持有）。
 
 ### A1-8 UID 归属成功率
 
@@ -140,6 +147,6 @@
 
 ## 5. 未决/阻塞
 
-1. A1-1（构建 + 真机联网）已完成，见 2.3 与第 3 节。
-2. 待补设备数据：演示机型号/Android 版本、A1-3、A1-4、A1-6（切 Standard 验证拦截）、A1-8（UID 归属成功率）。
+1. A1-1（构建 + 真机联网）、A1-6（真机阻断 32%）已完成，见 2.3 与第 3 节。
+2. 待补设备数据：演示机型号/Android 版本、A1-3、A1-4、A1-8（UID 归属成功率）。
 3. 待导出 A1-5 的脱敏 JSON 样例。
