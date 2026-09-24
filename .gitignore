@@ -11,6 +11,8 @@
 local.properties
 app/build/
 demo-app/build/
+core-model/build/
+build/
 *.apk.idsig
 
 # Kotlin

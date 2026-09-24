@@ -1,0 +1,26 @@
+apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
+
+// core-model：纯契约模块（枚举、事件与风险模型、Repository/Adapter 接口）。
+// 约束：不依赖 Room、不依赖 Android 采集 API、不依赖 UI；只暴露契约。
+// 详见 docs/05-system-architecture.md 第 5.1 节、docs/06-module-design.md。
+
+android {
+    namespace 'com.causalguard.core.model'
+    compileSdk 37
+
+    defaultConfig {
+        minSdk 29
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0'
+    api 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
+    testImplementation 'junit:junit:4.13.2'
+}
