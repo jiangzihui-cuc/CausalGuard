@@ -1,5 +1,7 @@
 package com.causalguard.core.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * 契约模型（阶段 2 冻结，字段与 docs/07-data-model.md 一一对应）。
  *
@@ -8,6 +10,7 @@ package com.causalguard.core.model
  */
 
 /** 统一事件（写入 privacy_event）。 */
+@Serializable
 data class PrivacyEvent(
     val schemaVersion: String = SchemaVersion.CURRENT,
     val eventId: String,
@@ -32,6 +35,7 @@ data class PrivacyEvent(
 )
 
 /** network 事件附加结构。 */
+@Serializable
 data class NetworkInfo(
     val protocol: NetworkProtocol,
     val remoteIp: String? = null,
@@ -55,6 +59,7 @@ data class NetworkInfo(
  * Adapter 产出 NetworkEvent 后，由事件适配层转换为
  * `PrivacyEvent(eventType = NETWORK, network = NetworkInfo(...))` 再写入事件库。
  */
+@Serializable
 data class NetworkEvent(
     val eventId: String,
     val packageName: String = NetworkInfo.UNKNOWN_PACKAGE,
@@ -76,6 +81,7 @@ data class NetworkEvent(
 }
 
 /** usage_context 事件附加结构。 */
+@Serializable
 data class UsageInfo(
     val packageName: String,
     val state: ForegroundState,
@@ -83,6 +89,7 @@ data class UsageInfo(
 )
 
 /** App 画像。 */
+@Serializable
 data class AppProfile(
     val packageName: String,
     val appName: String,
@@ -97,6 +104,7 @@ data class AppProfile(
 )
 
 /** 证据关联。 */
+@Serializable
 data class EvidenceLink(
     val id: Long = 0L,
     val eventId: String,
@@ -109,6 +117,7 @@ data class EvidenceLink(
 )
 
 /** 规则评估结果。 */
+@Serializable
 data class RiskAssessment(
     val id: String,
     val eventId: String,
@@ -123,6 +132,7 @@ data class RiskAssessment(
 )
 
 /** 行动建议。 */
+@Serializable
 data class Recommendation(
     val recommendationId: String,
     val riskType: String,
@@ -136,6 +146,7 @@ data class Recommendation(
 )
 
 /** 处置与复查记录。 */
+@Serializable
 data class MitigationRecord(
     val id: Long = 0L,
     val packageName: String,
@@ -151,6 +162,7 @@ data class MitigationRecord(
 )
 
 /** 规则版本。 */
+@Serializable
 data class RuleVersion(
     val ruleVersion: String,
     val description: String? = null,
@@ -159,6 +171,7 @@ data class RuleVersion(
 )
 
 /** 演示沙箱场景真值。 */
+@Serializable
 data class DemoScenario(
     val id: String,
     val title: String,
@@ -169,6 +182,7 @@ data class DemoScenario(
 )
 
 /** AI/配置/授权审计记录（不保存敏感原文）。 */
+@Serializable
 data class AuditLog(
     val id: Long = 0L,
     val type: String,

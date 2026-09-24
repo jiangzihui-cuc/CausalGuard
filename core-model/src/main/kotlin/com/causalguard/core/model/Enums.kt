@@ -1,5 +1,8 @@
 package com.causalguard.core.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * 公共枚举（阶段 2 冻结，见 docs/09-event-contract.md 第 1.1 节）。
  *
@@ -9,13 +12,27 @@ package com.causalguard.core.model
  * - 新增枚举值必须同步 docs/09、docs/07、docs/10。
  */
 
+@Serializable
 enum class EventType(val wire: String) {
+    @SerialName("clipboard")
     CLIPBOARD("clipboard"),
+
+    @SerialName("location")
     LOCATION("location"),
+
+    @SerialName("contacts")
     CONTACTS("contacts"),
+
+    @SerialName("network")
     NETWORK("network"),
+
+    @SerialName("usage_context")
     USAGE_CONTEXT("usage_context"),
+
+    @SerialName("permission")
     PERMISSION("permission"),
+
+    @SerialName("unknown")
     UNKNOWN("unknown");
 
     companion object {
@@ -24,11 +41,21 @@ enum class EventType(val wire: String) {
     }
 }
 
+@Serializable
 enum class ForegroundState(val wire: String) {
+    @SerialName("foreground")
     FOREGROUND("foreground"),
+
+    @SerialName("background")
     BACKGROUND("background"),
+
+    @SerialName("recent")
     RECENT("recent"),
+
+    @SerialName("unused")
     UNUSED("unused"),
+
+    @SerialName("unknown")
     UNKNOWN("unknown");
 
     companion object {
@@ -37,12 +64,24 @@ enum class ForegroundState(val wire: String) {
     }
 }
 
+@Serializable
 enum class EventSource(val wire: String) {
+    @SerialName("system_api")
     SYSTEM_API("system_api"),
+
+    @SerialName("usage_stats")
     USAGE_STATS("usage_stats"),
+
+    @SerialName("vpn")
     VPN("vpn"),
+
+    @SerialName("demo")
     DEMO("demo"),
+
+    @SerialName("mock")
     MOCK("mock"),
+
+    @SerialName("unknown")
     UNKNOWN("unknown");
 
     companion object {
@@ -51,11 +90,21 @@ enum class EventSource(val wire: String) {
     }
 }
 
+@Serializable
 enum class EvidenceLevel(val wire: String) {
+    @SerialName("E1")
     E1("E1"),
+
+    @SerialName("E2")
     E2("E2"),
+
+    @SerialName("E3")
     E3("E3"),
+
+    @SerialName("E4")
     E4("E4"),
+
+    @SerialName("E5")
     E5("E5");
 
     companion object {
@@ -64,10 +113,18 @@ enum class EvidenceLevel(val wire: String) {
     }
 }
 
+@Serializable
 enum class RiskCategory(val wire: String) {
+    @SerialName("necessary")
     NECESSARY("necessary"),
+
+    @SerialName("analytics")
     ANALYTICS("analytics"),
+
+    @SerialName("high_risk")
     HIGH_RISK("high_risk"),
+
+    @SerialName("unknown")
     UNKNOWN("unknown");
 
     companion object {
@@ -76,9 +133,15 @@ enum class RiskCategory(val wire: String) {
     }
 }
 
+@Serializable
 enum class Confidence(val wire: String) {
+    @SerialName("low")
     LOW("low"),
+
+    @SerialName("medium")
     MEDIUM("medium"),
+
+    @SerialName("high")
     HIGH("high");
 
     companion object {
@@ -87,10 +150,18 @@ enum class Confidence(val wire: String) {
     }
 }
 
+@Serializable
 enum class NetworkProtocol(val wire: String) {
+    @SerialName("TCP")
     TCP("TCP"),
+
+    @SerialName("UDP")
     UDP("UDP"),
+
+    @SerialName("ICMP")
     ICMP("ICMP"),
+
+    @SerialName("unknown")
     UNKNOWN("unknown");
 
     companion object {
@@ -99,10 +170,18 @@ enum class NetworkProtocol(val wire: String) {
     }
 }
 
+@Serializable
 enum class RiskLevel(val wire: String) {
+    @SerialName("low")
     LOW("low"),
+
+    @SerialName("medium")
     MEDIUM("medium"),
+
+    @SerialName("high")
     HIGH("high"),
+
+    @SerialName("critical")
     CRITICAL("critical");
 
     companion object {
@@ -111,10 +190,18 @@ enum class RiskLevel(val wire: String) {
     }
 }
 
+@Serializable
 enum class ScenarioMatch(val wire: String) {
+    @SerialName("match")
     MATCH("match"),
+
+    @SerialName("match_with_concern")
     MATCH_WITH_CONCERN("match_with_concern"),
+
+    @SerialName("mismatch")
     MISMATCH("mismatch"),
+
+    @SerialName("unknown")
     UNKNOWN("unknown");
 
     companion object {
