@@ -40,17 +40,19 @@
 
 ### 成员 B：完全不等待 VPN
 
-| 编号 | 任务 | 交付物 | 状态 |
-|---|---|---|---|
-| B1-1 | 定义 v0.1 事件 fixture | `docs/fixtures/`（8~12 条 JSON） | 未开始 |
-| B1-2 | 定义 4 个 Demo 场景 | `docs/demo-scenarios.md` | 未开始 |
-| B1-3 | 证据文案模板 | 模板 JSON/文档：事实、能力、推断、不可观测不混写 | 未开始 |
-| B1-4 | 第三方组件登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 汇总 | 未开始 |
-| B1-5 | UI 状态草图 | 页面状态表：loading/empty/unknown/demo/error | 未开始 |
-| B1-6 | Android 能力边界表定稿 | [02-android-capability-matrix.md](02-android-capability-matrix.md) | 未开始 |
-| B1-7 | 真实/沙箱模式产品说明 | [01 项目章程](01-project-charter.md) 第 4 节 | 未开始 |
+| 编号 | 任务 | 交付物 | 状态 | 进展/证据 |
+|---|---|---|---|---|
+| B1-1 | 定义 v0.1 事件 fixture | `docs/fixtures/`（8~12 条 JSON） | 已完成 | [privacy-events-v0.1.json](fixtures/privacy-events-v0.1.json) 已覆盖 10 条事件、正常/风险/unknown/Demo；旁路预期与规则资产同步完成并校验。 |
+| B1-2 | 定义 4 个 Demo 场景 | `docs/demo-scenarios.md` | 未开始 | 文件尚未创建；需补齐 4 个场景的操作、真值、预期证据链和失败降级。 |
+| B1-3 | 证据文案模板 | 模板 JSON/文档：事实、能力、推断、不可观测不混写 | 已完成 | [explanation-templates-v0.1.json](fixtures/explanation-templates-v0.1.json) 已与 10 条事件逐一关联；正常、风险、unknown 和 Demo 场景均有明确解释边界，unknown 不生成确定处置。 |
+| B1-4 | 第三方组件登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 汇总 | 进行中 | 已登记 `kotlinx.serialization 1.9.0`（Apache-2.0，`rule-engine` 使用）；TrackerControl 及最终运行依赖待 A 分支合并后汇总。 |
+| B1-5 | UI 状态草图 | 页面状态表：loading/empty/unknown/demo/error | 未开始 | 尚未形成页面状态表；建议与 B1-2 一并落到 `docs/demo-scenarios.md`。 |
+| B1-6 | Android 能力边界表定稿 | [02-android-capability-matrix.md](02-android-capability-matrix.md) | 待验证 | 已有数据来源、证据等级和降级初稿；待 A 的 Spike 回填 UID/UsageStats/VPN 实测结论后定稿。 |
+| B1-7 | 真实/沙箱模式产品说明 | [01 项目章程](01-project-charter.md) 第 4 节 | 已完成 | 已明确真实观测模式与演示沙箱模式，并要求界面、数据模型和答辩材料区分演示数据。 |
 
 唯一集成点：A 导出的真实 NetworkEvent 必须可映射到 B 的 fixture schema；不一致只改 Adapter 或契约，不重写 VPN、规则或 UI。
+
+阶段 1 成员 B 进度快照（2026-09-24）：核心离线资产已完成 `B1-1`、`B1-3`、`B1-7`；`B1-4` 进行中，`B1-6` 待 A 的 Spike 结果验证；当前剩余首选项为 `B1-2`、`B1-5`。阶段 1 总体门禁仍取决于 A 侧 VPN/NetworkEvent 验证，不能提前标记完成。
 
 ## 阶段 2：需求、架构与数据设计冻结（9/23-9/24）
 
