@@ -1,6 +1,8 @@
 -- 隐私因果哨兵 数据库表结构 v0.1
 -- 目标数据库：SQLite / Room
+-- 最后更新：2026-09-24（阶段 2 设计冻结；Room 实现延后到阶段 3）
 -- 说明：字段与 docs/07-data-model.md 一一对应；Room Entity 类名与表名映射见注释。
+-- 契约版本：schema_version 与 docs/09-event-contract.md 的 schemaVersion 对齐。
 -- 注意：不保存剪贴板/通讯录/精确位置原文。
 
 PRAGMA foreign_keys = ON;
@@ -21,6 +23,7 @@ CREATE TABLE IF NOT EXISTS app_profile (
 
 -- PrivacyEvent: 统一事件
 CREATE TABLE IF NOT EXISTS privacy_event (
+    schemaVersion    TEXT    NOT NULL DEFAULT '0.1',
     eventId          TEXT    NOT NULL PRIMARY KEY,
     appId            TEXT    NOT NULL DEFAULT 'unknown',
     appName          TEXT,
