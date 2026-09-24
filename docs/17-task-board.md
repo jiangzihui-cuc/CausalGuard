@@ -1,7 +1,7 @@
 # 17 任务看板
 
-> 版本：`v0.3`
-> 最后更新：2026-09-23
+> 版本：`v0.4`
+> 最后更新：2026-09-24
 > 责任人：成员 B（协作：成员 A）
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
 > 依据：[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)。阶段内任务按 A（平台/网络/系统/发布）与 B（产品/规则/证据/UI/评测）两条并行链拆分；每人每天最多保留“今日必须完成 1 项 + 完成后再做 1 项 + 阻塞替代 1 项”。
@@ -32,9 +32,9 @@
 | A1-5 | 输出最小 NetworkEvent | 脱敏 JSON：时间、协议、IP/域名线索、端口、UID/unknown | 已完成 |
 | A1-6 | 最小阻断验证 | 日志：至少一个测试域名可阻断并保留尝试记录 | 已完成 |
 | A1-7 | 开源技术登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 条目 | 已完成 |
-| A1-8 | 记录 UID 归属成功率 | 更新 [02 能力边界表](02-android-capability-matrix.md) | 待验证 |
+| A1-8 | 记录 UID 归属成功率 | 更新 [02 能力边界表](02-android-capability-matrix.md) | 已完成（量化成功率转 A4-4） |
 
-> 阶段 1 进展（A 回填，证据见 [Spike 结果](spike-results.md)）：A1-1～A1-7 已完成；A1-8 结论已出——普通 App 直接调用 `getConnectionOwnerUid` 恒为 `-1`，归属必须复用底座 VpnService 内路径，`docs/02` 已更新。仅“底座 UID 归属**量化成功率**”待补，需 adb 抓取 `TrackerControl.VPN` 的 `Get uid=` 日志；当前演示机 adb 不可用，转入 A4-4 一并统计。
+> 阶段 1 进展（A 回填，证据见 [Spike 结果](spike-results.md)）：**A1-1～A1-8 全部完成**。A1-8 结论已出——普通 App 直接调用 `getConnectionOwnerUid` 恒为 `-1`，归属必须复用底座 VpnService 内路径，`docs/02` 已更新，失败降级为 unknown。仅“底座 UID 归属**量化成功率**”未采集（构建机已具备 adb，但当前无设备连接），转入 A4-4 一并统计。
 
 止损：24 小时内 TrackerControl 必须能构建并联网；48 小时内必须得到连接事件或明确失败原因；失败先换固定旧 tag，仍失败则缩小网络范围。
 
