@@ -1,8 +1,9 @@
 # 05 系统架构设计
 
 > 版本：`v0.1`（P0 设计基线）
-> 最后更新：2026-09-20
+> 最后更新：2026-09-24
 > 责任人：成员 A（协作：成员 B）
+> 状态：**架构决策已冻结（A2-6，2026-09-24）**，UI/依赖注入/模块结构不再摇摆。
 > 验收标准：每个模块有明确输入、输出、责任人；页面不能直接耦合 Android 原始 API；规则不能直接修改原始事件。
 
 ## 1. 架构总览
@@ -84,15 +85,39 @@
 | 决策 | 选择 | 理由 |
 |---|---|---|
 | 语言 | Kotlin | 团队熟悉、与 Android 官方一致 |
-| UI | Jetpack Compose 或 XML（冻结一种） | 避免混用导致返工 |
+| UI | **Jetpack Compose + Material3（已冻结）** | 单一 Activity、状态提升；不混用 XML，避免返工 |
 | 状态管理 | ViewModel + StateFlow | 页面与逻辑解耦 |
 | 数据库 | Room / SQLite | 类型安全、便于迁移 |
 | 网络观测 | VpnService + TrackerControl/NetGuard 适配层 | 不从零实现 TCP/IP 栈；事件经适配器转为 PrivacyEvent |
-| 依赖注入 | Hilt 或手工构造（冻结一种） | 便于测试 |
+| 依赖注入 | **手工构造 + `AppContainer`（已冻结）** | 避免 Hilt/KSP 引入额外注解处理器与构建风险；构造器注入同样可测试 |
 | AI | 可选接口，本地模板兜底 | 核心不依赖在线 |
 | 转发核心 | TrackerControl/NetGuard（GPL-3.0）；备选 MIT tun2socks | 成熟稳定、降低断网风险；许可证边界见 20 与 THIRD_PARTY_NOTICES |
 | JSON | kotlinx.serialization | 契约、规则、fixture、评测统一序列化 |
 | HTTP | Retrofit + OkHttp | 仅在线 AI 增强，失败回退本地模板 |
+| **模块结构** | **单 `:app` + 纯契约 `:core-model`（已冻结）** | P0 不引入复杂多模块脚手架；`core-model` 不依赖 Android/Room，规则与页面只依赖公共契约 |
+
+### 5.1 模块结构（冻结）
+
+```text
+CausalGuard/
+├─ settings.gradle          include ':app', ':core-model'
+├─ core-model/              纯 Kotlin 契约：枚举、PrivacyEvent、RiskAssessment、
+│                           Repository/Adapter 接口；不依赖 Android/Room
+└─ app/                     采集、数据、洞察、UI 与 DI
+   └─ src/main/java/com/causalguard/
+      ├─ core/model/        （可选）core-model 的重新导出/扩展
+      ├─ profile/           M1 AppProfileRepository + Real/Fake Provider
+      ├─ usage/             M2 UsageContextRepository
+      ├─ network/           M3 TrackerControlAdapter / NetworkEventSource
+      ├─ data/              M4 Room、DAO、EventRepository（阶段 3）
+      ├─ rules/             M7 规则引擎（纯 Kotlin，仅依赖 core-model）
+      ├─ explain/           M8 解释（模板 + 可选 AI）
+      ├─ mitigation/        M9 处置与复查
+      ├─ di/                AppContainer（手工依赖注入）
+      └─ ui/                Compose 页面 + ViewModel
+```
+
+约束：依赖方向 `ui → di/app-container → domain/repository → core-model`；`core-model` 与 `rules` 不得反向依赖 `data`/`ui`/Android 采集 API。
 
 ## 6. 真实/演示模式标识
 

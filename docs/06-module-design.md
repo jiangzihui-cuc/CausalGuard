@@ -1,8 +1,9 @@
 # 06 模块设计说明
 
 > 版本：`v0.1`（P0 设计基线）
-> 最后更新：2026-09-20
+> 最后更新：2026-09-24
 > 责任人：成员 A（协作：成员 B）
+> 状态：**接口骨架已冻结（A2-3/A2-5，2026-09-24）**；主要接口定义在 `core-model` 模块，Room 实现延后到阶段 3。
 
 每个模块统一记录：目标、输入、输出、依赖、主要类/接口、错误处理、权限要求、测试方法、首版边界。
 
@@ -42,7 +43,7 @@
 | 输入 | `VpnService` 的包/TCP/UDP 事件 |
 | 输出 | `NetworkEvent`（IP、端口、协议、时间、流量、UID、域名线索） |
 | 依赖 | 转发核心；UID→包名映射 |
-| 主要接口 | `VpnObserver.start()/stop()`；`NetworkEventSource` |
+| 主要接口 | `VpnObserver.start()/stop()`；`NetworkEventSource.events(): Flow<NetworkEvent>`（见 [TrackerControl Adapter 边界](trackercontrol-adapter-boundary.md)） |
 | 错误处理 | VPN 被回收 → 停止并提示；UID 未知 → 显示“无法归属” |
 | 权限 | VPN 授权 + 前台服务 |
 | 测试 | 测试机真实连接 + 离线回放固定事件 |
@@ -56,7 +57,7 @@
 | 输入 | 各采集器输出的标准 `PrivacyEvent` |
 | 输出 | 事件流、按 App/时间聚合 |
 | 依赖 | Room；契约（09） |
-| 主要接口 | `PrivacyEventRepository.insert(...)`、`observeAll()`、`byApp(pkg)` |
+| 主要接口 | `PrivacyEventRepository.insert(...)`、`observeAll()`、`byApp(pkg)`（接口在 `core-model`，实现在阶段 3） |
 | 错误处理 | 写入失败入队重试；异常退出不丢历史数据 |
 | 权限 | 无 |
 | 测试 | 模拟事件注入；重启后数据持久 |
