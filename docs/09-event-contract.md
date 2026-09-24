@@ -1,9 +1,17 @@
 # 09 事件契约（采集 → 事件库）
 
 > 版本：`v0.1`（P0 设计基线）
-> 最后更新：2026-09-20
+> 最后更新：2026-09-24
 > 责任人：成员 A
+> 状态：**已冻结（阶段 2，2026-09-24）**。字段与枚举变更必须走独立契约 PR，并同步 [07 数据模型](07-data-model.md)、[08 表结构](08-database-schema.sql)、fixture 与验收清单。
 > 目的：冻结采集模块写入事件库的格式，使页面和规则无需真实 VPN 即可被固定 JSON 驱动。
+
+## 0. 契约版本（`schemaVersion`）
+
+- 当前 `schemaVersion = "0.1"`，以字符串 `主版本.次版本` 表示；
+- 每条事件必须携带该字段，采集写入与 JSON fixture 一致；
+- 不兼容字段变更时递增次版本，并在本文件记录变更说明；
+- Kotlin 侧对应 `com.causalguard.core.model.SchemaVersion.CURRENT`（见 `core-model` 模块）。
 
 ## 1. 统一事件 JSON
 
@@ -11,6 +19,7 @@
 
 ```json
 {
+  "schemaVersion": "0.1",
   "eventId": "e-20260920-0001",
   "appId": "com.example.calculator",
   "appName": "计算器",
@@ -33,6 +42,22 @@
 - `source` 枚举：`system_api`、`usage_stats`、`vpn`、`demo`、`mock`。
 - `evidenceLevel` 枚举：`E1`~`E5`（定义见 [02-android-capability-matrix.md](02-android-capability-matrix.md)）。
 - `foregroundState` 枚举：`foreground`、`background`、`recent`、`unused`、`unknown`。
+
+### 1.1 公共枚举（冻结）
+
+JSON 值统一使用小写 snake_case；Kotlin 侧对应 `core-model` 中枚举，未知值映射为 `UNKNOWN`，不得抛异常。
+
+| 字段 | Kotlin 枚举 | 允许值 |
+|---|---|---|
+| `eventType` | `EventType` | `clipboard`、`location`、`contacts`、`network`、`usage_context`、`permission`、`unknown` |
+| `foregroundState` | `ForegroundState` | `foreground`、`background`、`recent`、`unused`、`unknown` |
+| `source` | `EventSource` | `system_api`、`usage_stats`、`vpn`、`demo`、`mock`、`unknown` |
+| `evidenceLevel` | `EvidenceLevel` | `E1`、`E2`、`E3`、`E4`、`E5` |
+| `category` | `RiskCategory` | `necessary`、`analytics`、`high_risk`、`unknown` |
+| `confidence` | `Confidence` | `low`、`medium`、`high` |
+| `protocol` | `NetworkProtocol` | `TCP`、`UDP`、`ICMP`、`unknown` |
+
+> 新增枚举值必须同步本表、`docs/07`、`docs/10` 与 `core-model`，否则视为契约破坏。
 
 ## 2. 各类型事件附加结构
 
