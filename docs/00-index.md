@@ -2,7 +2,7 @@
 
 > 项目：隐私因果哨兵（Privacy Causal Sentinel）
 > 文档基线版本：`v0.1`
-> 最后更新：2026-09-21
+> 最后更新：2026-09-24
 > 依据：《软件工程实施规划-隐私因果哨兵》第 2 章“开发前必须先完成的文档”
 
 本目录是编码前的设计基线。所有文档先冻结到 `v0.1`，两人确认后再进入开发。
@@ -50,6 +50,7 @@
 | [spike-results](spike-results.md) | 阶段1 A1-1/A1-3/A1-4/A1-6/A1-8：技术 Spike 结果（设备部分待回填） | 成员 A |
 | [spike-build-guide](spike-build-guide.md) | 阶段1 A1-1：本地固定版本构建步骤与降级 | 成员 A |
 | [uid-attribution-capture](uid-attribution-capture.md) | 阶段1 A1-8：UID 归属成功率抓取与统计操作 | 成员 A |
+| [trackercontrol-adapter-boundary](trackercontrol-adapter-boundary.md) | 阶段2 A2-5：TrackerControl Adapter 边界冻结（输入/输出/接口/降级） | 成员 A |
 
 ## 阅读顺序
 
