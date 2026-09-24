@@ -12,7 +12,7 @@
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
 当前阶段：阶段 0/1/2 已完成并合入 main；进入阶段 3（MVP 基础闭环）
-成员 A：阶段 3 数据基础设施（A3-1～A3-5）已实现，在 feature/a-t3-room-repository 待合并
+成员 A：阶段 3 数据基础设施（A3-1～A3-5）已实现并合入 main
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
@@ -46,11 +46,11 @@
 
 | 任务编号 | 做什么 | 改哪里（新建/编辑） | 完成标准 | 当前状态 |
 |---|---|---|---|---|
-| A3-1 | Room Entity、DAO、migration | `app/.../data/local/`；schema 导出 `app/schemas/` | 写入、查询、重启持久化测试通过 | 已实现待合并 |
-| A3-2 | `EventRepository` 与事件导入器 | `app/.../data/repository/`、`data/importer/` | 可批量导入 B 的 fixture | 已实现待合并 |
-| A3-3 | AppProfile/PermissionState Repository | `app/.../data/provider/`、`data/repository/` | Fake 与真实 Provider 可替换 | 已实现待合并 |
-| A3-4 | 导航/ViewModel 注入接口 | `app/.../di/AppContainer.kt` | 不包含页面视觉和业务文案 | 已实现待合并 |
-| A3-5 | DAO、Adapter、Repository 单元测试 | `app/src/test/` | CI 通过 | 已实现待合并 |
+| A3-1 | Room Entity、DAO、migration | `app/.../data/local/`；schema 导出 `app/schemas/` | 写入、查询、重启持久化测试通过 | 已完成（已合入 main） |
+| A3-2 | `EventRepository` 与事件导入器 | `app/.../data/repository/`、`data/importer/` | 可批量导入 B 的 fixture | 已完成（已合入 main） |
+| A3-3 | AppProfile/PermissionState Repository | `app/.../data/provider/`、`data/repository/` | Fake 与真实 Provider 可替换 | 已完成（已合入 main） |
+| A3-4 | 导航/ViewModel 注入接口 | `app/.../di/AppContainer.kt` | 不包含页面视觉和业务文案 | 已完成（已合入 main） |
+| A3-5 | DAO、Adapter、Repository 单元测试 | `app/src/test/` | CI 通过 | 已完成（已合入 main） |
 
 > 代码在 `feature/a-t3-room-repository` 分支，详见 [17 任务看板](17-task-board.md) 阶段 3 进展。
 > 接口只在 `:core-model`（纯契约），Room/映射只放 `:app`；构建用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容，见 [18 风险清单](18-risk-register.md) RK-21）。
