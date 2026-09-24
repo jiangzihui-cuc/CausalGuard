@@ -1,6 +1,6 @@
 # 17 任务看板
 
-> 版本：`v0.5`
+> 版本：`v0.6`
 > 最后更新：2026-09-24
 > 责任人：成员 B（协作：成员 A）
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
@@ -78,11 +78,13 @@
 
 | 编号 | 任务 | 验收 | 状态 |
 |---|---|---|---|
-| A3-1 | Room Entity、DAO、migration | 写入、查询、重启持久化测试通过 | 未开始 |
-| A3-2 | `EventRepository` 与事件导入器 | 可批量导入 B 的 fixture | 未开始 |
-| A3-3 | AppProfile/PermissionState Repository | Fake 与真实 Provider 可替换 | 未开始 |
-| A3-4 | 导航/ViewModel 注入接口 | 不包含页面视觉和业务文案 | 未开始 |
-| A3-5 | DAO、Adapter、Repository 单元测试 | CI 通过 | 未开始 |
+| A3-1 | Room Entity、DAO、migration | 写入、查询、重启持久化测试通过 | 已完成（待合并） |
+| A3-2 | `EventRepository` 与事件导入器 | 可批量导入 B 的 fixture | 已完成（待合并） |
+| A3-3 | AppProfile/PermissionState Repository | Fake 与真实 Provider 可替换 | 已完成（待合并） |
+| A3-4 | 导航/ViewModel 注入接口 | 不包含页面视觉和业务文案 | 已完成（待合并） |
+| A3-5 | DAO、Adapter、Repository 单元测试 | CI 通过 | 已完成（待合并） |
+
+> 阶段 3 进展（A 回填，2026-09-24）：A3-1～A3-5 已实现，代码在 `feature/a-t3-room-repository`（**待合并**）——`:app` 新增 Room 实体/DAO/数据库与迁移登记（schema 导出到 `app/schemas/1.json`）、`PrivacyEventRepository` 等 Room 实现、`EventImporter` 导入 docs/09 fixture、真实/可替换 Provider 与 `AppContainer` 注入边界。单测 13 项通过（含 Robolectric Room 写入/查询/幂等/unknown 降级/重开持久化）。构建采用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容；旧 KSP 2.2.x 与 KGP 均不可用，见 18 风险清单 RK-21）。B3-1～B3-6 仍待 B。
 
 ### 成员 B：可运行产品闭环
 
