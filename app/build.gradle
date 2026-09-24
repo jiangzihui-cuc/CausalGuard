@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.devtools.ksp'
 
 android {
     namespace 'com.causalguard'
@@ -22,8 +23,30 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            all { test ->
+                test.systemProperty 'robolectric.dependency.repo.url', 'https://maven.aliyun.com/repository/public'
+                test.systemProperty 'robolectric.dependency.repo.id', 'aliyun'
+            }
+        }
+    }
+}
+
+ksp {
+    arg 'room.schemaLocation', "$projectDir/schemas"
 }
 
 dependencies {
     implementation project(':core-model')
+    implementation 'androidx.room:room-runtime:2.7.0'
+    implementation 'androidx.room:room-ktx:2.7.0'
+    ksp 'androidx.room:room-compiler:2.7.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.17'
+    testImplementation 'androidx.test:core:1.6.1'
+    testImplementation 'androidx.room:room-testing:2.7.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0'
 }
