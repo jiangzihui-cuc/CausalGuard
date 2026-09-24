@@ -114,8 +114,10 @@
 | `riskLevel` | String | low/medium/high/critical |
 | `scenarioMatch` | String | match/match_with_concern/mismatch/unknown |
 | `confidence` | String | low/medium/high |
+| `category` | String | necessary/analytics/high_risk/unknown（见 10 契约 §2） |
 | `explanationBoundary` | String | 解释边界说明 |
 | `evidenceIds` | String (JSON) | 证据链接列表 |
+| `matchedRules` | String (JSON) | 命中的规则 ID 列表，供解释与评测展开（见 10 契约 §2） |
 | `createdAt` | Long | 时间 |
 
 ### 2.7 Recommendation
