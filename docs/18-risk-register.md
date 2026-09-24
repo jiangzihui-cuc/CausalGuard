@@ -1,7 +1,7 @@
 # 18 风险清单
 
-> 版本：`v0.2`
-> 最后更新：2026-09-21
+> 版本：`v0.3`
+> 最后更新：2026-09-24
 > 责任人：成员 B（协作：成员 A）
 > 关联：[20 开源复用建议](20-open-source-reuse-guide.md)、[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
 
@@ -29,6 +29,7 @@
 | RK-18 | 第三方组件跟随浮动版本 | 许可证或行为突变 | 直接依赖浮动 `main` | 全部固定 tag/完整 SHA；导入前复核 LICENSE/NOTICE | 成员 A |
 | RK-19 | 许可证报告误判 | 合规漏检 | 仅依赖自动扫描 | 人工复核 Unknown/GPL/AGPL/非商业条款，手工复制源码与数据集单独登记 | 成员 A/B |
 | RK-20 | 密钥、原始日志或真实数据入库 | 泄露风险 | 提交含 key/日志/个人信息 | `.gitignore` + 提交前检查 + 阶段 8 清理 | 成员 A |
+| RK-21 | AGP 9 内置 Kotlin 与注解处理/旧 KGP 不兼容 | Room 等注解处理无法编译，阻塞阶段 3 | apply KSP 2.2.x 报 “Kotlin source set contains generated/ksp”；apply KGP 2.2.10 报 `BaseExtension` 转换失败 | 保留内置 Kotlin，改用 **KSP 2.3.4 + Room 2.7.0**；不引入 kapt/KGP；版本固定并记录 | 成员 A |
 
 ## 风险复盘机制
 

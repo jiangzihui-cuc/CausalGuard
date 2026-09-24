@@ -1,7 +1,7 @@
 # 19 工作导引（打开仓库先看这个）
 
-> 版本：`v0.1`
-> 最后更新：2026-09-21
+> 版本：`v0.2`
+> 最后更新：2026-09-24
 > 用途：两人打开仓库后，30 秒内知道“现在到哪一步、我下一步做什么、改哪个文件”。
 > 配套：[20 开源复用建议](20-open-source-reuse-guide.md)、[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)、[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
 
@@ -11,12 +11,13 @@
 
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
-当前阶段：阶段 0（范围冻结）已完成，准备进入阶段 1（技术 Spike）
+当前阶段：阶段 0/1/2 已完成并合入 main；进入阶段 3（MVP 基础闭环）
+成员 A：阶段 3 数据基础设施（A3-1～A3-5）已实现，在 feature/a-t3-room-repository 待合并
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
 
-**一句话**：设计文档已基本写完；**下一步不是写页面，也不是从零写 VPN 协议栈，而是优先构建/裁剪 TrackerControl 网络底座，同时并行验证 PackageManager 与 Usage Access**。
+**一句话**：网络底座（TrackerControl）与三类契约已冻结；**成员 A 现在做阶段 3 的数据基础设施（Room 事件库、Repository、Provider、注入接口与单测），成员 B 并行做不依赖真实 VPN 的可运行产品闭环**。
 
 开源路线已定（详见 [20 开源复用建议](20-open-source-reuse-guide.md) 第 13 节）：优先走 **方案 A：TrackerControl / NetGuard（GPL-3.0）** 作为网络底座；接受 GPL 路线并明确开源与原创边界。MIT 备选路线仅在阶段 1 构建链持续失败时启用。
 
@@ -39,24 +40,20 @@
 
 ## 三、我是谁？我下一步做什么？
 
-### 成员 A（技术实现主责）——现在做阶段 1 Spike（9/21-9/22）
+### 成员 A（技术实现主责）——现在做阶段 3 数据基础设施（9/25-9/27）
 
-**目标**：先验证最危险的技术点，不写业务页面。
+**阶段 1（Spike）与阶段 2（契约冻结）已完成并合入 `main`**：A1-1～A1-8 全部完成（见 [Spike 结果](spike-results.md)）；A2-1～A2-6 全部完成（见 [17 任务看板](17-task-board.md) 阶段 2 进展）。A2-4 的 Room 实现按计划延后到本阶段。
 
-| 任务编号 | 做什么 | 改哪里（新建/编辑） | 完成标准 |
-|---|---|---|---|
-| A1-1 | 固定 TrackerControl commit/tag 并构建 | 第三方源码单独提交；新建 `docs/spike-results.md` 记录环境与 commit | 演示机启动 VPN 后可联网 |
-| A1-2 | 定位 VPN、连接、DNS、UID、阻断入口 | 新建 `docs/network-core-map.md` | 能指出类、回调、数据流 |
-| A1-3 | 验证 PackageManager 读包名/权限 | `app/.../profile/` 下新建采集类 | App、UID、版本、声明权限、授权状态可输出 |
-| A1-4 | 验证 Usage Access 前后台 | `app/.../usage/` | 授权后能读到前后台或明确 unknown/失败原因 |
-| A1-5 | 输出最小 NetworkEvent | `app/.../network/` 适配层 | 脱敏 JSON 含时间、协议、IP/域名线索、端口、UID/unknown |
-| A1-6 | 最小阻断验证 | `app/.../network/` | 至少一个测试域名可阻断并保留尝试记录 |
-| A1-7 | 开源技术登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) | NDK/JNI/Rust/数据依赖可追溯 |
-| A1-8 | 记录 UID 归属成功率 | 更新 [02 能力边界表](02-android-capability-matrix.md) | 记录 IP/端口/流量/UID 成功率 |
+| 任务编号 | 做什么 | 改哪里（新建/编辑） | 完成标准 | 当前状态 |
+|---|---|---|---|---|
+| A3-1 | Room Entity、DAO、migration | `app/.../data/local/`；schema 导出 `app/schemas/` | 写入、查询、重启持久化测试通过 | 已实现待合并 |
+| A3-2 | `EventRepository` 与事件导入器 | `app/.../data/repository/`、`data/importer/` | 可批量导入 B 的 fixture | 已实现待合并 |
+| A3-3 | AppProfile/PermissionState Repository | `app/.../data/provider/`、`data/repository/` | Fake 与真实 Provider 可替换 | 已实现待合并 |
+| A3-4 | 导航/ViewModel 注入接口 | `app/.../di/AppContainer.kt` | 不包含页面视觉和业务文案 | 已实现待合并 |
+| A3-5 | DAO、Adapter、Repository 单元测试 | `app/src/test/` | CI 通过 | 已实现待合并 |
 
-> 优先级：TrackerControl 能否构建联网 → 能否产生连接事件 → 能否阻断 → PackageManager / UsageStats 补充验证。
-> 止损：24 小时内 TrackerControl 必须能构建并联网；48 小时内必须得到连接事件或明确失败原因；失败先换固定旧 tag，仍失败则缩小网络范围。
-> 建议按 [05 系统架构](05-system-architecture.md) 的模块划分建目录：`profile/`（M1）、`usage/`（M2）、`network/`（M3）、`event/`（M4）。
+> 代码在 `feature/a-t3-room-repository` 分支，详见 [17 任务看板](17-task-board.md) 阶段 3 进展。
+> 接口只在 `:core-model`（纯契约），Room/映射只放 `:app`；构建用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容，见 [18 风险清单](18-risk-register.md) RK-21）。
 
 ### 成员 B（产品与智能分析主责）——现在做阶段 1 设计输入（9/21-9/22）
 
