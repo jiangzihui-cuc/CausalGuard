@@ -13,7 +13,6 @@ jobs:
   build:
     name: Build and unit test
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,18 +25,13 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          set -x
           SDKMANAGER="$(command -v sdkmanager || find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}" -name sdkmanager -type f | head -n 1)"
-          yes | timeout 300 "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-          yes | timeout 900 "$SDKMANAGER" "platforms;android-37.0" "build-tools;37.0.0" "platform-tools"
+          echo "using $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;37.0.0" "platform-tools"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.6.1'
 
       - name: Build and test
-        # Use the official Gradle distribution on CI instead of ./gradlew,
-        # because the committed wrapper points at a China mirror that can stall
-        # on GitHub-hosted runners.
-        run: gradle build --stacktrace
+        run: ./gradlew build --stacktrace
