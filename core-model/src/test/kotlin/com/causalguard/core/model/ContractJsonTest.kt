@@ -137,6 +137,55 @@ class ContractJsonTest {
     }
 
     @Test
+    fun riskAssessmentRoundTripsWithMatchedRulesAndCategory() {
+        val assessment = RiskAssessment(
+            id = "r-20260920-0001",
+            eventId = "e-20260920-0001",
+            ruleVersion = "rules-v0.1",
+            riskScore = 78,
+            riskLevel = RiskLevel.HIGH,
+            scenarioMatch = ScenarioMatch.MISMATCH,
+            confidence = Confidence.MEDIUM,
+            category = RiskCategory.HIGH_RISK,
+            explanationBoundary = "缺少请求内容证据，不能判定是否发生数据泄露",
+            evidenceIds = listOf("ev-1", "ev-2"),
+            matchedRules = listOf("R-003", "R-006"),
+        )
+
+        val encoded = json.encodeToString(RiskAssessment.serializer(), assessment)
+        assertTrue(encoded.contains("\"category\":\"high_risk\""))
+        assertTrue(encoded.contains("\"matchedRules\":[\"R-003\",\"R-006\"]"))
+
+        assertEquals(assessment, json.decodeFromString(RiskAssessment.serializer(), encoded))
+    }
+
+    @Test
+    fun ruleInputCarriesExtendedContext() {
+        val event = PrivacyEvent(
+            eventId = "e-20260920-0003",
+            appId = "com.demo.calculator",
+            eventType = EventType.NETWORK,
+            timestamp = 1789000003000,
+            foregroundState = ForegroundState.BACKGROUND,
+            source = EventSource.VPN,
+            evidenceLevel = EvidenceLevel.E2,
+        )
+        val input = RuleInput(
+            event = event,
+            appProfile = AppProfile(packageName = "com.demo.calculator", appName = "计算器", sceneType = "calculator"),
+            usageContext = RuleUsageContext(ForegroundState.BACKGROUND, lastUsedAgoMs = 7_200_000L),
+            scenarioMatch = ScenarioMatch.MISMATCH,
+            relatedEvents = listOf(event),
+            priorEvents = emptyList(),
+            ruleVersion = "rules-v0.1",
+        )
+
+        val encoded = json.encodeToString(RuleInput.serializer(), input)
+        assertEquals(input, json.decodeFromString(RuleInput.serializer(), encoded))
+        assertEquals("rules-v0.1", input.ruleVersion)
+    }
+
+    @Test
     fun ignoresUnknownFieldsForForwardCompatibility() {
         val raw = """
             {

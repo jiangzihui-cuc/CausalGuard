@@ -20,9 +20,24 @@
     "foregroundState": "background",
     "lastUsedAgoMs": 7200000
   },
+  "scenarioMatch": "mismatch",
+  "relatedEvents": [],
+  "priorEvents": [],
   "ruleVersion": "rules-v0.1"
 }
 ```
+
+| 字段 | 必填 | 类型 | 说明 |
+|---|---|---|---|
+| `event` | 是 | object | 见 09 事件契约；规则只读不改 |
+| `appProfile` | 否 | object | App 画像，支撑 `sceneTypes`/权限条件 |
+| `usageContext` | 否 | object | 使用上下文，含 `foregroundState`、`lastUsedAgoMs` |
+| `scenarioMatch` | 否 | string | 上游场景一致性结果，供 `scenarioMatchRequired` 引用 |
+| `relatedEvents` | 否 | array | 相关事件集合，供 `relatedEventTypes`/`timeWindowMs` 引用 |
+| `priorEvents` | 否 | array | 事件库历史窗口，供 `requiresPriorEvents` 引用 |
+| `ruleVersion` | 是 | string | 必须为引擎声明支持的版本 |
+
+对应的 Kotlin 类型为 `:core-model` 的 `RuleInput`、`RuleUsageContext`。
 
 ## 2. 规则输出 RiskAssessment
 

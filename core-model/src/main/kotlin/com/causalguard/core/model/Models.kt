@@ -126,8 +126,10 @@ data class RiskAssessment(
     val riskLevel: RiskLevel = RiskLevel.LOW,
     val scenarioMatch: ScenarioMatch = ScenarioMatch.UNKNOWN,
     val confidence: Confidence = Confidence.LOW,
+    val category: RiskCategory = RiskCategory.UNKNOWN,
     val explanationBoundary: String? = null,
     val evidenceIds: List<String> = emptyList(),
+    val matchedRules: List<String> = emptyList(),
     val createdAt: Long = 0L,
 )
 

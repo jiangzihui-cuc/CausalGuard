@@ -99,7 +99,7 @@
 | 输入 | 事件 + 画像 + 上下文 + 场景知识库 |
 | 输出 | `RiskAssessment` |
 | 依赖 | 场景知识库、画像、事件契约（10） |
-| 主要接口 | `RiskRuleEngine.assess(event): RiskAssessment` |
+| 主要接口 | `RiskRuleEngine.assess(input: RuleInput): RiskAssessment`（见 10 契约 §6） |
 | 错误处理 | 规则异常 → 返回最低置信度，不阻断 |
 | 权限 | 无 |
 | 测试 | 规则命中测试、稳定性测试（同版本同输出） |

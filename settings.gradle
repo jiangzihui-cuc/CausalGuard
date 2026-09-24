@@ -15,3 +15,10 @@ dependencyResolutionManagement {
 rootProject.name = "CausalGuard"
 include ':app'
 include ':core-model'
+
+// 规则引擎模块由成员 B 在 feature/b-rule-engine-core 提供。
+// 分支合入前 rule-engine/ 目录不存在，守卫式 include 保证 main 构建不受影响；
+// 合入后需同步该模块 build.gradle.kts（JDK17、依赖 :core-model、复用 core-model 类型）。
+if (file('rule-engine').exists()) {
+    include ':rule-engine'
+}
