@@ -1,6 +1,6 @@
 # 17 任务看板
 
-> 版本：`v0.4`
+> 版本：`v0.5`
 > 最后更新：2026-09-24
 > 责任人：成员 B（协作：成员 A）
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
@@ -56,12 +56,12 @@
 
 | 编号 | 任务 | 主责 | 协作 | 状态 |
 |---|---|---|---|---|
-| A2-1 | 按 Spike 更新能力矩阵技术事实 | 成员 A | 成员 B | 未开始 |
-| A2-2 | 冻结 `PrivacyEvent`、公共枚举与 `schemaVersion` | 成员 A | 成员 B | 未开始 |
-| A2-3 | 建立 `core-model`、Repository/Adapter 接口骨架 | 成员 A | 成员 B | 未开始 |
-| A2-4 | 修订 Room schema（实现延后到阶段 3） | 成员 A | 成员 B | 未开始 |
-| A2-5 | 冻结 TrackerControl Adapter 边界 | 成员 A | 成员 B | 未开始 |
-| A2-6 | 确定 Compose、依赖注入与模块结构 | 成员 A | 成员 B | 未开始 |
+| A2-1 | 按 Spike 更新能力矩阵技术事实 | 成员 A | 成员 B | 已完成 |
+| A2-2 | 冻结 `PrivacyEvent`、公共枚举与 `schemaVersion` | 成员 A | 成员 B | 已完成 |
+| A2-3 | 建立 `core-model`、Repository/Adapter 接口骨架 | 成员 A | 成员 B | 已完成 |
+| A2-4 | 修订 Room schema（实现延后到阶段 3） | 成员 A | 成员 B | 已完成 |
+| A2-5 | 冻结 TrackerControl Adapter 边界 | 成员 A | 成员 B | 已完成 |
+| A2-6 | 确定 Compose、依赖注入与模块结构 | 成员 A | 成员 B | 已完成 |
 | B2-1 | 冻结 PRD 的 P0/P1/P2 | 成员 B | 成员 A | 未开始 |
 | B2-2 | 冻结 `RiskAssessment`、`ExplanationResult` | 成员 B | 成员 A | 未开始 |
 | B2-3 | 5 条 P0 规则定义、场景知识草案、解释模板 | 成员 B | 成员 A | 未开始 |
@@ -69,6 +69,8 @@
 | B2-5 | 建立首批 20 条评测样例 | 成员 B | 成员 A | 未开始 |
 | T2-4 | 三类契约冻结 v0.1（独立 PR） | 两人 | - | 未开始 |
 | T2-5 | 更新被 Spike 推翻的 05~15 文档 | 两人 | - | 未开始 |
+
+> 阶段 2 进展（A 回填，2026-09-24）：A2-1～A2-6 已完成并合入 `main`——`feature/a-t2-event-contract`（A2-2/A2-4：docs/07/08/09）、`feature/a-t2-arch-freeze`（A2-1/A2-5/A2-6：docs/02/05/06 + `docs/trackercontrol-adapter-boundary.md`）、`feature/a-t2-core-model`（A2-3：`:core-model` 模块与接口骨架，含契约 JSON 解析测试）。`docs/08` 的 Room 实现延后到阶段 3。B2-1～B2-5、T2-4/T2-5 仍待 B/两人推进。
 
 ## 阶段 3：MVP 基础闭环（9/25-9/27）
 
