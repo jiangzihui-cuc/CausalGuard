@@ -43,7 +43,7 @@
 | 编号 | 任务 | 交付物 | 状态 |
 |---|---|---|---|
 | B1-1 | 定义 v0.1 事件 fixture | `docs/fixtures/`（8~12 条 JSON） | 未开始 |
-| B1-2 | 定义 4 个 Demo 场景 | `docs/demo-scenarios.md` | 未开始 |
+| B1-2 | 定义 4 个 Demo 场景 | `docs/demo-scenarios.md` | 已完成 |
 | B1-3 | 证据文案模板 | 模板 JSON/文档：事实、能力、推断、不可观测不混写 | 未开始 |
 | B1-4 | 第三方组件登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 汇总 | 未开始 |
 | B1-5 | UI 状态草图 | 页面状态表：loading/empty/unknown/demo/error | 未开始 |
