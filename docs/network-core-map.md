@@ -6,6 +6,7 @@
 > 对应任务：A1-2
 > 上游底座：TrackerControl Android
 > 固定版本：tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（2026-08-05）
+> 源码位置：git submodule `third_party/tracker-control-android/`（A4-3 起导入；`git submodule update --init --recursive`）
 > 许可证：GPL-3.0（见 `THIRD_PARTY_NOTICES.md`）
 > 说明：本文件基于固定 commit 的静态源码分析，尚未在设备上验证运行。设备验证结果回填到 `spike-results.md`。
 

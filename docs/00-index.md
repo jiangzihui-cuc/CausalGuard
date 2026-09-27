@@ -53,6 +53,7 @@
 | [trackercontrol-adapter-boundary](trackercontrol-adapter-boundary.md) | 阶段2 A2-5：TrackerControl Adapter 边界冻结（输入/输出/接口/降级） | 成员 A |
 | `app/schemas/`（代码产物） | 阶段3/4 A3-1/A4-4：Room schema 导出（v2 补 RiskAssessment `category`/`matchedRules`，迁移与迁移测试依据） | 成员 A |
 | `core-model/`、`app/.../data/`（代码产物） | 阶段2/3/4 A2-3/A3-1～A3-5/A4-4：契约模块、Room 事件库、Repository/Provider/DI、网络事件关联入库（`data/ingest`、`data/network`） | 成员 A |
+| `third_party/tracker-control-android/`（submodule） | 阶段4 A4-3：TrackerControl 网络底座，固定 commit `9504d41b`，克隆需 `git submodule update --init --recursive`（见 THIRD_PARTY_NOTICES 第 1 节） | 成员 A |
 
 ## 阅读顺序
 

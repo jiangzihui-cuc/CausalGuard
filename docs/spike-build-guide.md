@@ -5,7 +5,7 @@
 > 责任人：成员 A
 > 对应任务：A1-1
 > 关联：`docs/spike-results.md`、`docs/network-core-map.md`、`scripts/build-trackercontrol-spike.sh`、`THIRD_PARTY_NOTICES.md`
-> 约定：第三方源码**不导入本仓库**，保留在外部，只登记固定 commit。
+> 约定：第三方源码以 **git submodule** 固定 commit 引入 `third_party/tracker-control-android/`（A4-3 起），不 vendored 进本仓历史；克隆/构建前需 `git submodule update --init --recursive`。
 
 ---
 
@@ -60,15 +60,18 @@ chmod +x scripts/build-trackercontrol-spike.sh
 
 脚本会：检查环境 → clone 并切到固定 commit → 校验 commit → `assembleFdroidDebug` → 列出 APK。
 
+> A4-3 起底座已作为 submodule 固定在本仓库 `third_party/tracker-control-android/`，优先用第 4.2 节在该目录内构建；本脚本保留用于独立外部复现。
+
 ### 4.2 手动步骤
 
 ```bash
 export ANDROID_HOME="$HOME/Android/Sdk"
 export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 
-git clone https://github.com/TrackerControl/tracker-control-android.git
-cd tracker-control-android
-git checkout 9504d41b9f6fa1509d784e5503c084d4b428307d
+# 在 CausalGuard 仓库根目录
+git submodule update --init --recursive third_party/tracker-control-android
+cd third_party/tracker-control-android
+git rev-parse HEAD   # 应为 9504d41b9f6fa1509d784e5503c084d4b428307d
 
 # 演示用 fdroid flavor，避免 Play 依赖
 ./gradlew --no-daemon assembleFdroidDebug
@@ -106,7 +109,7 @@ adb install -r app/build/outputs/apk/fdroid/debug/app-fdroid-debug.apk
 
 ## 7. 许可证合规（构建阶段）
 
-- 第三方源码保留在仓库外，**不提交进 CausalGuard**；
-- 固定 commit 已登记在 `THIRD_PARTY_NOTICES.md`；
+- 第三方源码以 **git submodule** 固定 commit 引入 `third_party/tracker-control-android/`，源码对象不进 CausalGuard 历史（`.gitmodules` + gitlink 已登记）；
+- 固定 commit `9504d41b9f6fa1509d784e5503c084d4b428307d` 已登记在 `THIRD_PARTY_NOTICES.md` 第 1 节；
 - 若后续需要团队修改底座，修改必须单独 commit 并登记修改文件；
 - 答辩材料不得把底座能力声称为团队原创。
