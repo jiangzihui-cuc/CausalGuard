@@ -4,6 +4,7 @@ import android.content.Context
 import com.causalguard.core.model.AppProfileProvider
 import com.causalguard.core.model.AppProfileRepository
 import com.causalguard.core.model.AuditLogRepository
+import com.causalguard.core.model.EventSink
 import com.causalguard.core.model.DemoScenarioRepository
 import com.causalguard.core.model.MitigationRepository
 import com.causalguard.core.model.PrivacyEventRepository
@@ -19,6 +20,7 @@ import com.causalguard.data.provider.UsageStatsContextProvider
 import com.causalguard.data.repository.RoomAppProfileRepository
 import com.causalguard.data.repository.RoomAuditLogRepository
 import com.causalguard.data.repository.RoomDemoScenarioRepository
+import com.causalguard.data.repository.RoomEventSink
 import com.causalguard.data.repository.RoomMitigationRepository
 import com.causalguard.data.repository.RoomPrivacyEventRepository
 import com.causalguard.data.repository.RoomRecommendationRepository
@@ -32,6 +34,7 @@ import com.causalguard.data.repository.RoomUsageContextRepository
  */
 interface AppDependencies {
     val privacyEventRepository: PrivacyEventRepository
+    val eventSink: EventSink
     val appProfileRepository: AppProfileRepository
     val usageContextRepository: UsageContextRepository
     val riskAssessmentRepository: RiskAssessmentRepository
@@ -57,6 +60,7 @@ class AppContainer(
 ) : AppDependencies {
 
     override val privacyEventRepository: PrivacyEventRepository = RoomPrivacyEventRepository(database)
+    override val eventSink: EventSink = RoomEventSink(privacyEventRepository)
     override val appProfileRepository: AppProfileRepository = RoomAppProfileRepository(database)
     override val usageContextRepository: UsageContextRepository = RoomUsageContextRepository(database)
     override val riskAssessmentRepository: RiskAssessmentRepository = RoomRiskAssessmentRepository(database)
