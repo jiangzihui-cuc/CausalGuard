@@ -1,7 +1,7 @@
 # 18 风险清单
 
-> 版本：`v0.3`
-> 最后更新：2026-09-24
+> 版本：`v0.4`
+> 最后更新：2026-09-27
 > 责任人：成员 B（协作：成员 A）
 > 关联：[20 开源复用建议](20-open-source-reuse-guide.md)、[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
 
@@ -30,6 +30,7 @@
 | RK-19 | 许可证报告误判 | 合规漏检 | 仅依赖自动扫描 | 人工复核 Unknown/GPL/AGPL/非商业条款，手工复制源码与数据集单独登记 | 成员 A/B |
 | RK-20 | 密钥、原始日志或真实数据入库 | 泄露风险 | 提交含 key/日志/个人信息 | `.gitignore` + 提交前检查 + 阶段 8 清理 | 成员 A |
 | RK-21 | AGP 9 内置 Kotlin 与注解处理/旧 KGP 不兼容 | Room 等注解处理无法编译，阻塞阶段 3 | apply KSP 2.2.x 报 “Kotlin source set contains generated/ksp”；apply KGP 2.2.10 报 `BaseExtension` 转换失败 | 保留内置 Kotlin，改用 **KSP 2.3.4 + Room 2.7.0**；不引入 kapt/KGP；版本固定并记录 | 成员 A |
+| RK-22 | TrackerControl 以 submodule 引入后目录为空/构建缺源码 | A4-3 Adapter 无法编译或验证；CI 不影响但本地开发受阻 | clone 后 `third_party/tracker-control-android/` 为空 | clone 后执行 `git submodule update --init --recursive`；README/导引写明；`.gitmodules` 固定 URL 与 commit，工作文档登记该步骤 | 成员 A |
 
 ## 风险复盘机制
 
