@@ -3,6 +3,7 @@ package io.causalguard.rules
 import com.causalguard.core.model.Confidence
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.RiskCategory
+import com.causalguard.core.model.RiskAssessment as CoreRiskAssessment
 import com.causalguard.core.model.RiskLevel
 import com.causalguard.core.model.RuleInput
 import com.causalguard.core.model.ScenarioMatch
@@ -14,6 +15,31 @@ class RuleEvaluator(
     private val sortedRules = rules.sortedWith(
         compareByDescending<RiskRule> { it.priority }.thenBy { it.id }
     )
+
+    fun evaluate(input: RuleInput): RuleEvaluationResult {
+        val legacy = assess(input)
+
+        return RuleEvaluationResult(
+            assessment = CoreRiskAssessment(
+                id = legacy.id,
+                eventId = legacy.eventId,
+                ruleVersion = legacy.ruleVersion,
+                riskScore = legacy.riskScore,
+                riskLevel = legacy.riskLevel,
+                scenarioMatch = legacy.scenarioMatch,
+                confidence = legacy.confidence,
+                category = legacy.category,
+                explanationBoundary = legacy.explanationBoundary,
+                evidenceIds = legacy.evidenceIds,
+                matchedRules = legacy.matchedRules,
+                createdAt = 0L
+            ),
+            recommendationDecision = legacy.recommendation,
+            degradation = EvaluationDegradation(
+                shouldShowUnknownDegradation = legacy.shouldShowUnknownDegradation
+            )
+        )
+    }
 
     fun assess(input: RuleInput): RiskAssessment {
         val event = input.event
