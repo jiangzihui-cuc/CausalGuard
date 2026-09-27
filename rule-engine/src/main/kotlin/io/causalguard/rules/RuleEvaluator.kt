@@ -39,7 +39,7 @@ class RuleEvaluator(
         val unknownDegradation = unknownMatches.isNotEmpty() ||
             effectiveMatches.any { it.degradation.shouldShowUnknownDegradation }
         val recommendation = if (unknownDegradation) {
-            Recommendation("none", "无法确认，暂不处置")
+            RecommendationDecision("none", "无法确认，暂不处置")
         } else {
             primary.recommendation
         }
@@ -116,7 +116,7 @@ class RuleEvaluator(
             evidenceIds = listOf(event.eventId),
             matchedRules = emptyList(),
             category = RiskCategory.UNKNOWN,
-            recommendation = Recommendation("none", "无需处置"),
+            recommendation = RecommendationDecision("none", "无需处置"),
             shouldShowUnknownDegradation = false
         )
 

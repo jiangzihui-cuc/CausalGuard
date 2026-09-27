@@ -266,10 +266,10 @@ class RuleAssetLoader(
         }
     }
 
-    private fun RecommendationDto.toDomain(prefix: String, errors: MutableList<String>): Recommendation? {
+    private fun RecommendationDto.toDomain(prefix: String, errors: MutableList<String>): RecommendationDecision? {
         val action = requiredString(action, "$prefix.action", errors)
         val title = requiredString(title, "$prefix.title", errors)
-        return if (action != null && title != null) Recommendation(action, title) else null
+        return if (action != null && title != null) RecommendationDecision(action, title) else null
     }
 
     private fun DegradationDto.toDomain(prefix: String, errors: MutableList<String>): Degradation? {

@@ -34,7 +34,7 @@ data class RuleOutput(
     val confidence: Confidence
 )
 
-data class Recommendation(
+data class RecommendationDecision(
     val action: String,
     val title: String
 )
@@ -52,7 +52,7 @@ data class RiskRule(
     val condition: RuleCondition,
     val output: RuleOutput,
     val explanationBoundary: String,
-    val recommendation: Recommendation,
+    val recommendation: RecommendationDecision,
     val degradation: Degradation
 )
 
@@ -68,6 +68,6 @@ data class RiskAssessment(
     val evidenceIds: List<String>,
     val matchedRules: List<String>,
     val category: RiskCategory,
-    val recommendation: Recommendation,
+    val recommendation: RecommendationDecision,
     val shouldShowUnknownDegradation: Boolean
 )

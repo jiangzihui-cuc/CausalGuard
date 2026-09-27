@@ -325,7 +325,7 @@ internal object FixtureRules {
             ),
             output = RuleOutput(RiskLevel.LOW, RiskCategory.NECESSARY, ScenarioMatch.MATCH, Confidence.MEDIUM),
             explanationBoundary = "该行为与前台使用场景匹配；仍不读取通信内容或敏感原文。",
-            recommendation = Recommendation("none", "无需处置"),
+            recommendation = RecommendationDecision("none", "无需处置"),
             degradation = Degradation(false, "not_applicable")
         ),
         RiskRule(
@@ -339,7 +339,7 @@ internal object FixtureRules {
             ),
             output = RuleOutput(RiskLevel.MEDIUM, RiskCategory.HIGH_RISK, ScenarioMatch.MISMATCH, Confidence.MEDIUM),
             explanationBoundary = "只能说明发生了后台敏感访问，不能据此确认数据泄露。",
-            recommendation = Recommendation("review_permission", "检查权限和后台活动"),
+            recommendation = RecommendationDecision("review_permission", "检查权限和后台活动"),
             degradation = Degradation(false, "not_applicable")
         ),
         RiskRule(
@@ -354,7 +354,7 @@ internal object FixtureRules {
             ),
             output = RuleOutput(RiskLevel.HIGH, RiskCategory.HIGH_RISK, ScenarioMatch.MISMATCH, Confidence.MEDIUM),
             explanationBoundary = "只能确认后台联网与场景不匹配，不能确认请求内容或数据泄露。",
-            recommendation = Recommendation("limit_background_network", "限制后台网络"),
+            recommendation = RecommendationDecision("limit_background_network", "限制后台网络"),
             degradation = Degradation(false, "not_applicable")
         ),
         RiskRule(
@@ -368,7 +368,7 @@ internal object FixtureRules {
             ),
             output = RuleOutput(RiskLevel.HIGH, RiskCategory.ANALYTICS, ScenarioMatch.MISMATCH, Confidence.MEDIUM),
             explanationBoundary = "域名命中公开或演示分类只能说明服务类别，不代表已发生隐私泄露。",
-            recommendation = Recommendation("limit_background_network", "限制分析追踪连接"),
+            recommendation = RecommendationDecision("limit_background_network", "限制分析追踪连接"),
             degradation = Degradation(false, "If domainHint is empty, do not infer tracker category from IP alone.")
         ),
         RiskRule(
@@ -382,7 +382,7 @@ internal object FixtureRules {
             ),
             output = RuleOutput(RiskLevel.HIGH, RiskCategory.ANALYTICS, ScenarioMatch.MISMATCH, Confidence.MEDIUM),
             explanationBoundary = "只能说明长期未使用状态下仍有联网元数据，不能确认请求内容。",
-            recommendation = Recommendation("limit_background_network", "限制长期未使用应用联网"),
+            recommendation = RecommendationDecision("limit_background_network", "限制长期未使用应用联网"),
             degradation = Degradation(false, "If last-used context is unavailable, do not apply this rule.")
         ),
         RiskRule(
@@ -397,7 +397,7 @@ internal object FixtureRules {
             ),
             output = RuleOutput(RiskLevel.HIGH, RiskCategory.HIGH_RISK, ScenarioMatch.MISMATCH, Confidence.MEDIUM),
             explanationBoundary = "时间相关只能作为伴随证据，不能证明敏感内容被发送。",
-            recommendation = Recommendation("limit_background_network", "结合敏感访问检查联网行为"),
+            recommendation = RecommendationDecision("limit_background_network", "结合敏感访问检查联网行为"),
             degradation = Degradation(false, "If app attribution is unknown, do not correlate sensitive access and network traffic.")
         ),
         RiskRule(
@@ -412,7 +412,7 @@ internal object FixtureRules {
             ),
             output = RuleOutput(RiskLevel.LOW, RiskCategory.UNKNOWN, ScenarioMatch.UNKNOWN, Confidence.LOW),
             explanationBoundary = "无法可靠归属到具体 App，不得生成确定性归因、数据流向结论或处置建议。",
-            recommendation = Recommendation("none", "仅展示未知网络事件"),
+            recommendation = RecommendationDecision("none", "仅展示未知网络事件"),
             degradation = Degradation(true, "Show unknown attribution and avoid deterministic mitigation.")
         ),
         RiskRule(
@@ -429,7 +429,7 @@ internal object FixtureRules {
             ),
             output = RuleOutput(RiskLevel.HIGH, RiskCategory.HIGH_RISK, ScenarioMatch.MISMATCH, Confidence.MEDIUM),
             explanationBoundary = "演示事件说明权限撤销后的异常场景，但仍不能声称真实系统权限被绕过。",
-            recommendation = Recommendation("review_permission", "复查权限与演示状态"),
+            recommendation = RecommendationDecision("review_permission", "复查权限与演示状态"),
             degradation = Degradation(false, "If prior permission state is missing, do not apply this rule.")
         ),
         RiskRule(
@@ -440,7 +440,7 @@ internal object FixtureRules {
             condition = RuleCondition(evidenceLevels = setOf(EvidenceLevel.E5)),
             output = RuleOutput(RiskLevel.LOW, RiskCategory.UNKNOWN, ScenarioMatch.UNKNOWN, Confidence.LOW),
             explanationBoundary = "关键字段缺失，只能展示无法确认结论。",
-            recommendation = Recommendation("none", "无法确认，暂不处置"),
+            recommendation = RecommendationDecision("none", "无法确认，暂不处置"),
             degradation = Degradation(true, "Keep the event visible as unknown evidence without app attribution.")
         )
     )
