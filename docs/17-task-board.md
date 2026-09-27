@@ -1,7 +1,7 @@
 # 17 任务看板
 
-> 版本：`v0.6`
-> 最后更新：2026-09-24
+> 版本：`v0.7`
+> 最后更新：2026-09-27
 > 责任人：成员 B（协作：成员 A）
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
 > 依据：[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)。阶段内任务按 A（平台/网络/系统/发布）与 B（产品/规则/证据/UI/评测）两条并行链拆分；每人每天最多保留“今日必须完成 1 项 + 完成后再做 1 项 + 阻塞替代 1 项”。
@@ -120,6 +120,8 @@
 阶段门：至少一种真实网络事件进入 Room；至少一个 App 获得使用上下文；无域名/UID 时诚实降级；真实 Provider 替换 Fake 后规则和 UI 无需重写。
 
 > 阶段 4 进展（A 回填，2026-09-27）：A4-1/A4-2 已在 A3-3 `RealProviders` 落地；A4-4 完成 `NetworkEvent → PrivacyEvent` 关联入库链路——`data/ingest/NetworkEventIngestor`（补齐 `schemaVersion`/`dedupKey`/时间窗、`evidenceLevel=E2`、`source=vpn`、诚实保留 `uid=-1`/`packageName=unknown`）、`data/network/ReplayNetworkEventSource`（无 VPN 回放）、`data/repository/RoomEventSink`（docs/09 §3 唯一写入口，已接入 `AppContainer`），并有 8 项单测覆盖转换/降级/去重窗/回放/端到端。同时修复 `RiskAssessment` 持久化漂移：Entity/Mapper/`docs/08` 补 `category`、`matchedRules`，数据库升 v2 并登记 `MIGRATION_1_2`。A4-3 底座源码已以 git submodule 固定导入 `third_party/tracker-control-android/`（commit `9504d41b`），下一步在该目录内构建并编写 Adapter；A4-5（VPN 生命周期/前台服务）仍需真机验证。
+>
+> A 侧阶段 4 已合入分支登记：`feature/a-t4-network-ingest`→`24e71a9`（A4-4 关联入库 + DB v2）、`feature/a-t4-trackercontrol-submodule`→`990e96c`（A4-3 底座 submodule）、`feature/a-rule-contract-extension`→`4224cdf`（规则契约扩展）、`feature/a-t3-room-repository`→`3479330`（A3 数据层）。当前 `:app` 单测 22 项通过，`gradle build` 通过（CI 同）。
 
 ## 阶段 5：场景推理、因果链与处置复查（10/1-10/3）
 
