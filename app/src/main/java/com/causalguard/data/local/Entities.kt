@@ -139,8 +139,10 @@ data class RiskAssessmentEntity(
     @ColumnInfo(defaultValue = "low") val riskLevel: String = "low",
     @ColumnInfo(defaultValue = "unknown") val scenarioMatch: String = "unknown",
     @ColumnInfo(defaultValue = "low") val confidence: String = "low",
+    @ColumnInfo(defaultValue = "unknown") val category: String = "unknown",
     val explanationBoundary: String? = null,
     val evidenceIds: List<String> = emptyList(),
+    @ColumnInfo(defaultValue = "[]") val matchedRules: List<String> = emptyList(),
     val createdAt: Long,
 )
 

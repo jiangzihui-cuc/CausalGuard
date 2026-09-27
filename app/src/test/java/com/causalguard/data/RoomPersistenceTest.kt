@@ -6,12 +6,18 @@ import androidx.test.core.app.ApplicationProvider
 import com.causalguard.core.model.EventSource
 import com.causalguard.core.model.EventType
 import com.causalguard.core.model.ForegroundState
+import com.causalguard.core.model.Confidence
 import com.causalguard.core.model.NetworkInfo
 import com.causalguard.core.model.NetworkProtocol
 import com.causalguard.core.model.PrivacyEvent
+import com.causalguard.core.model.RiskAssessment
+import com.causalguard.core.model.RiskCategory
+import com.causalguard.core.model.RiskLevel
+import com.causalguard.core.model.ScenarioMatch
 import com.causalguard.data.local.CausalGuardDatabase
 import com.causalguard.data.repository.RoomAppProfileRepository
 import com.causalguard.data.repository.RoomPrivacyEventRepository
+import com.causalguard.data.repository.RoomRiskAssessmentRepository
 import com.causalguard.core.model.AppProfile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -129,6 +135,31 @@ class RoomPersistenceTest {
         val loaded = requireNotNull(repository.get("com.demo.map"))
         assertEquals("Demo Map", loaded.appName)
         assertEquals(listOf("android.permission.ACCESS_FINE_LOCATION"), loaded.grantedPermissions)
+    }
+
+    @Test
+    fun riskAssessmentPersistsMatchedRulesAndCategory() = runBlocking {
+        val eventRepository = RoomPrivacyEventRepository(database)
+        eventRepository.insert(sampleEvent(id = "e-risk-0001"))
+
+        val repository = RoomRiskAssessmentRepository(database)
+        repository.save(
+            RiskAssessment(
+                id = "r-e-risk-0001",
+                eventId = "e-risk-0001",
+                ruleVersion = "rules-v0.1",
+                riskScore = 70,
+                riskLevel = RiskLevel.HIGH,
+                scenarioMatch = ScenarioMatch.MISMATCH,
+                confidence = Confidence.MEDIUM,
+                category = RiskCategory.HIGH_RISK,
+                matchedRules = listOf("R-002", "R-007"),
+            ),
+        )
+
+        val loaded = requireNotNull(repository.getByEvent("e-risk-0001"))
+        assertEquals(RiskCategory.HIGH_RISK, loaded.category)
+        assertEquals(listOf("R-002", "R-007"), loaded.matchedRules)
     }
 
     @Test

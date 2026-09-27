@@ -177,8 +177,10 @@ fun RiskAssessmentEntity.toModel(): RiskAssessment = RiskAssessment(
     riskLevel = RiskLevel.fromWire(riskLevel),
     scenarioMatch = ScenarioMatch.fromWire(scenarioMatch),
     confidence = Confidence.fromWire(confidence),
+    category = RiskCategory.fromWire(category),
     explanationBoundary = explanationBoundary,
     evidenceIds = evidenceIds,
+    matchedRules = matchedRules,
     createdAt = createdAt,
 )
 
@@ -190,8 +192,10 @@ fun RiskAssessment.toEntity(): RiskAssessmentEntity = RiskAssessmentEntity(
     riskLevel = riskLevel.wire,
     scenarioMatch = scenarioMatch.wire,
     confidence = confidence.wire,
+    category = category.wire,
     explanationBoundary = explanationBoundary,
     evidenceIds = evidenceIds,
+    matchedRules = matchedRules,
     createdAt = createdAt,
 )
 

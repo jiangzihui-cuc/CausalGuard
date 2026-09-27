@@ -105,8 +105,10 @@ CREATE TABLE IF NOT EXISTS risk_assessment (
     riskLevel         TEXT    NOT NULL DEFAULT 'low',
     scenarioMatch     TEXT    NOT NULL DEFAULT 'unknown',
     confidence        TEXT    NOT NULL DEFAULT 'low',
+    category          TEXT    NOT NULL DEFAULT 'unknown',  -- docs/10 §2
     explanationBoundary TEXT,
     evidenceIds       TEXT,                  -- JSON array
+    matchedRules      TEXT    NOT NULL DEFAULT '[]',       -- JSON array, docs/10 §2
     createdAt         INTEGER NOT NULL,
     FOREIGN KEY (eventId) REFERENCES privacy_event(eventId) ON DELETE CASCADE
 );
