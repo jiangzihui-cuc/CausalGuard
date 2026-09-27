@@ -1,20 +1,31 @@
 plugins {
-    kotlin("jvm") version "2.2.20"
-    kotlin("plugin.serialization") version "2.2.20"
+    id("com.android.library")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 group = "io.causalguard"
 version = "0.1.0"
 
-kotlin {
-    jvmToolchain(21)
-}
+android {
+    namespace = "io.causalguard.rules"
+    compileSdk = 37
 
-tasks.test {
-    useJUnitPlatform()
+    defaultConfig {
+        minSdk = 29
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    lint {
+        disable += "NewApi"
+    }
 }
 
 dependencies {
+    implementation(project(":core-model"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
-    testImplementation(kotlin("test"))
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.2.10")
 }
