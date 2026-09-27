@@ -11,13 +11,13 @@
 
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
-当前阶段：阶段 0/1/2 已完成并合入 main；进入阶段 3（MVP 基础闭环）
-成员 A：阶段 3 数据基础设施（A3-1～A3-5）已实现并合入 main
+当前阶段：阶段 0/1/2/3 已完成并合入 main；进入阶段 4（真实数据接入）
+成员 A：阶段 3 已完成；阶段 4 A4-1/A4-2/A4-4 关联入库链路已完成，A4-3/A4-5 待 TrackerControl 源码与真机
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
 
-**一句话**：网络底座（TrackerControl）与三类契约已冻结；**成员 A 现在做阶段 3 的数据基础设施（Room 事件库、Repository、Provider、注入接口与单测），成员 B 并行做不依赖真实 VPN 的可运行产品闭环**。
+**一句话**：事件库、Provider 与网络事件关联入库链路已就绪；**成员 A 现在做阶段 4 的真实数据接入（A4-3 TrackerControl Adapter、A4-5 VPN 生命周期；A4-1/A4-2/A4-4 已完成），成员 B 并行做不依赖真实 VPN 的规则与产品闭环**。
 
 开源路线已定（详见 [20 开源复用建议](20-open-source-reuse-guide.md) 第 13 节）：优先走 **方案 A：TrackerControl / NetGuard（GPL-3.0）** 作为网络底座；接受 GPL 路线并明确开源与原创边界。MIT 备选路线仅在阶段 1 构建链持续失败时启用。
 
@@ -40,7 +40,7 @@
 
 ## 三、我是谁？我下一步做什么？
 
-### 成员 A（技术实现主责）——现在做阶段 3 数据基础设施（9/25-9/27）
+### 成员 A（技术实现主责）——阶段 3 已完成，现在做阶段 4 真实数据接入（9/28-9/30）
 
 **阶段 1（Spike）与阶段 2（契约冻结）已完成并合入 `main`**：A1-1～A1-8 全部完成（见 [Spike 结果](spike-results.md)）；A2-1～A2-6 全部完成（见 [17 任务看板](17-task-board.md) 阶段 2 进展）。A2-4 的 Room 实现按计划延后到本阶段。
 
@@ -52,8 +52,8 @@
 | A3-4 | 导航/ViewModel 注入接口 | `app/.../di/AppContainer.kt` | 不包含页面视觉和业务文案 | 已完成（已合入 main） |
 | A3-5 | DAO、Adapter、Repository 单元测试 | `app/src/test/` | CI 通过 | 已完成（已合入 main） |
 
-> 代码在 `feature/a-t3-room-repository` 分支，详见 [17 任务看板](17-task-board.md) 阶段 3 进展。
-> 接口只在 `:core-model`（纯契约），Room/映射只放 `:app`；构建用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容，见 [18 风险清单](18-risk-register.md) RK-21）。
+> A3 代码已合入 `main`；A4-1/A4-2/A4-4 见 `data/provider/RealProviders.kt`、`data/ingest/NetworkEventIngestor.kt`、`data/network/ReplayNetworkEventSource.kt`、`data/repository/RoomEventSink.kt`，详见 [17 任务看板](17-task-board.md) 阶段 4 进展。
+> 接口只在 `:core-model`（纯契约），Room/映射只放 `:app`；构建用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容，见 [18 风险清单](18-risk-register.md) RK-21）；数据库 `RiskAssessment` 升 v2 补 `category`/`matchedRules`。
 
 ### 成员 B（产品与智能分析主责）——现在做阶段 1 设计输入（9/21-9/22）
 
