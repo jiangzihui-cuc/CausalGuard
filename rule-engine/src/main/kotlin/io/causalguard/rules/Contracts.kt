@@ -1,6 +1,7 @@
 package io.causalguard.rules
 
 import com.causalguard.core.model.Confidence
+import com.causalguard.core.model.RiskAssessment as CoreRiskAssessment
 import com.causalguard.core.model.EventType
 import com.causalguard.core.model.EvidenceLevel
 import com.causalguard.core.model.ForegroundState
@@ -42,6 +43,16 @@ data class RecommendationDecision(
 data class Degradation(
     val shouldShowUnknownDegradation: Boolean,
     val unknownHandling: String
+)
+
+data class EvaluationDegradation(
+    val shouldShowUnknownDegradation: Boolean
+)
+
+data class RuleEvaluationResult(
+    val assessment: CoreRiskAssessment,
+    val recommendationDecision: RecommendationDecision,
+    val degradation: EvaluationDegradation
 )
 
 data class RiskRule(
