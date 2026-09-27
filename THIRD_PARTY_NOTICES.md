@@ -37,7 +37,20 @@
 - Registered by / date: <成员 / 日期>
 -->
 
-无。
+## TrackerControl Android
+
+- Repository: https://github.com/TrackerControl/tracker-control-android
+- Commit/Tag: tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（2026-08-05）
+- License: GPL-3.0（部分第三方组件/数据另有许可，见其根 `LICENSE` 与 `docs/20` 第 7 节）
+- Used files/modules: 网络底座（`VpnService`/TUN、TCP/UDP 处理、DNS 观测、连接记录、域名阻断）；当前仅作网络核心与 A4-3 Adapter 适配对象
+- Local modifications: 暂无（尚未修改）；后续修改必须另起 commit 并在此登记实际文件
+- Purpose: CausalGuard 网络事件的真实采集底座
+- Included license file: YES（随 submodule 内的根 `LICENSE`，保持原样）
+- Source availability: 以 git submodule 形式引入，路径 `third_party/tracker-control-android/`（`.gitmodules` 记录 URL，gitlink 固定到上述 commit）
+- Team-original boundary: 网络底座能力归 TrackerControl/NetGuard；CausalGuard 原创部分为事件契约、规则引擎、证据与解释、UI 与产品逻辑
+- Registered by / date: 成员 A / 2026-09-27
+
+> 说明：按 `docs/20` 第 4.1 节与 A4-3 需要，源码以 submodule 固定版本引入，不 vendored 进本仓历史；克隆需 `git submodule update --init --recursive`。
 
 ### 1.1 构建与运行时技术依赖（阶段 1 / A1-7 登记）
 
@@ -90,7 +103,7 @@
 | 组件 | 仓库 | 许可证（需按具体版本复核） | 计划用途 | 主责 |
 |---|---|---|---|---|
 | TrackerControl Android | https://github.com/TrackerControl/tracker-control-android | GPL-3.0（部分第三方组件/数据另有许可） | VPN/TUN、DNS、连接记录、域名阻断底座 | 成员 A |
-| ↳ 已固定版本 | tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（2026-08-05），根 `LICENSE` 为 GPL-3.0 | 构建链：AGP 9.3.1 / Gradle 9.6.1 / compileSdk 37 / NDK / 可选 Rust 1.95.0 | 阶段 1 静态分析已完成，见 `docs/network-core-map.md`；源码尚未导入本仓库 | 成员 A |
+| ↳ 已固定版本 | tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（2026-08-05），根 `LICENSE` 为 GPL-3.0 | 构建链：AGP 9.3.1 / Gradle 9.6.1 / compileSdk 37 / NDK / 可选 Rust 1.95.0 | 已作为 submodule 导入 `third_party/tracker-control-android/`（见第 1 节），见 `docs/network-core-map.md` | 成员 A |
 | NetGuard | https://github.com/M66B/NetGuard | GPL-3.0 | TrackerControl 上游参考；本地网络转发研究 | 成员 A |
 | android/architecture-templates | https://github.com/android/architecture-templates | Apache-2.0 | 工程分层骨架参考 | 成员 A |
 | android/architecture-samples | https://github.com/android/architecture-samples | Apache-2.0 | Repository/ViewModel/UI State 参考 | 成员 A |
