@@ -1,5 +1,9 @@
 package io.causalguard.rules
 
+import com.causalguard.core.model.Confidence
+import com.causalguard.core.model.RiskCategory
+import com.causalguard.core.model.RiskLevel
+import com.causalguard.core.model.RuleInput
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -26,23 +30,25 @@ class RuleAssetLoaderTest {
         val evaluator = RuleEvaluator(loadFixture().rules)
 
         val clipboard = evaluator.assess(
-            FixtureEvents.calculatorClipboard,
-            EvaluationContext(
-                appProfile = AppProfile("com.demo.calculator", "calculator"),
+            RuleInput(
+                event = FixtureEvents.calculatorClipboard,
+                appProfile = FixtureEvents.calculatorProfile,
                 relatedEvents = listOf(FixtureEvents.calculatorNetwork)
             )
         )
         val network = evaluator.assess(
-            FixtureEvents.calculatorNetwork,
-            EvaluationContext(
-                appProfile = AppProfile("com.demo.calculator", "calculator"),
+            RuleInput(
+                event = FixtureEvents.calculatorNetwork,
+                appProfile = FixtureEvents.calculatorProfile,
                 relatedEvents = listOf(FixtureEvents.calculatorClipboard)
             )
         )
-        val unused = evaluator.assess(FixtureEvents.flashlightNetwork)
+        val unused = evaluator.assess(RuleInput(event = FixtureEvents.flashlightNetwork))
         val location = evaluator.assess(
-            FixtureEvents.weatherLocation,
-            EvaluationContext(priorEvents = listOf(FixtureEvents.weatherPermission))
+            RuleInput(
+                event = FixtureEvents.weatherLocation,
+                priorEvents = listOf(FixtureEvents.weatherPermission)
+            )
         )
 
         assertEquals(listOf("R-007", "R-002"), clipboard.matchedRules)
@@ -154,7 +160,7 @@ class RuleAssetLoaderTest {
         ruleVersion: String = "rules-v0.1",
         outputRiskLevel: String = "low"
     ): String {
-        val idField = id?.let { """"id": "$it",""" } ?: ""
+        val idField = id?.let { "\"id\": \"$it\"," } ?: ""
         return """
         {
           $idField

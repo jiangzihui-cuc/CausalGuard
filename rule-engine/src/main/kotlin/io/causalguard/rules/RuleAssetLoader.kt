@@ -1,5 +1,13 @@
 package io.causalguard.rules
 
+import com.causalguard.core.model.Confidence
+import com.causalguard.core.model.EventType
+import com.causalguard.core.model.EvidenceLevel
+import com.causalguard.core.model.ForegroundState
+import com.causalguard.core.model.RiskCategory
+import com.causalguard.core.model.RiskLevel
+import com.causalguard.core.model.ScenarioMatch
+
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlinx.serialization.Serializable

@@ -1,15 +1,23 @@
 package io.causalguard.rules
 
+import com.causalguard.core.model.Confidence
+import com.causalguard.core.model.PrivacyEvent
+import com.causalguard.core.model.RiskCategory
+import com.causalguard.core.model.RiskLevel
+import com.causalguard.core.model.RuleInput
+import com.causalguard.core.model.ScenarioMatch
+
 class RuleEvaluator(
     rules: List<RiskRule>,
-    private val ruleVersion: String = "rules-v0.1"
+    private val ruleVersion: String = RuleInput.DEFAULT_RULE_VERSION
 ) {
     private val sortedRules = rules.sortedWith(
         compareByDescending<RiskRule> { it.priority }.thenBy { it.id }
     )
 
-    fun assess(event: PrivacyEvent, context: EvaluationContext = EvaluationContext()): RiskAssessment {
-        val matched = sortedRules.filter { it.matches(event, context) }
+    fun assess(input: RuleInput): RiskAssessment {
+        val event = input.event
+        val matched = sortedRules.filter { it.matches(input) }
         if (matched.isEmpty()) {
             return noMatchAssessment(event)
         }
@@ -53,7 +61,8 @@ class RuleEvaluator(
         )
     }
 
-    private fun RiskRule.matches(event: PrivacyEvent, context: EvaluationContext): Boolean {
+    private fun RiskRule.matches(input: RuleInput): Boolean {
+        val event = input.event
         val c = condition
         if (c.eventTypes.isNotEmpty() && event.eventType !in c.eventTypes) return false
         if (c.foregroundStates.isNotEmpty() && event.foregroundState !in c.foregroundStates) return false
@@ -61,20 +70,20 @@ class RuleEvaluator(
         if (c.domainHints.isNotEmpty() && event.network?.domainHint !in c.domainHints) return false
         if (c.packageName != null && event.network?.packageName != c.packageName) return false
         if (c.uid != null && event.network?.uid != c.uid) return false
-        if (c.sceneTypes.isNotEmpty() && context.appProfile?.sceneType !in c.sceneTypes) return false
-        if (c.scenarioMatchRequired != null && context.scenarioMatch != c.scenarioMatchRequired) return false
-        if (c.relatedEventTypes.isNotEmpty() && !hasRelatedEvent(event, context, c)) return false
-        if (c.requiresPriorEvents.isNotEmpty() && !hasPriorEvents(context, c.requiresPriorEvents)) return false
+        if (c.sceneTypes.isNotEmpty() && input.appProfile?.sceneType !in c.sceneTypes) return false
+        if (c.scenarioMatchRequired != null && input.scenarioMatch != c.scenarioMatchRequired) return false
+        if (c.relatedEventTypes.isNotEmpty() && !hasRelatedEvent(input, c)) return false
+        if (c.requiresPriorEvents.isNotEmpty() && !hasPriorEvents(input, c.requiresPriorEvents)) return false
         return true
     }
 
     private fun hasRelatedEvent(
-        event: PrivacyEvent,
-        context: EvaluationContext,
+        input: RuleInput,
         condition: RuleCondition
     ): Boolean {
+        val event = input.event
         val window = condition.timeWindowMs ?: Long.MAX_VALUE
-        return context.relatedEvents.any { related ->
+        return input.relatedEvents.any { related ->
             related.eventId != event.eventId &&
                 related.appId == event.appId &&
                 related.eventType in condition.relatedEventTypes &&
@@ -83,13 +92,13 @@ class RuleEvaluator(
     }
 
     private fun hasPriorEvents(
-        context: EvaluationContext,
+        input: RuleInput,
         requirements: List<PriorEventCondition>
     ): Boolean = requirements.all { requirement ->
-        context.priorEvents.any { prior ->
+        input.priorEvents.any { prior ->
             prior.eventType == requirement.eventType &&
                 requirement.evidenceSummaryContains?.let { token ->
-                    prior.evidenceSummary.contains(token, ignoreCase = true)
+                    prior.evidenceSummary?.contains(token, ignoreCase = true) == true
                 } ?: true
         }
     }
