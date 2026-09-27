@@ -69,6 +69,25 @@ class RuleEvaluationResultTest {
     }
 
     @Test
+    fun evaluateMapsCalculatorNetworkMultiRuleAssessmentToCanonicalResult() {
+        val input = RuleInput(
+            event = FixtureEvents.calculatorNetwork,
+            appProfile = FixtureEvents.calculatorProfile,
+            relatedEvents = listOf(FixtureEvents.calculatorClipboard)
+        )
+
+        val legacy = evaluator.assess(input)
+        val result = evaluator.evaluate(input)
+
+        assertCanonicalMatchesLegacy(legacy, result)
+        assertEquals(listOf("R-007", "R-003", "R-005"), result.assessment.matchedRules)
+        assertEquals(RiskLevel.HIGH, result.assessment.riskLevel)
+        assertEquals(RiskCategory.HIGH_RISK, result.assessment.category)
+        assertEquals("limit_background_network", result.recommendationDecision.action)
+        assertFalse(result.degradation.shouldShowUnknownDegradation)
+    }
+
+    @Test
     fun evaluateMapsUnknownAssessmentToCanonicalResult() {
         val input = RuleInput(event = FixtureEvents.unknownNetwork)
 
@@ -111,6 +130,20 @@ class RuleEvaluationResultTest {
 
         val first = evaluator.evaluate(input)
         val second = evaluator.evaluate(input)
+
+        assertEquals(first, second)
+    }
+
+    @Test
+    fun assessIsDeterministicForSameInput() {
+        val input = RuleInput(
+            event = FixtureEvents.calculatorNetwork,
+            appProfile = FixtureEvents.calculatorProfile,
+            relatedEvents = listOf(FixtureEvents.calculatorClipboard)
+        )
+
+        val first = evaluator.assess(input)
+        val second = evaluator.assess(input)
 
         assertEquals(first, second)
     }

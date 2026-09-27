@@ -17,35 +17,10 @@ class RuleEvaluator(
     )
 
     fun evaluate(input: RuleInput): RuleEvaluationResult {
-        val legacy = assess(input)
-
-        return RuleEvaluationResult(
-            assessment = CoreRiskAssessment(
-                id = legacy.id,
-                eventId = legacy.eventId,
-                ruleVersion = legacy.ruleVersion,
-                riskScore = legacy.riskScore,
-                riskLevel = legacy.riskLevel,
-                scenarioMatch = legacy.scenarioMatch,
-                confidence = legacy.confidence,
-                category = legacy.category,
-                explanationBoundary = legacy.explanationBoundary,
-                evidenceIds = legacy.evidenceIds,
-                matchedRules = legacy.matchedRules,
-                createdAt = 0L
-            ),
-            recommendationDecision = legacy.recommendation,
-            degradation = EvaluationDegradation(
-                shouldShowUnknownDegradation = legacy.shouldShowUnknownDegradation
-            )
-        )
-    }
-
-    fun assess(input: RuleInput): RiskAssessment {
         val event = input.event
         val matched = sortedRules.filter { it.matches(input) }
         if (matched.isEmpty()) {
-            return noMatchAssessment(event)
+            return noMatchEvaluation(event)
         }
 
         val unknownMatches = matched.filter { it.output.category == RiskCategory.UNKNOWN }
@@ -70,20 +45,46 @@ class RuleEvaluator(
             primary.recommendation
         }
 
+        return RuleEvaluationResult(
+            assessment = CoreRiskAssessment(
+                id = "r-${event.eventId}",
+                eventId = event.eventId,
+                ruleVersion = ruleVersion,
+                riskScore = primary.output.riskLevel.defaultScore,
+                riskLevel = if (unknownDegradation) RiskLevel.LOW else primary.output.riskLevel,
+                scenarioMatch = if (unknownDegradation) ScenarioMatch.UNKNOWN else primary.output.scenarioMatch,
+                confidence = if (unknownDegradation) Confidence.LOW else primary.output.confidence,
+                category = if (unknownDegradation) RiskCategory.UNKNOWN else primary.output.category,
+                explanationBoundary = explanationBoundary(effectiveMatches),
+                evidenceIds = listOf(event.eventId),
+                matchedRules = effectiveMatches.map { it.id },
+                createdAt = 0L
+            ),
+            recommendationDecision = recommendation,
+            degradation = EvaluationDegradation(
+                shouldShowUnknownDegradation = unknownDegradation
+            )
+        )
+    }
+
+    fun assess(input: RuleInput): RiskAssessment {
+        val result = evaluate(input)
+        val assessment = result.assessment
+
         return RiskAssessment(
-            id = "r-${event.eventId}",
-            eventId = event.eventId,
-            ruleVersion = ruleVersion,
-            riskScore = primary.output.riskLevel.defaultScore,
-            riskLevel = if (unknownDegradation) RiskLevel.LOW else primary.output.riskLevel,
-            scenarioMatch = if (unknownDegradation) ScenarioMatch.UNKNOWN else primary.output.scenarioMatch,
-            confidence = if (unknownDegradation) Confidence.LOW else primary.output.confidence,
-            explanationBoundary = explanationBoundary(effectiveMatches),
-            evidenceIds = listOf(event.eventId),
-            matchedRules = effectiveMatches.map { it.id },
-            category = if (unknownDegradation) RiskCategory.UNKNOWN else primary.output.category,
-            recommendation = recommendation,
-            shouldShowUnknownDegradation = unknownDegradation
+            id = assessment.id,
+            eventId = assessment.eventId,
+            ruleVersion = assessment.ruleVersion,
+            riskScore = assessment.riskScore,
+            riskLevel = assessment.riskLevel,
+            scenarioMatch = assessment.scenarioMatch,
+            confidence = assessment.confidence,
+            explanationBoundary = requireNotNull(assessment.explanationBoundary),
+            evidenceIds = assessment.evidenceIds,
+            matchedRules = assessment.matchedRules,
+            category = assessment.category,
+            recommendation = result.recommendationDecision,
+            shouldShowUnknownDegradation = result.degradation.shouldShowUnknownDegradation
         )
     }
 
@@ -129,21 +130,24 @@ class RuleEvaluator(
         }
     }
 
-    private fun noMatchAssessment(event: PrivacyEvent): RiskAssessment =
-        RiskAssessment(
-            id = "r-${event.eventId}",
-            eventId = event.eventId,
-            ruleVersion = ruleVersion,
-            riskScore = 0,
-            riskLevel = RiskLevel.LOW,
-            scenarioMatch = ScenarioMatch.UNKNOWN,
-            confidence = Confidence.LOW,
-            explanationBoundary = "未命中风险规则，仅保留事件事实。",
-            evidenceIds = listOf(event.eventId),
-            matchedRules = emptyList(),
-            category = RiskCategory.UNKNOWN,
-            recommendation = RecommendationDecision("none", "无需处置"),
-            shouldShowUnknownDegradation = false
+    private fun noMatchEvaluation(event: PrivacyEvent): RuleEvaluationResult =
+        RuleEvaluationResult(
+            assessment = CoreRiskAssessment(
+                id = "r-${event.eventId}",
+                eventId = event.eventId,
+                ruleVersion = ruleVersion,
+                riskScore = 0,
+                riskLevel = RiskLevel.LOW,
+                scenarioMatch = ScenarioMatch.UNKNOWN,
+                confidence = Confidence.LOW,
+                category = RiskCategory.UNKNOWN,
+                explanationBoundary = "未命中风险规则，仅保留事件事实。",
+                evidenceIds = listOf(event.eventId),
+                matchedRules = emptyList(),
+                createdAt = 0L
+            ),
+            recommendationDecision = RecommendationDecision("none", "无需处置"),
+            degradation = EvaluationDegradation(shouldShowUnknownDegradation = false)
         )
 
     private fun explanationBoundary(rules: List<RiskRule>): String =
