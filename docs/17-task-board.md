@@ -1,7 +1,7 @@
 # 17 任务看板
 
-> 版本：`v0.7`
-> 最后更新：2026-09-27
+> 版本：`v0.8`
+> 最后更新：2026-09-28
 > 责任人：成员 B（协作：成员 A）
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
 > 依据：[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)。阶段内任务按 A（平台/网络/系统/发布）与 B（产品/规则/证据/UI/评测）两条并行链拆分；每人每天最多保留“今日必须完成 1 项 + 完成后再做 1 项 + 阻塞替代 1 项”。
@@ -94,13 +94,14 @@
 |---|---|---|---|
 | B3-1 | `FakeEventRepository` | 无 VPN 也能播放 fixture | 未开始 |
 | B3-2 | 首页、时间线、详情、设置四个 P0 页面 | Fake 数据可完整浏览 | 未开始 |
-| B3-3 | 小型规则执行器与 5 条规则 | 正例、反例、unknown 测试通过 | 进行中（核心已推送 `feature/b-rule-engine-core`，待契约收敛） |
+| B3-3 | 小型规则执行器与 5 条规则 | 正例、反例、unknown 测试通过 | 已完成 |
 | B3-4 | 证据卡片和本地解释模板 | 事实/推断/不可观测显示准确 | 未开始 |
 | B3-5 | Demo App 场景 A/B | 可单独编译、触发和复位 | 未开始 |
 | B3-6 | 第一批评测测试 | 至少 20 条自动运行 | 未开始 |
-| B3-7 | 规则引擎契约收敛：复用 `:core-model` 类型、实现 `RiskRuleEngine.assess(RuleInput)`、包名改 `com.causalguard.rules`、纳入根构建 | 规则模块依赖 `:core-model`，`gradle build` 通过 | 未开始 |
+| B3-7 | 规则引擎契约收敛：复用 `:core-model` 类型、实现 `RiskRuleEngine.assess(RuleInput)`、包名改 `com.causalguard.rules`、纳入根构建 | 规则模块依赖 `:core-model`，`gradle build` 通过 | 已完成 |
 
 集成：`fixture → FakeEventRepository → 规则 → 证据 → 本地解释 → UI → Fake 处置`；随后只替换 `FakeEventRepository → RoomEventRepository`。
+> 阶段 3 成员 B 规则引擎进展（2026-09-28）：B3-3、B3-7 已完成。feature/b-rule-engine-core 已完成确定性规则执行器和 v0.1 规则资产，复用 :core-model 的 RuleInput / RiskAssessment，RuleEvaluator 实现 RiskRuleEngine，标准 assess() 返回 canonical RiskAssessment，rich evaluation metadata 由 evaluate() 提供；包名统一为 com.causalguard.rules，模块纳入根 Gradle 构建并移除旧 standalone Gradle 入口。当前 rule-engine unit test、lint 及根 gradle build 均通过。
 
 > 契约收敛说明（A，2026-09-24）：`RiskAssessment` 已按 docs/10 §2 在 `:core-model` 补齐 `matchedRules`/`category`，并新增 `RuleInput`/`RuleUsageContext`/`RiskRuleEngine`（`core-model/.../RuleApi.kt`）。B 侧需删除自建枚举与模型、改用 core-model 类型，规则动作建议改名 `RuleRecommendation` 以避开 docs/07 §2.7 的持久化 `Recommendation`。根 `settings.gradle` 已守卫式 include `:rule-engine`，B 合并分支时需同步其 `build.gradle.kts`（JDK17、依赖 `:core-model`、移除独立 `settings.gradle.kts` 与 `FAIL_ON_PROJECT_REPOS`）。
 
