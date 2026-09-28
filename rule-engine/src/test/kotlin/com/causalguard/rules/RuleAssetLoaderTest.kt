@@ -4,6 +4,7 @@ import com.causalguard.core.model.Confidence
 import com.causalguard.core.model.RiskCategory
 import com.causalguard.core.model.RiskLevel
 import com.causalguard.core.model.RuleInput
+import java.io.File
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,6 +24,7 @@ class RuleAssetLoaderTest {
             listOf("R-001", "R-002", "R-003", "R-005", "R-006", "R-007", "R-008", "R-009", "R-010"),
             result.rules.map { it.id }
         )
+        assertEquals("前台合理访问", result.rules.first().name)
     }
 
     @Test
@@ -55,6 +57,17 @@ class RuleAssetLoaderTest {
         assertEquals(listOf("R-007", "R-003", "R-005"), network.matchedRules)
         assertEquals(listOf("R-006", "R-005"), unused.matchedRules)
         assertEquals(listOf("R-002", "R-009"), location.matchedRules)
+    }
+    @Test
+    fun missingPathReturnsReadFailure() {
+        val missingFile = File.createTempFile("missing-risk-rules-", ".json")
+        try {
+            assertTrue(missingFile.delete())
+            val result = loader.loadFromPath(missingFile.toPath())
+            assertFailureContains(result, "Failed to read rule asset:")
+        } finally {
+            missingFile.delete()
+        }
     }
 
     @Test

@@ -19,9 +19,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    lint {
-        disable += "NewApi"
-    }
 }
 
 dependencies {

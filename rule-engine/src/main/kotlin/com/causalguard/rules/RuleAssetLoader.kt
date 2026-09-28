@@ -8,7 +8,6 @@ import com.causalguard.core.model.RiskCategory
 import com.causalguard.core.model.RiskLevel
 import com.causalguard.core.model.ScenarioMatch
 
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -44,7 +43,7 @@ class RuleAssetLoader(
     }
 
     fun loadFromPath(path: Path): RuleAssetLoadResult =
-        runCatching { Files.readString(path) }
+        runCatching { path.toFile().readText(Charsets.UTF_8) }
             .fold(
                 onSuccess = ::loadFromString,
                 onFailure = { RuleAssetLoadResult.Failure(listOf("Failed to read rule asset: ${it.message}")) }
