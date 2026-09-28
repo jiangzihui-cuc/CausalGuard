@@ -3,7 +3,7 @@
 > 版本：`v0.1`（P0 设计基线）
 > 最后更新：2026-09-24
 > 责任人：成员 B（协作：成员 A）
-> 状态：**技术事实已按阶段 1 Spike 定稿（A2-1，2026-09-24）**。证据见 [spike-results](spike-results.md)；协议级 UID 归属量化成功率待 A4-4 补。
+> 状态：**技术事实已按阶段 1 Spike 定稿（A2-1，2026-09-24）**。证据见 [spike-results](spike-results.md)；协议级 UID 归属量化成功率已于 2026-09-28 在真机 PJW110 / Android 16 补测（TCP/UDP 231/231 = 100%）。
 > 验收标准：每个产品功能都能指向一个真实数据来源，不能出现“先写页面，之后再想数据从哪里来”。
 
 ## 1. 用途
@@ -31,7 +31,7 @@
 | 相机/麦克风访问历史 | 第三方 App 无法可靠读取 | — | — | **否** | 走 Demo App 真值 | “不可观测” |
 | 原始剪贴板/通讯录内容 | 不采集 | — | — | 否 | — | 不展示、不保存 |
 
-> 阶段 1 结论（A1-8，真机 OPPO Reno12 Pro，2026-09-23）：普通 App 在自身进程直接调用 `ConnectivityManager.getConnectionOwnerUid` 恒返回 `-1`，无论走 VPN 还是物理网络。因此 `uid` 一律取自底座 `VpnService` 内回调（`ServiceSinkhole.getUidQ` → `Packet.uid`），App 侧不重复调用系统 API；失败按第 6 节降级为 `unknown`。底座归属**量化成功率**（按 TCP/UDP 分别统计）待 A4-4 用 `scripts/capture-uid-attribution.*` 采集回填。
+> 阶段 1 结论（A1-8，真机 OPPO Reno12 Pro，2026-09-23）：普通 App 在自身进程直接调用 `ConnectivityManager.getConnectionOwnerUid` 恒返回 `-1`，无论走 VPN 还是物理网络。因此 `uid` 一律取自底座 `VpnService` 内回调（`ServiceSinkhole.getUidQ` → `Packet.uid`），App 侧不重复调用系统 API；失败按第 6 节降级为 `unknown`。底座归属**量化成功率**已于 2026-09-28 在真机 PJW110 / Android 16 补测：TCP/UDP **231/231 = 100%**（两轮，覆盖闲鱼/番茄小说/微信/支付宝/企业微信），ICMP 固定不归属；统计方法见 `docs/spike-results.md` §3 A1-8。
 
 ## 3. 三档可观测性定义
 

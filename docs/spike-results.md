@@ -1,11 +1,11 @@
 # spike-results（阶段 1 技术 Spike 结果）
 
-> 版本：`v0.1`
-> 最后更新：2026-09-23
+> 版本：`v0.2`
+> 最后更新：2026-09-28
 > 责任人：成员 A
 > 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**基本完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；仅底座 UID 归属量化成功率待 adb 打通后补）
+> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测，见第 3 节）
 
 ---
 
@@ -60,8 +60,8 @@
 | CMake | 3.22.1（SDK 包） |
 | NDK | 27.2.12479018 |
 | Rust / WireGuard | rustup 1.29.1 + Rust 1.95.0（4 个 Android target）+ cargo-ndk 4.1.2；APK 打包必须构建 `libwgbridge.so` |
-| 演示机型号 | OPPO Reno12 Pro |
-| Android 版本 | _待补（基线 API 29+）_ |
+| 演示机型号 | OPPO Reno12 Pro（A1-3/A1-4 Spike）；PJW110（A1-8 量化 + A4-4 真机，2026-09-28） |
+| Android 版本 | PJW110：Android 16 / API 36（adb 无线调试，2026-09-28）；Reno12 Pro：_待补（基线 API 29+）_ |
 | 构建命令 | `gradle --no-daemon assembleFdroidDebug`（Gradle 9.6.1；wrapper 分发地址被网络策略拦截，改用系统安装的 9.6.1） |
 | 构建结果 | **成功**，BUILD SUCCESSFUL in 9m 6s（首次）/ 3m 10s（缓存命中） |
 | APK 路径 | 构建产物 `app/build/outputs/apk/fdroid/debug/TrackerControl-fdroidDebug-latest.apk`；已复制持久副本到构建机 `~/trackercontrol-apk/` |
@@ -208,7 +208,22 @@
   2. 因此不能由 App 自行实现 UID 归属，必须复用底座在 **VpnService 内**的归属路径（`ServiceSinkhole.getUidQ` → `Packet.uid`），这也是底座能按 App 记录/拦截的原因（A1-5、A1-6 已在真机验证 per-App 事实）。
   3. 协议边界不变：底座仅对 TCP(6)/UDP(17) 调 `getUidQ`，ICMP 固定不归属。
 - 结论：满足 A1-8——**网络事件中的 `uid` 一律取自底座回调（`Packet.uid`），App 侧不重复调用系统 API**；归属失败时按 `docs/02`、`docs/09` 降级为 `unknown`。
-- 遗留：底座在真机上的**量化成功率**（成功归属条数 / 总连接条数）需在 adb 可用后从 `TrackerControl.VPN` 日志（`Get uid=...`）统计，当前演示机 adb 未打通，列为待补。
+- 遗留：底座 UID 归属**量化成功率**已于 2026-09-28 在真机 PJW110 补测，见下。
+
+#### A1-8 底座 UID 归属量化成功率（2026-09-28 真机 PJW110 / Android 16 / API 36）
+
+- 采集方式：`adb logcat -s TrackerControl.VPN`，读取底座 `ServiceSinkhole.getUidQ`（`ServiceSinkhole.java:2274/2276`）的 `Get uid local=... remote=...`（查询）与 `Get uid=<uid>`（结果）两行；分母 = TCP/UDP 查询次数（非 TCP/UDP 如 ICMP 不进入 `getUidQ`，不计入）。
+- 设备/安装：PJW110（Android 16 / API 36），安装 fdroid debug 包 `net.kollnig.missioncontrol.fdroid.test`（构建机持久副本 `~/trackercontrol-apk/TrackerControl-fdroidDebug-latest.apk`，`adb install -r` 侧载；经 WSL2 无线调试连接）。
+
+| 轮次 | 窗口 | TCP/UDP 查询（分母） | 成功返回有效 uid | `Get uid=-1` | 成功率 | ICMP/系统未归属（不计分母） |
+|---|---|---|---|---|---|---|
+| #1 单 App（闲鱼） | 19:59 | 137 | 137 | 0 | 100% | 13 |
+| #2 多 App | 20:02 | 94 | 94 | 0 | 100% | 1 |
+| **合计** | - | **231** | **231** | **0** | **100%** | 14 |
+
+- 第 2 轮覆盖多 App 且均正确归属到各自 uid：番茄小说 `com.phoenix.read`(10379) 49 条、微信 `com.tencent.mm`(10331) 32 条、支付宝 `com.eg.android.AlipayGphone`(10326) 11 条、企业微信 `com.tencent.wework`(10349) 2 条；第 1 轮全部为闲鱼 `com.taobao.idlefish`(10343)。
+- 结论：底座 VpnService 内 `getConnectionOwnerUid` 在 TCP/UDP 上成功率为 **231/231 = 100%**，且能区分多个 App；唯一未归属的是 ICMP（`p1`），与协议边界一致（`docs/02` §4、`docs/09`）。
+- 局限：两轮各约 1 分钟、4~5 个 App，样本量有限；后续可在长时、更多 App 与网络切换场景下复测。
 
 ---
 
@@ -228,6 +243,6 @@
 
 ## 5. 未决/阻塞
 
-1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）；A1-8 自测完成（见上，归属依赖底座）。
-2. 待补：底座 UID 归属**量化成功率**，需 adb 打通后从 `TrackerControl.VPN` 日志统计（演示机 adb 当前不可用）。
-3. 演示机型号 OPPO Reno12 Pro；Android 版本待补。
+1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）；A1-8 自测与量化成功率均完成（见第 3 节 A1-8，归属依赖底座）。
+2. 已补测：底座 UID 归属**量化成功率** 231/231 = 100%（TCP/UDP，真机 PJW110 / Android 16，2026-09-28，经 WSL2 无线调试采集 `TrackerControl.VPN` 日志）。
+3. 演示机 PJW110 为 Android 16 / API 36；早期 Spike 机 OPPO Reno12 Pro 的 Android 版本仍待补（基线 API 29+）。
