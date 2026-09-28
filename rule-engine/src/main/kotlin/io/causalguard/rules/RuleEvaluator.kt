@@ -4,6 +4,7 @@ import com.causalguard.core.model.Confidence
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.RiskCategory
 import com.causalguard.core.model.RiskAssessment as CoreRiskAssessment
+import com.causalguard.core.model.RiskRuleEngine
 import com.causalguard.core.model.RiskLevel
 import com.causalguard.core.model.RuleInput
 import com.causalguard.core.model.ScenarioMatch
@@ -11,7 +12,7 @@ import com.causalguard.core.model.ScenarioMatch
 class RuleEvaluator(
     rules: List<RiskRule>,
     private val ruleVersion: String = RuleInput.DEFAULT_RULE_VERSION
-) {
+) : RiskRuleEngine {
     private val sortedRules = rules.sortedWith(
         compareByDescending<RiskRule> { it.priority }.thenBy { it.id }
     )
@@ -67,26 +68,8 @@ class RuleEvaluator(
         )
     }
 
-    fun assess(input: RuleInput): RiskAssessment {
-        val result = evaluate(input)
-        val assessment = result.assessment
-
-        return RiskAssessment(
-            id = assessment.id,
-            eventId = assessment.eventId,
-            ruleVersion = assessment.ruleVersion,
-            riskScore = assessment.riskScore,
-            riskLevel = assessment.riskLevel,
-            scenarioMatch = assessment.scenarioMatch,
-            confidence = assessment.confidence,
-            explanationBoundary = requireNotNull(assessment.explanationBoundary),
-            evidenceIds = assessment.evidenceIds,
-            matchedRules = assessment.matchedRules,
-            category = assessment.category,
-            recommendation = result.recommendationDecision,
-            shouldShowUnknownDegradation = result.degradation.shouldShowUnknownDegradation
-        )
-    }
+    override fun assess(input: RuleInput): CoreRiskAssessment =
+        evaluate(input).assessment
 
     private fun RiskRule.matches(input: RuleInput): Boolean {
         val event = input.event

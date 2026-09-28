@@ -57,10 +57,10 @@ class RuleEvaluationResultTest {
             relatedEvents = listOf(FixtureEvents.calculatorNetwork)
         )
 
-        val legacy = evaluator.assess(input)
+        val assessment = evaluator.assess(input)
         val result = evaluator.evaluate(input)
 
-        assertCanonicalMatchesLegacy(legacy, result)
+        assertCanonicalMatchesAssessment(assessment, result)
         assertEquals(listOf("R-007", "R-002"), result.assessment.matchedRules)
         assertEquals(RiskLevel.HIGH, result.assessment.riskLevel)
         assertEquals(RiskCategory.HIGH_RISK, result.assessment.category)
@@ -76,10 +76,10 @@ class RuleEvaluationResultTest {
             relatedEvents = listOf(FixtureEvents.calculatorClipboard)
         )
 
-        val legacy = evaluator.assess(input)
+        val assessment = evaluator.assess(input)
         val result = evaluator.evaluate(input)
 
-        assertCanonicalMatchesLegacy(legacy, result)
+        assertCanonicalMatchesAssessment(assessment, result)
         assertEquals(listOf("R-007", "R-003", "R-005"), result.assessment.matchedRules)
         assertEquals(RiskLevel.HIGH, result.assessment.riskLevel)
         assertEquals(RiskCategory.HIGH_RISK, result.assessment.category)
@@ -91,10 +91,10 @@ class RuleEvaluationResultTest {
     fun evaluateMapsUnknownAssessmentToCanonicalResult() {
         val input = RuleInput(event = FixtureEvents.unknownNetwork)
 
-        val legacy = evaluator.assess(input)
+        val assessment = evaluator.assess(input)
         val result = evaluator.evaluate(input)
 
-        assertCanonicalMatchesLegacy(legacy, result)
+        assertCanonicalMatchesAssessment(assessment, result)
         assertEquals(listOf("R-008", "R-010"), result.assessment.matchedRules)
         assertEquals(RiskLevel.LOW, result.assessment.riskLevel)
         assertEquals(RiskCategory.UNKNOWN, result.assessment.category)
@@ -108,10 +108,10 @@ class RuleEvaluationResultTest {
     fun evaluateMapsNoMatchAssessmentToCanonicalResult() {
         val input = RuleInput(event = FixtureEvents.readerUsage)
 
-        val legacy = evaluator.assess(input)
+        val assessment = evaluator.assess(input)
         val result = evaluator.evaluate(input)
 
-        assertCanonicalMatchesLegacy(legacy, result)
+        assertCanonicalMatchesAssessment(assessment, result)
         assertEquals(RiskLevel.LOW, result.assessment.riskLevel)
         assertEquals(RiskCategory.UNKNOWN, result.assessment.category)
         assertEquals(0, result.assessment.riskScore)
@@ -148,26 +148,21 @@ class RuleEvaluationResultTest {
         assertEquals(first, second)
     }
 
-    private fun assertCanonicalMatchesLegacy(
-        legacy: RiskAssessment,
+    private fun assertCanonicalMatchesAssessment(
+        assessment: CoreRiskAssessment,
         result: RuleEvaluationResult
     ) {
-        assertEquals(legacy.id, result.assessment.id)
-        assertEquals(legacy.eventId, result.assessment.eventId)
-        assertEquals(legacy.ruleVersion, result.assessment.ruleVersion)
-        assertEquals(legacy.riskScore, result.assessment.riskScore)
-        assertEquals(legacy.riskLevel, result.assessment.riskLevel)
-        assertEquals(legacy.scenarioMatch, result.assessment.scenarioMatch)
-        assertEquals(legacy.confidence, result.assessment.confidence)
-        assertEquals(legacy.category, result.assessment.category)
-        assertEquals(legacy.explanationBoundary, result.assessment.explanationBoundary)
-        assertEquals(legacy.evidenceIds, result.assessment.evidenceIds)
-        assertEquals(legacy.matchedRules, result.assessment.matchedRules)
+        assertEquals(assessment.id, result.assessment.id)
+        assertEquals(assessment.eventId, result.assessment.eventId)
+        assertEquals(assessment.ruleVersion, result.assessment.ruleVersion)
+        assertEquals(assessment.riskScore, result.assessment.riskScore)
+        assertEquals(assessment.riskLevel, result.assessment.riskLevel)
+        assertEquals(assessment.scenarioMatch, result.assessment.scenarioMatch)
+        assertEquals(assessment.confidence, result.assessment.confidence)
+        assertEquals(assessment.category, result.assessment.category)
+        assertEquals(assessment.explanationBoundary, result.assessment.explanationBoundary)
+        assertEquals(assessment.evidenceIds, result.assessment.evidenceIds)
+        assertEquals(assessment.matchedRules, result.assessment.matchedRules)
         assertEquals(0L, result.assessment.createdAt)
-        assertEquals(legacy.recommendation, result.recommendationDecision)
-        assertEquals(
-            legacy.shouldShowUnknownDegradation,
-            result.degradation.shouldShowUnknownDegradation
-        )
     }
 }

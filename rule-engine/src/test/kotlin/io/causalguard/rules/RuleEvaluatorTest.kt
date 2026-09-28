@@ -11,6 +11,7 @@ import com.causalguard.core.model.NetworkProtocol
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.RiskCategory
 import com.causalguard.core.model.RiskLevel
+import com.causalguard.core.model.RiskRuleEngine
 import com.causalguard.core.model.RuleInput
 import com.causalguard.core.model.ScenarioMatch
 import com.causalguard.core.model.UsageInfo
@@ -23,85 +24,106 @@ class RuleEvaluatorTest {
     private val evaluator = RuleEvaluator(FixtureRules.rules)
 
     @Test
+    fun `rule evaluator satisfies canonical risk rule engine contract`() {
+        val engine: RiskRuleEngine = RuleEvaluator(FixtureRules.rules)
+        val input = RuleInput(
+            event = FixtureEvents.calculatorClipboard,
+            appProfile = FixtureEvents.calculatorProfile,
+            relatedEvents = listOf(FixtureEvents.calculatorNetwork)
+        )
+
+        val assessment = engine.assess(input)
+
+        assertEquals("e-20260921-0003", assessment.eventId)
+        assertEquals(RiskLevel.HIGH, assessment.riskLevel)
+        assertEquals(listOf("R-007", "R-002"), assessment.matchedRules)
+    }
+
+    @Test
     fun `background clipboard matches sensitive access and correlated network rules`() {
-        val event = FixtureEvents.calculatorClipboard
-        val result = evaluator.assess(
+        val result = evaluator.evaluate(
             RuleInput(
-                event = event,
+                event = FixtureEvents.calculatorClipboard,
                 appProfile = FixtureEvents.calculatorProfile,
                 relatedEvents = listOf(FixtureEvents.calculatorNetwork)
             )
         )
+        val assessment = result.assessment
 
-        assertEquals(listOf("R-007", "R-002"), result.matchedRules)
-        assertEquals(RiskLevel.HIGH, result.riskLevel)
-        assertEquals(RiskCategory.HIGH_RISK, result.category)
-        assertEquals("limit_background_network", result.recommendation.action)
+        assertEquals(listOf("R-007", "R-002"), assessment.matchedRules)
+        assertEquals(RiskLevel.HIGH, assessment.riskLevel)
+        assertEquals(RiskCategory.HIGH_RISK, assessment.category)
+        assertEquals("limit_background_network", result.recommendationDecision.action)
     }
 
     @Test
     fun `background contacts matches sensitive access rule`() {
-        val result = evaluator.assess(RuleInput(event = FixtureEvents.notesContacts))
+        val result = evaluator.evaluate(RuleInput(event = FixtureEvents.notesContacts))
+        val assessment = result.assessment
 
-        assertEquals(listOf("R-002"), result.matchedRules)
-        assertEquals(RiskLevel.MEDIUM, result.riskLevel)
-        assertEquals(RiskCategory.HIGH_RISK, result.category)
-        assertEquals("review_permission", result.recommendation.action)
+        assertEquals(listOf("R-002"), assessment.matchedRules)
+        assertEquals(RiskLevel.MEDIUM, assessment.riskLevel)
+        assertEquals(RiskCategory.HIGH_RISK, assessment.category)
+        assertEquals("review_permission", result.recommendationDecision.action)
     }
 
     @Test
     fun `unused app network matches tracker and long-unused rules`() {
-        val result = evaluator.assess(RuleInput(event = FixtureEvents.flashlightNetwork))
+        val result = evaluator.evaluate(RuleInput(event = FixtureEvents.flashlightNetwork))
+        val assessment = result.assessment
 
-        assertEquals(listOf("R-006", "R-005"), result.matchedRules)
-        assertEquals(RiskLevel.HIGH, result.riskLevel)
-        assertEquals(RiskCategory.ANALYTICS, result.category)
-        assertEquals("limit_background_network", result.recommendation.action)
+        assertEquals(listOf("R-006", "R-005"), assessment.matchedRules)
+        assertEquals(RiskLevel.HIGH, assessment.riskLevel)
+        assertEquals(RiskCategory.ANALYTICS, assessment.category)
+        assertEquals("limit_background_network", result.recommendationDecision.action)
     }
 
     @Test
     fun `post-revocation background location matches permission rule`() {
-        val result = evaluator.assess(
+        val result = evaluator.evaluate(
             RuleInput(
                 event = FixtureEvents.weatherLocation,
                 priorEvents = listOf(FixtureEvents.weatherPermission)
             )
         )
+        val assessment = result.assessment
 
-        assertEquals(listOf("R-002", "R-009"), result.matchedRules)
-        assertEquals(RiskLevel.HIGH, result.riskLevel)
-        assertEquals(RiskCategory.HIGH_RISK, result.category)
-        assertEquals("review_permission", result.recommendation.action)
+        assertEquals(listOf("R-002", "R-009"), assessment.matchedRules)
+        assertEquals(RiskLevel.HIGH, assessment.riskLevel)
+        assertEquals(RiskCategory.HIGH_RISK, assessment.category)
+        assertEquals("review_permission", result.recommendationDecision.action)
     }
 
     @Test
     fun `foreground location is normal low risk`() {
-        val result = evaluator.assess(
+        val result = evaluator.evaluate(
             RuleInput(
                 event = FixtureEvents.mapLocation,
                 appProfile = FixtureEvents.mapProfile,
                 scenarioMatch = ScenarioMatch.MATCH
             )
         )
+        val assessment = result.assessment
 
-        assertEquals(listOf("R-001"), result.matchedRules)
-        assertEquals(RiskLevel.LOW, result.riskLevel)
-        assertEquals(RiskCategory.NECESSARY, result.category)
-        assertEquals("none", result.recommendation.action)
-        assertFalse(result.shouldShowUnknownDegradation)
+        assertEquals(listOf("R-001"), assessment.matchedRules)
+        assertEquals(RiskLevel.LOW, assessment.riskLevel)
+        assertEquals(RiskCategory.NECESSARY, assessment.category)
+        assertEquals("none", result.recommendationDecision.action)
+        assertFalse(result.degradation.shouldShowUnknownDegradation)
     }
 
     @Test
     fun `unknown network stays low confidence and has no deterministic action`() {
-        val result = evaluator.assess(RuleInput(event = FixtureEvents.unknownNetwork))
+        val result = evaluator.evaluate(RuleInput(event = FixtureEvents.unknownNetwork))
+        val assessment = result.assessment
 
-        assertEquals(listOf("R-008", "R-010"), result.matchedRules)
-        assertEquals(RiskLevel.LOW, result.riskLevel)
-        assertEquals(RiskCategory.UNKNOWN, result.category)
-        assertEquals(ScenarioMatch.UNKNOWN, result.scenarioMatch)
-        assertEquals(Confidence.LOW, result.confidence)
-        assertEquals("none", result.recommendation.action)
-        assertTrue(result.shouldShowUnknownDegradation)
+        assertEquals(listOf("R-008", "R-010"), assessment.matchedRules)
+        assertEquals(RiskLevel.LOW, assessment.riskLevel)
+        assertEquals(RiskCategory.UNKNOWN, assessment.category)
+        assertEquals(ScenarioMatch.UNKNOWN, assessment.scenarioMatch)
+        assertEquals(Confidence.LOW, assessment.confidence)
+        assertEquals("none", result.recommendationDecision.action)
+        assertTrue(result.degradation.shouldShowUnknownDegradation)
     }
 
     @Test
@@ -128,15 +150,15 @@ class RuleEvaluatorTest {
 
     @Test
     fun `event with no matching rule returns safe low risk result`() {
-        val result = evaluator.assess(RuleInput(event = FixtureEvents.readerUsage))
+        val result = evaluator.evaluate(RuleInput(event = FixtureEvents.readerUsage))
+        val assessment = result.assessment
 
-        assertEquals(emptyList(), result.matchedRules)
-        assertEquals(RiskLevel.LOW, result.riskLevel)
-        assertEquals(RiskCategory.UNKNOWN, result.category)
-        assertEquals("none", result.recommendation.action)
+        assertEquals(emptyList(), assessment.matchedRules)
+        assertEquals(RiskLevel.LOW, assessment.riskLevel)
+        assertEquals(RiskCategory.UNKNOWN, assessment.category)
+        assertEquals("none", result.recommendationDecision.action)
     }
 }
-
 internal object FixtureEvents {
     val mapProfile = AppProfile(
         packageName = "com.demo.map",

@@ -66,19 +66,3 @@ data class RiskRule(
     val recommendation: RecommendationDecision,
     val degradation: Degradation
 )
-
-data class RiskAssessment(
-    val id: String,
-    val eventId: String,
-    val ruleVersion: String,
-    val riskScore: Int,
-    val riskLevel: RiskLevel,
-    val scenarioMatch: ScenarioMatch,
-    val confidence: Confidence,
-    val explanationBoundary: String,
-    val evidenceIds: List<String>,
-    val matchedRules: List<String>,
-    val category: RiskCategory,
-    val recommendation: RecommendationDecision,
-    val shouldShowUnknownDegradation: Boolean
-)
