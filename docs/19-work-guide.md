@@ -1,7 +1,7 @@
 # 19 工作导引（打开仓库先看这个）
 
-> 版本：`v0.2`
-> 最后更新：2026-09-24
+> 版本：`v0.3`
+> 最后更新：2026-09-28
 > 用途：两人打开仓库后，30 秒内知道“现在到哪一步、我下一步做什么、改哪个文件”。
 > 配套：[20 开源复用建议](20-open-source-reuse-guide.md)、[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)、[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
 
@@ -12,12 +12,12 @@
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
 当前阶段：阶段 0/1/2/3 已完成并合入 main；进入阶段 4（真实数据接入）
-成员 A：阶段 3 已完成；阶段 4 A4-1/A4-2/A4-4 关联入库链路已完成，A4-3 底座源码已 submodule 导入（下一步写 Adapter），A4-5 待真机
+成员 A：阶段 3 已完成；阶段 4 A4-1/A4-2/A4-4 关联入库链路已完成，A1-8 底座 UID 归属量化成功率已真机补测（231/231=100%），A4-3 已采用广播桥接实现 App 侧 + 底座补丁（代码完成，真机联调并入 A4-5）
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
 
-**一句话**：事件库、Provider 与网络事件关联入库链路已就绪；**成员 A 现在做阶段 4 的真实数据接入（A4-3 TrackerControl Adapter、A4-5 VPN 生命周期；A4-1/A4-2/A4-4 已完成），成员 B 并行做不依赖真实 VPN 的规则与产品闭环**。
+**一句话**：事件库、Provider、网络事件关联入库链路与 A1-8 底座 UID 归属量化成功率均已就绪，A4-3 广播桥接（App 侧契约/Receiver/Source + 底座 `ServiceSinkhole` Hook 补丁 + 应用脚本）代码完成；**成员 A 现在做阶段 4 真机联调（应用底座补丁、A4-5 VPN 生命周期；A4-1/A4-2/A4-4 主体已完成），成员 B 并行做不依赖真实 VPN 的规则与产品闭环**。
 
 开源路线已定（详见 [20 开源复用建议](20-open-source-reuse-guide.md) 第 13 节）：优先走 **方案 A：TrackerControl / NetGuard（GPL-3.0）** 作为网络底座；接受 GPL 路线并明确开源与原创边界。MIT 备选路线仅在阶段 1 构建链持续失败时启用。
 
@@ -53,7 +53,7 @@
 | A3-5 | DAO、Adapter、Repository 单元测试 | `app/src/test/` | CI 通过 | 已完成（已合入 main） |
 
 > A3 代码已合入 `main`；A4-1/A4-2/A4-4 见 `data/provider/RealProviders.kt`、`data/ingest/NetworkEventIngestor.kt`、`data/network/ReplayNetworkEventSource.kt`、`data/repository/RoomEventSink.kt`，详见 [17 任务看板](17-task-board.md) 阶段 4 进展。
-> A4-3 底座以 submodule 固定在 `third_party/tracker-control-android/`（commit `9504d41b`）；克隆后需 `git submodule update --init --recursive`，构建见 [spike-build-guide](spike-build-guide.md) 第 4.2 节。
+> A4-3 底座以 submodule 固定在 `third_party/tracker-control-android/`（commit `9504d41b`）；克隆后需 `git submodule update --init --recursive`，构建见 [spike-build-guide](spike-build-guide.md) 第 4.2 节。A4-3 采用**广播桥接**：App 侧 `data/network/trackercontrol/TrackerControlBroadcast|EventReceiver|EventSource` + A4-4 `data/ingest/NetworkEventCollector`；底座侧不改 submodule，改由 `third_party/patches/a4-3-serversinkhole-network-hook.patch` + `scripts/apply-trackercontrol-hook.sh` 应用/撤销，详见 [adapter 边界](trackercontrol-adapter-boundary.md) §9。
 > 接口只在 `:core-model`（纯契约），Room/映射只放 `:app`；构建用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容，见 [18 风险清单](18-risk-register.md) RK-21）；数据库 `RiskAssessment` 升 v2 补 `category`/`matchedRules`。
 
 ### 成员 B（产品与智能分析主责）——现在做阶段 1 设计输入（9/21-9/22）

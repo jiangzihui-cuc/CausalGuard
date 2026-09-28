@@ -7,6 +7,7 @@ import com.causalguard.core.model.AuditLogRepository
 import com.causalguard.core.model.EventSink
 import com.causalguard.core.model.DemoScenarioRepository
 import com.causalguard.core.model.MitigationRepository
+import com.causalguard.core.model.NetworkEventSource
 import com.causalguard.core.model.PrivacyEventRepository
 import com.causalguard.core.model.RecommendationRepository
 import com.causalguard.core.model.RiskAssessmentRepository
@@ -14,6 +15,11 @@ import com.causalguard.core.model.RuleVersionRepository
 import com.causalguard.core.model.UsageContextProvider
 import com.causalguard.core.model.UsageContextRepository
 import com.causalguard.data.importer.EventImporter
+import com.causalguard.data.ingest.NetworkEventCollector
+import com.causalguard.data.ingest.NetworkEventIngestor
+import com.causalguard.data.network.trackercontrol.AndroidPackageNameResolver
+import com.causalguard.data.network.trackercontrol.TrackerControlEventSource
+import com.causalguard.data.network.trackercontrol.TrackerControlNetworkAdapter
 import com.causalguard.data.local.CausalGuardDatabase
 import com.causalguard.data.provider.PackageManagerProfileProvider
 import com.causalguard.data.provider.UsageStatsContextProvider
@@ -53,7 +59,7 @@ interface AppDependencies {
  * Provider 允许注入 Fake 实现，便于无 VPN/无权限时用 fixture 驱动。
  */
 class AppContainer(
-    context: Context,
+    private val context: Context,
     override val appProfileProvider: AppProfileProvider = PackageManagerProfileProvider(context),
     override val usageContextProvider: UsageContextProvider = UsageStatsContextProvider(context),
     database: CausalGuardDatabase = CausalGuardDatabase.get(context),
@@ -61,6 +67,19 @@ class AppContainer(
 
     override val privacyEventRepository: PrivacyEventRepository = RoomPrivacyEventRepository(database)
     override val eventSink: EventSink = RoomEventSink(privacyEventRepository)
+
+    /**
+     * A4-3：真实网络事件源（底座广播桥接）。未授权 VPN 或无底座时 `isAvailable=false`，
+     * 事件流为空，绝不伪造连接；无 VPN 场景用 `ReplayNetworkEventSource` 替代。
+     */
+    val networkEventSource: NetworkEventSource = TrackerControlEventSource(
+        context = context,
+        adapter = TrackerControlNetworkAdapter(AndroidPackageNameResolver(context)),
+    )
+
+    /** A4-4：source → `NetworkEventIngestor` → Room 的端到端采集器（前台服务/演示壳按需 start/stop）。 */
+    val networkEventCollector: NetworkEventCollector =
+        NetworkEventCollector(networkEventSource, NetworkEventIngestor(privacyEventRepository))
     override val appProfileRepository: AppProfileRepository = RoomAppProfileRepository(database)
     override val usageContextRepository: UsageContextRepository = RoomUsageContextRepository(database)
     override val riskAssessmentRepository: RiskAssessmentRepository = RoomRiskAssessmentRepository(database)

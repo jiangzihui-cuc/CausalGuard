@@ -1,7 +1,7 @@
 # 17 任务看板
 
-> 版本：`v0.7`
-> 最后更新：2026-09-27
+> 版本：`v0.8`
+> 最后更新：2026-09-28
 > 责任人：成员 B（协作：成员 A）
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
 > 依据：[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)。阶段内任务按 A（平台/网络/系统/发布）与 B（产品/规则/证据/UI/评测）两条并行链拆分；每人每天最多保留“今日必须完成 1 项 + 完成后再做 1 项 + 阻塞替代 1 项”。
@@ -32,9 +32,9 @@
 | A1-5 | 输出最小 NetworkEvent | 脱敏 JSON：时间、协议、IP/域名线索、端口、UID/unknown | 已完成 |
 | A1-6 | 最小阻断验证 | 日志：至少一个测试域名可阻断并保留尝试记录 | 已完成 |
 | A1-7 | 开源技术登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 条目 | 已完成 |
-| A1-8 | 记录 UID 归属成功率 | 更新 [02 能力边界表](02-android-capability-matrix.md) | 已完成（量化成功率转 A4-4） |
+| A1-8 | 记录 UID 归属成功率 | 更新 [02 能力边界表](02-android-capability-matrix.md) | 已完成（量化成功率已补测，见 A4-4） |
 
-> 阶段 1 进展（A 回填，证据见 [Spike 结果](spike-results.md)）：**A1-1～A1-8 全部完成**。A1-8 结论已出——普通 App 直接调用 `getConnectionOwnerUid` 恒为 `-1`，归属必须复用底座 VpnService 内路径，`docs/02` 已更新，失败降级为 unknown。仅“底座 UID 归属**量化成功率**”未采集（构建机已具备 adb，但当前无设备连接），转入 A4-4 一并统计。
+> 阶段 1 进展（A 回填，证据见 [Spike 结果](spike-results.md)）：**A1-1～A1-8 全部完成**。A1-8 结论已出——普通 App 直接调用 `getConnectionOwnerUid` 恒为 `-1`，归属必须复用底座 VpnService 内路径，`docs/02` 已更新，失败降级为 unknown。底座 UID 归属**量化成功率**已于 2026-09-28 在真机 PJW110 / Android 16 补测（TCP/UDP 231/231 = 100%，见 A4-4 与 `docs/spike-results.md` §3）。
 
 止损：24 小时内 TrackerControl 必须能构建并联网；48 小时内必须得到连接事件或明确失败原因；失败先换固定旧 tag，仍失败则缩小网络范围。
 
@@ -108,8 +108,8 @@
 |---|---|---|---|---|
 | A4-1 | PackageManager Provider | 成员 A | - | 已完成（A3-3 `PackageManagerProfileProvider`） |
 | A4-2 | UsageStats Provider | 成员 A | - | 已完成（A3-3 `UsageStatsContextProvider`） |
-| A4-3 | TrackerControl/NetGuard Network Adapter | 成员 A | - | 进行中（submodule 已导入；回调→`NetworkEvent` 映射 Adapter 已实现并测试，真实 `ServiceSinkhole` 挂接待底座构建/真机） |
-| A4-4 | UID/包名/域名/时间窗口关联（含补 A1-8 遗留：adb 抓 `Get uid=` 统计底座归属量化成功率） | 成员 A | - | 进行中（关联入库链路已完成，A1-8 量化待真机） |
+| A4-3 | TrackerControl/NetGuard Network Adapter | 成员 A | - | 代码完成（submodule 已导入；广播桥接 App 侧契约/Receiver/Source + 底座 `ServiceSinkhole` Hook 补丁 + 应用脚本已就绪并单测，真机端到端联调并入 A4-5） |
+| A4-4 | UID/包名/域名/时间窗口关联（含补 A1-8 遗留：adb 抓 `Get uid=` 统计底座归属量化成功率） | 成员 A | - | 代码完成（关联入库链路 + `NetworkEventCollector` 端到端源→入库已接 `AppContainer`；A1-8 量化成功率真机补测 231/231=100%；真实事件端到端待 A4-3 底座补丁真机联调） |
 | A4-5 | VPN 生命周期、前台服务、网络切换和异常恢复 | 成员 A | - | 未开始 |
 | B4-1 | 只选一套 tracker 数据，固定版本并生成 50~200 条精简离线表 | 成员 B | 成员 A | 未开始 |
 | B4-2 | `TrackerClassifier` 和域名归一化 | 成员 B | 成员 A | 未开始 |
@@ -121,7 +121,11 @@
 
 > 阶段 4 进展（A 回填，2026-09-27）：A4-1/A4-2 已在 A3-3 `RealProviders` 落地；A4-4 完成 `NetworkEvent → PrivacyEvent` 关联入库链路——`data/ingest/NetworkEventIngestor`（补齐 `schemaVersion`/`dedupKey`/时间窗、`evidenceLevel=E2`、`source=vpn`、诚实保留 `uid=-1`/`packageName=unknown`）、`data/network/ReplayNetworkEventSource`（无 VPN 回放）、`data/repository/RoomEventSink`（docs/09 §3 唯一写入口，已接入 `AppContainer`），并有 8 项单测覆盖转换/降级/去重窗/回放/端到端。同时修复 `RiskAssessment` 持久化漂移：Entity/Mapper/`docs/08` 补 `category`、`matchedRules`，数据库升 v2 并登记 `MIGRATION_1_2`。A4-3 底座源码已以 git submodule 固定导入 `third_party/tracker-control-android/`（commit `9504d41b`）；`data/network/trackercontrol/` 已实现回调桥（`PacketMeta`/`DnsRecordMeta`/`TrackerControlCallback`）与 `TrackerControlNetworkAdapter`（协议号映射、`blocked`、`dnsResolved`→`domainHint`、`uid=-1`→`unknown`、有界队列丢包计数、`start/stop` 生命周期），9 项单测覆盖；真实 `ServiceSinkhole` 挂接需底座构建与真机。A4-5（VPN 生命周期/前台服务）仍需真机验证。
 >
+> 真机进展（A 回填，2026-09-28）：演示机 **PJW110 / Android 16（API 36）** 已通过 WSL2 无线调试接入 adb，并侧载 fdroid debug 底座（`net.kollnig.missioncontrol.fdroid.test`），VPN 正常起 `tun0`。借此补齐 A1-8 遗留的**底座 UID 归属量化成功率**：从 `TrackerControl.VPN` 日志（`ServiceSinkhole.getUidQ`）统计 TCP/UDP 归属 **231/231 = 100%**（两轮：单 App 137/137、多 App 94/94，覆盖闲鱼/番茄小说/微信/支付宝/企业微信），ICMP 固定不归属按 unknown 降级，与 `docs/02`/`docs/09` 一致。下一步：在该底座内挂接 `TrackerControlCallback` 打通 A4-3 真实事件端到端。
+>
 > A 侧阶段 4 已合入分支登记：`feature/a-t4-network-ingest`→`24e71a9`（A4-4 关联入库 + DB v2）、`feature/a-t4-trackercontrol-submodule`→`990e96c`（A4-3 底座 submodule）、`feature/a-rule-contract-extension`→`4224cdf`（规则契约扩展）、`feature/a-t3-room-repository`→`3479330`（A3 数据层）。当前 `:app` 单测 31 项通过，`gradle build` 通过（CI 同）。
+>
+> A4-3/A4-4 代码进展（A 回填，2026-09-28）：采用**广播桥接**（底座独立 Gradle 工程无法 import `com.causalguard.*`，冻结的 `TrackerControlCallback` 契约不变，详见 [adapter 边界](trackercontrol-adapter-boundary.md) §9）。App 侧新增 `data/network/trackercontrol/TrackerControlBroadcast`（广播契约 + 纯解析）、`TrackerControlEventReceiver`、`TrackerControlEventSource`（`NetworkEventSource` 实现，`LocalBroadcastManager` 注册/注销），及 A4-4 端到端 `data/ingest/NetworkEventCollector`（`NetworkEventSource → NetworkEventIngestor → Room`，`start/stop` 幂等），已接入 `AppContainer`；`app/build.gradle` 增 `androidx.localbroadcastmanager:localbroadcastmanager:1.1.0`。底座侧不改 submodule，改以补丁交付：`third_party/patches/a4-3-serversinkhole-network-hook.patch`（新增 `eu.faircode.netguard.CausalGuardNetworkHook`，在 `ServiceSinkhole.logPacket`/`dnsResolved` 各挂一处）与 `scripts/apply-trackercontrol-hook.sh`（应用/`--revert`）；submodule 保持干净、`git apply --check` 通过。`:app` 单测 41 项通过（新增 Broadcast 5 / EventSource 3 / Collector 2），`./gradlew --offline build` 通过。真机端到端与 VPN 生命周期（A4-5）未验证。
 
 ## 阶段 5：场景推理、因果链与处置复查（10/1-10/3）
 

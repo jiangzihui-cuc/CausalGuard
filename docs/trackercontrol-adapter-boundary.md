@@ -1,9 +1,9 @@
 # TrackerControl Adapter 边界（阶段 2 冻结）
 
-> 版本：`v0.1`
-> 最后更新：2026-09-24
+> 版本：`v0.2`
+> 最后更新：2026-09-28
 > 责任人：成员 A
-> 对应任务：A2-5（冻结 TrackerControl Adapter 边界）
+> 对应任务：A2-5（冻结 TrackerControl Adapter 边界）、A4-3（真实挂接实现，见第 9 节）
 > 上游底座：TrackerControl Android，tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（GPL-3.0）
 > 关联：[network-core-map](network-core-map.md)、[09 事件契约](09-event-contract.md)、[02 能力边界表](02-android-capability-matrix.md)、[06 模块设计](06-module-design.md) M3
 
@@ -138,3 +138,25 @@ interface EventSink {
 - 底座源码首次导入单独 commit，团队在 `ServiceSinkhole` 的挂接改动另起 commit；
 - 改动范围与回滚方式记入 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 与 PR；
 - 本边界一旦冻结，字段/接口变更需走独立契约 PR，并同步 [09](09-event-contract.md)、`core-model` 与 `docs/06` M3。
+
+---
+
+## 9. A4-3 真实挂接实现：广播桥接（2026-09-28 补充）
+
+第 5 节原方案是在 `ServiceSinkhole` 回调末尾直接调用 `TrackerControlCallback`。实施时确认底座（submodule，独立 Gradle 工程）与 CausalGuard `:app` 是两个编译单元，底座无法 import `com.causalguard.*`，直接调用会导致底座必须依赖本仓代码、难以回滚，也不利于在本仓 CI 验证。因此 A4-3 采用**广播桥接**（原第 9 节“方案 2”的落地版），冻结的 `TrackerControlCallback` 契约不变：
+
+```text
+ServiceSinkhole.logPacket / dnsResolved
+  → CausalGuardNetworkHook（底座内新增，自包含，不 import 本仓）
+  → LocalBroadcastManager 广播（同进程）
+  → TrackerControlEventReceiver（:app）
+  → TrackerControlNetworkAdapter（实现冻结的 TrackerControlCallback）
+  → events() → NetworkEventIngestor → Room
+```
+
+- 底座补丁：`third_party/patches/a4-3-serversinkhole-network-hook.patch`，用 `scripts/apply-trackercontrol-hook.sh` 应用/撤销；
+- 桥接契约（action、extra key）：`app/.../data/network/trackercontrol/TrackerControlBroadcast.kt`，与补丁一一对应，改动需同步；
+- 接收与生命周期：`TrackerControlEventReceiver.kt`、`TrackerControlEventSource.kt`；
+- 端到端采集：`data/ingest/NetworkEventCollector.kt`（source → `NetworkEventIngestor` → `PrivacyEventRepository`）。
+
+约束与降级不变：`uid=-1`→`packageName=unknown`；无 `dnsResolved`→`domainHint=null`；`allowed` 缺失按未阻断；队列满丢包计数；`stop()` 后不再接收广播。补丁只改 Java 回调、不动 native 核心。真机端到端与 VPN 生命周期联调归 A4-5。

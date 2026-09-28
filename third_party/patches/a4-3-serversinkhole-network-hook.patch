@@ -1,0 +1,115 @@
+diff --git a/app/src/main/java/eu/faircode/netguard/CausalGuardNetworkHook.java b/app/src/main/java/eu/faircode/netguard/CausalGuardNetworkHook.java
+new file mode 100644
+index 0000000..177547d
+--- /dev/null
++++ b/app/src/main/java/eu/faircode/netguard/CausalGuardNetworkHook.java
+@@ -0,0 +1,89 @@
++/*
++ * CausalGuard team modification (A4-3), added on top of TrackerControl/NetGuard.
++ *
++ * TrackerControl is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * See the repository root LICENSE (GPL-3.0) and the parent repository's
++ * THIRD_PARTY_NOTICES.md for the modification record and rollback notes.
++ */
++
++package eu.faircode.netguard;
++
++import android.content.Intent;
++import android.util.Log;
++
++import androidx.localbroadcastmanager.content.LocalBroadcastManager;
++
++/**
++ * CausalGuard 广播桥接（团队新增，A4-3）。
++ *
++ * 在 `ServiceSinkhole.logPacket` / `dnsResolved` 回调末尾把最小脱敏元数据
++ * （时间、协议、五元组、uid、allowed；DNS 的 qname/aname/ip）通过
++ * LocalBroadcastManager 发给同进程的 CausalGuard 适配层。
++ *
++ * 设计约束（docs/trackercontrol-adapter-boundary.md）：
++ * - 只发送连接元数据，绝不读请求体/响应体/TLS 明文；
++ * - 不 import 任何 com.causalguard 类型，保持底座自成一体、可回滚；
++ * - native 回调线程只做轻量打包 + 异步投递，异常一律吞掉，绝不影响转发。
++ */
++public final class CausalGuardNetworkHook {
++
++    public static final String ACTION_PACKET = "com.causalguard.intent.NETWORK_PACKET";
++    public static final String ACTION_DNS = "com.causalguard.intent.NETWORK_DNS";
++
++    public static final String EXTRA_TIME = "time";
++    public static final String EXTRA_PROTOCOL = "protocol";
++    public static final String EXTRA_SADDR = "saddr";
++    public static final String EXTRA_SPORT = "sport";
++    public static final String EXTRA_DADDR = "daddr";
++    public static final String EXTRA_DPORT = "dport";
++    public static final String EXTRA_UID = "uid";
++    public static final String EXTRA_ALLOWED = "allowed";
++
++    public static final String EXTRA_QNAME = "qname";
++    public static final String EXTRA_ANAME = "aname";
++    public static final String EXTRA_RESOURCE = "resource";
++
++    private static final String TAG = "TrackerControl.VPN";
++
++    private CausalGuardNetworkHook() {
++    }
++
++    /** Called at the end of logPacket(Packet). */
++    public static void onPacket(ServiceSinkhole service, Packet packet) {
++        if (service == null || packet == null)
++            return;
++        try {
++            Intent intent = new Intent(ACTION_PACKET);
++            intent.putExtra(EXTRA_TIME, packet.time);
++            intent.putExtra(EXTRA_PROTOCOL, packet.protocol);
++            intent.putExtra(EXTRA_SADDR, packet.saddr);
++            intent.putExtra(EXTRA_SPORT, packet.sport);
++            intent.putExtra(EXTRA_DADDR, packet.daddr);
++            intent.putExtra(EXTRA_DPORT, packet.dport);
++            intent.putExtra(EXTRA_UID, packet.uid);
++            intent.putExtra(EXTRA_ALLOWED, packet.allowed);
++            LocalBroadcastManager.getInstance(service).sendBroadcast(intent);
++        } catch (Throwable ex) {
++            Log.e(TAG, "CausalGuard onPacket failed: " + ex);
++        }
++    }
++
++    /** Called at the end of dnsResolved(ResourceRecord). */
++    public static void onDnsResolved(ServiceSinkhole service, ResourceRecord rr) {
++        if (service == null || rr == null)
++            return;
++        try {
++            Intent intent = new Intent(ACTION_DNS);
++            intent.putExtra(EXTRA_QNAME, rr.QName);
++            intent.putExtra(EXTRA_ANAME, rr.AName);
++            intent.putExtra(EXTRA_RESOURCE, rr.Resource);
++            LocalBroadcastManager.getInstance(service).sendBroadcast(intent);
++        } catch (Throwable ex) {
++            Log.e(TAG, "CausalGuard onDnsResolved failed: " + ex);
++        }
++    }
++}
+diff --git a/app/src/main/java/eu/faircode/netguard/ServiceSinkhole.java b/app/src/main/java/eu/faircode/netguard/ServiceSinkhole.java
+index e181130..54ccebb 100644
+--- a/app/src/main/java/eu/faircode/netguard/ServiceSinkhole.java
++++ b/app/src/main/java/eu/faircode/netguard/ServiceSinkhole.java
+@@ -2226,11 +2226,15 @@ public class ServiceSinkhole extends VpnService {
+ 
+     // Called from native code
+     private void logPacket(Packet packet) {
++        // CausalGuard A4-3: emit minimal metadata to the in-process adapter (non-blocking).
++        CausalGuardNetworkHook.onPacket(this, packet);
+         logHandler.queue(packet);
+     }
+ 
+     // Called from native code
+     private void dnsResolved(ResourceRecord rr) {
++        // CausalGuard A4-3: map DNS answer to IP for domain hints (non-blocking).
++        CausalGuardNetworkHook.onDnsResolved(this, rr);
+         if (DatabaseHelper.getInstance(ServiceSinkhole.this).insertDns(rr)) {
+             Log.i(TAG, "New IP " + rr);
+             prepareUidIPFilters(rr.QName);

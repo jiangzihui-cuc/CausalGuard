@@ -43,7 +43,7 @@
 - Commit/Tag: tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（2026-08-05）
 - License: GPL-3.0（部分第三方组件/数据另有许可，见其根 `LICENSE` 与 `docs/20` 第 7 节）
 - Used files/modules: 网络底座（`VpnService`/TUN、TCP/UDP 处理、DNS 观测、连接记录、域名阻断）；当前仅作网络核心与 A4-3 Adapter 适配对象
-- Local modifications: 暂无（尚未修改）；后续修改必须另起 commit 并在此登记实际文件
+- Local modifications: **有**（A4-3 广播桥接，2026-09-28）。新增 `app/src/main/java/eu/faircode/netguard/CausalGuardNetworkHook.java`；在 `app/src/main/java/eu/faircode/netguard/ServiceSinkhole.java` 的 `logPacket`/`dnsResolved` 回调末尾各加一处调用。改动仅发送脱敏元数据（时间、协议、五元组、uid、allowed、DNS qname/aname/ip），不改 native 核心，不读通信内容。以补丁形式维护：`third_party/patches/a4-3-serversinkhole-network-hook.patch`，用 `scripts/apply-trackercontrol-hook.sh` 应用，`--revert` 可回到固定 commit 原状。对 CausalGuard 的 GPL-3.0 对应源码义务：应用补丁后的底座源码即对应源码，随发布提供。
 - Purpose: CausalGuard 网络事件的真实采集底座
 - Included license file: YES（随 submodule 内的根 `LICENSE`，保持原样）
 - Source availability: 以 git submodule 形式引入，路径 `third_party/tracker-control-android/`（`.gitmodules` 记录 URL，gitlink 固定到上述 commit）
@@ -64,6 +64,7 @@
 | Android SDK Platform | android-37.0 | Android SDK 条款 | 编译目标 |
 | Android SDK Build-Tools | 37.0.0 | Android SDK 条款 | 打包 |
 | Android SDK Platform-Tools | 37.0.1 | Apache-2.0（含 adb） | 设备工具 |
+| AndroidX LocalBroadcastManager | 1.1.0 | Apache-2.0 | A4-3 底座事件广播桥接（同进程） |
 | Android NDK | 27.2.12479018 | 见 NDK 内 NOTICE（含 LLVM/clang，Apache-2.0 with LLVM exceptions 等） | JNI/CMake 原生编译 |
 | CMake | 3.22.1 | BSD-3-Clause | 原生构建 |
 | Rust 工具链 | 1.95.0 | MIT OR Apache-2.0 | 编译 WireGuard 桥 |
