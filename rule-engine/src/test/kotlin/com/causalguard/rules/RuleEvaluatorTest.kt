@@ -149,6 +149,43 @@ class RuleEvaluatorTest {
     }
 
     @Test
+    fun `primary rule tie break prefers lexicographically smaller id when risk confidence and priority match`() {
+        val lowIdRule = RiskRule(
+            id = "R-100",
+            ruleVersion = "rules-v0.1",
+            name = "Tie break lower ID",
+            priority = 50,
+            condition = RuleCondition(eventTypes = setOf(EventType.USAGE_CONTEXT)),
+            output = RuleOutput(RiskLevel.MEDIUM, RiskCategory.HIGH_RISK, ScenarioMatch.MISMATCH, Confidence.MEDIUM),
+            explanationBoundary = "lower-id explanation",
+            recommendation = RecommendationDecision("lower_id_action", "Lower ID action"),
+            degradation = Degradation(false, "not_applicable")
+        )
+        val highIdRule = RiskRule(
+            id = "R-200",
+            ruleVersion = "rules-v0.1",
+            name = "Tie break higher ID",
+            priority = 50,
+            condition = RuleCondition(eventTypes = setOf(EventType.USAGE_CONTEXT)),
+            output = RuleOutput(RiskLevel.MEDIUM, RiskCategory.HIGH_RISK, ScenarioMatch.MISMATCH, Confidence.MEDIUM),
+            explanationBoundary = "higher-id explanation",
+            recommendation = RecommendationDecision("higher_id_action", "Higher ID action"),
+            degradation = Degradation(false, "not_applicable")
+        )
+        val tieEvaluator = RuleEvaluator(listOf(highIdRule, lowIdRule))
+
+        val result = tieEvaluator.evaluate(RuleInput(event = FixtureEvents.readerUsage))
+
+        assertEquals(listOf("R-100", "R-200"), result.assessment.matchedRules)
+        assertEquals(RiskLevel.MEDIUM, result.assessment.riskLevel)
+        assertEquals(RiskCategory.HIGH_RISK, result.assessment.category)
+        assertEquals(ScenarioMatch.MISMATCH, result.assessment.scenarioMatch)
+        assertEquals(Confidence.MEDIUM, result.assessment.confidence)
+        assertEquals("lower_id_action", result.recommendationDecision.action)
+        assertEquals("Lower ID action", result.recommendationDecision.title)
+    }
+
+    @Test
     fun `event with no matching rule returns safe low risk result`() {
         val result = evaluator.evaluate(RuleInput(event = FixtureEvents.readerUsage))
         val assessment = result.assessment

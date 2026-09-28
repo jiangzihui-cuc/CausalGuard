@@ -262,7 +262,7 @@ v0.1 冻结以下字段来源，避免规则层、存储层和解释层各自推
 
 规则引擎先按 priority 降序、同 priority 按规则 id 升序建立稳定匹配顺序。普通非 unknown 多规则命中时，matchedRules 保留全部 effective match，并按该稳定顺序输出。
 
-主规则按以下顺序选择：riskLevel 等级降序、confidence 等级降序、priority 降序、规则 id 降序。最终 riskScore、riskLevel、category、scenarioMatch、confidence 与 recommendation 均来自主规则；explanationBoundary 由全部 effective match 的边界文案组成。
+主规则按以下顺序选择：riskLevel 等级更高、confidence 更高、priority 更高；前三项完全相同时，规则 ID 字典序更小者优先，作为最终 deterministic tie-break。最终 riskScore、riskLevel、category、scenarioMatch、confidence 与 recommendation 均来自主规则；explanationBoundary 由全部 effective match 的边界文案组成。
 
 若命中任一 category=unknown 规则，effective match 仅保留 unknown 规则，并按 unknown degradation 输出 riskLevel=low、category=unknown、scenarioMatch=unknown、confidence=low 和 recommendation.action=none；不得做确定性归因或处置。
 
