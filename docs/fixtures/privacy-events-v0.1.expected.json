@@ -35,15 +35,15 @@
     {
       "eventId": "e-20260921-0003",
       "expectedCategory": "high_risk",
-      "expectedRiskLevel": "medium",
+      "expectedRiskLevel": "high",
       "expectedScenarioMatch": "mismatch",
       "expectedConfidence": "medium",
-      "expectedMatchedRules": ["R-002", "R-007"],
-      "expectedAction": "limit_background_activity",
+      "expectedMatchedRules": ["R-007", "R-002"],
+      "expectedAction": "limit_background_network",
       "shouldShowUnknownDegradation": false,
       "kind": "scenario_mismatch",
       "demoExpectation": "Demo truth should be evaluated like an equivalent real background clipboard access.",
-      "expectedBasis": "Calculator background clipboard access is sensitive and scene-mismatched; nearby network evidence may raise concern without proving leakage."
+      "expectedBasis": "Background clipboard access is sensitive, and a same-app network event follows 3 seconds later; R-007 raises the final risk to high, but time correlation does not prove clipboard content was sent."
     },
     {
       "eventId": "e-20260921-0004",

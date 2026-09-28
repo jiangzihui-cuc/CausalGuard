@@ -39,16 +39,16 @@
     },
     {
       "eventId": "e-20260921-0003",
-      "riskLevel": "medium",
+      "riskLevel": "high",
       "category": "high_risk",
       "confidence": "medium",
-      "matchedRules": ["R-002", "R-007"],
+      "matchedRules": ["R-007", "R-002"],
       "isDemo": true,
       "kind": "scenario_mismatch",
       "summary": "Demo Calculator 在后台读取了剪贴板。",
       "whyCare": "计算器通常不需要在后台读取剪贴板，该行为与使用场景不匹配，并且时间窗内存在同应用网络事件。",
       "evidence": "证据来自 Demo 真值和规则 R-002、R-007：后台状态、clipboard 事件、剪贴板长度摘要、E4 证据等级。",
-      "action": "建议检查该应用的后台活动，并在真实设备上结合网络证据决定是否限制后台联网。",
+      "action": "建议限制该应用的后台网络访问，并结合后台活动继续复查。",
       "caveat": "未保存剪贴板原文，也不能确认剪贴板内容被发送。该事件应保留 Demo 标识。"
     },
     {
