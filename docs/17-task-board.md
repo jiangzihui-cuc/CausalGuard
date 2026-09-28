@@ -108,7 +108,7 @@
 |---|---|---|---|---|
 | A4-1 | PackageManager Provider | 成员 A | - | 已完成（A3-3 `PackageManagerProfileProvider`） |
 | A4-2 | UsageStats Provider | 成员 A | - | 已完成（A3-3 `UsageStatsContextProvider`） |
-| A4-3 | TrackerControl/NetGuard Network Adapter | 成员 A | - | 进行中（底座源码已 submodule 导入 `third_party/tracker-control-android`） |
+| A4-3 | TrackerControl/NetGuard Network Adapter | 成员 A | - | 进行中（submodule 已导入；回调→`NetworkEvent` 映射 Adapter 已实现并测试，真实 `ServiceSinkhole` 挂接待底座构建/真机） |
 | A4-4 | UID/包名/域名/时间窗口关联（含补 A1-8 遗留：adb 抓 `Get uid=` 统计底座归属量化成功率） | 成员 A | - | 进行中（关联入库链路已完成，A1-8 量化待真机） |
 | A4-5 | VPN 生命周期、前台服务、网络切换和异常恢复 | 成员 A | - | 未开始 |
 | B4-1 | 只选一套 tracker 数据，固定版本并生成 50~200 条精简离线表 | 成员 B | 成员 A | 未开始 |
@@ -119,9 +119,9 @@
 
 阶段门：至少一种真实网络事件进入 Room；至少一个 App 获得使用上下文；无域名/UID 时诚实降级；真实 Provider 替换 Fake 后规则和 UI 无需重写。
 
-> 阶段 4 进展（A 回填，2026-09-27）：A4-1/A4-2 已在 A3-3 `RealProviders` 落地；A4-4 完成 `NetworkEvent → PrivacyEvent` 关联入库链路——`data/ingest/NetworkEventIngestor`（补齐 `schemaVersion`/`dedupKey`/时间窗、`evidenceLevel=E2`、`source=vpn`、诚实保留 `uid=-1`/`packageName=unknown`）、`data/network/ReplayNetworkEventSource`（无 VPN 回放）、`data/repository/RoomEventSink`（docs/09 §3 唯一写入口，已接入 `AppContainer`），并有 8 项单测覆盖转换/降级/去重窗/回放/端到端。同时修复 `RiskAssessment` 持久化漂移：Entity/Mapper/`docs/08` 补 `category`、`matchedRules`，数据库升 v2 并登记 `MIGRATION_1_2`。A4-3 底座源码已以 git submodule 固定导入 `third_party/tracker-control-android/`（commit `9504d41b`），下一步在该目录内构建并编写 Adapter；A4-5（VPN 生命周期/前台服务）仍需真机验证。
+> 阶段 4 进展（A 回填，2026-09-27）：A4-1/A4-2 已在 A3-3 `RealProviders` 落地；A4-4 完成 `NetworkEvent → PrivacyEvent` 关联入库链路——`data/ingest/NetworkEventIngestor`（补齐 `schemaVersion`/`dedupKey`/时间窗、`evidenceLevel=E2`、`source=vpn`、诚实保留 `uid=-1`/`packageName=unknown`）、`data/network/ReplayNetworkEventSource`（无 VPN 回放）、`data/repository/RoomEventSink`（docs/09 §3 唯一写入口，已接入 `AppContainer`），并有 8 项单测覆盖转换/降级/去重窗/回放/端到端。同时修复 `RiskAssessment` 持久化漂移：Entity/Mapper/`docs/08` 补 `category`、`matchedRules`，数据库升 v2 并登记 `MIGRATION_1_2`。A4-3 底座源码已以 git submodule 固定导入 `third_party/tracker-control-android/`（commit `9504d41b`）；`data/network/trackercontrol/` 已实现回调桥（`PacketMeta`/`DnsRecordMeta`/`TrackerControlCallback`）与 `TrackerControlNetworkAdapter`（协议号映射、`blocked`、`dnsResolved`→`domainHint`、`uid=-1`→`unknown`、有界队列丢包计数、`start/stop` 生命周期），9 项单测覆盖；真实 `ServiceSinkhole` 挂接需底座构建与真机。A4-5（VPN 生命周期/前台服务）仍需真机验证。
 >
-> A 侧阶段 4 已合入分支登记：`feature/a-t4-network-ingest`→`24e71a9`（A4-4 关联入库 + DB v2）、`feature/a-t4-trackercontrol-submodule`→`990e96c`（A4-3 底座 submodule）、`feature/a-rule-contract-extension`→`4224cdf`（规则契约扩展）、`feature/a-t3-room-repository`→`3479330`（A3 数据层）。当前 `:app` 单测 22 项通过，`gradle build` 通过（CI 同）。
+> A 侧阶段 4 已合入分支登记：`feature/a-t4-network-ingest`→`24e71a9`（A4-4 关联入库 + DB v2）、`feature/a-t4-trackercontrol-submodule`→`990e96c`（A4-3 底座 submodule）、`feature/a-rule-contract-extension`→`4224cdf`（规则契约扩展）、`feature/a-t3-room-repository`→`3479330`（A3 数据层）。当前 `:app` 单测 31 项通过，`gradle build` 通过（CI 同）。
 
 ## 阶段 5：场景推理、因果链与处置复查（10/1-10/3）
 
