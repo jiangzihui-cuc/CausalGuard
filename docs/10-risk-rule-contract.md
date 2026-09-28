@@ -51,7 +51,7 @@
   "scenarioMatch": "mismatch",
   "confidence": "medium",
   "explanationBoundary": "缺少请求内容证据，不能判定是否发生数据泄露",
-  "evidenceIds": ["ev-1", "ev-2"],
+  "evidenceIds": ["e-20260920-0001"],
   "matchedRules": ["R-003", "R-006"],
   "category": "high_risk"
 }
@@ -65,6 +65,24 @@
 | `scenarioMatch` | `match` / `match_with_concern` / `mismatch` / `unknown` |
 | `confidence` | `low` / `medium` / `high` |
 | `category` | `necessary` / `analytics` / `high_risk` / `unknown` |
+
+### 2.1 v0.1 RiskAssessment 字段来源
+
+v0.1 冻结以下字段来源，避免规则层、存储层和解释层各自推断：
+
+| 字段 | v0.1 语义 |
+|---|---|
+| `id` | 确定性当前评估 ID，格式为 `r-${eventId}`。v0.1 中一个 `PrivacyEvent` 只维护一个当前 `RiskAssessment` 身份，不保存同一事件的多 `ruleVersion` assessment history。 |
+| `createdAt` | 规则引擎固定输出 `0L`，含义为 `UNASSIGNED_AT_DETERMINISTIC_EVALUATION_BOUNDARY`。它不是实际发生时间，也不得由规则引擎读取 wall clock 或用事件时间冒充。 |
+| `evidenceIds` | `PrivacyEvent.eventId` 字符串引用列表；v0.1 至少包含主事件 ID。它不等价于 Room `EvidenceLink.id`，完整 related/prior evidence 物化属于后续 evidence-chain 集成。 |
+| `ruleVersion` | 写入实际 evaluator 使用的已验证规则资产版本，即验证后的规则集合版本。不得把不受支持的 `RuleInput.ruleVersion` 原样写入评估结果。 |
+
+规则版本来源与输入兼容：
+
+- 规则资产 `schema.ruleVersion` 必须与每条 `rule.ruleVersion` 一致；
+- evaluator version 来自验证后的同版本规则集合，不再独立声明另一个可漂移版本；
+- `RuleInput.ruleVersion` 必须匹配 evaluator version；
+- 若输入版本不匹配，规则引擎不得执行规则匹配，也不得抛出阻断上层流程的异常；必须返回 `riskScore=0`、`riskLevel=low`、`category=unknown`、`scenarioMatch=unknown`、`confidence=low`、`matchedRules=[]`、`recommendation.action=none`、`degradation.shouldShowUnknownDegradation=true` 的确定性安全降级结果，并在 `RiskAssessment.ruleVersion` 中记录实际 evaluator version。
 
 ## 3. 风险评分公式（初版）
 
@@ -234,6 +252,8 @@
 - 同一资产内所有规则的 `ruleVersion` 必须等于 `schema.ruleVersion`；
 - 规则引擎只能加载自己声明支持的 `ruleVersion`；
 - 不兼容变更必须提升规则版本，并保留旧版本评测结果；
+- evaluator 的 `ruleVersion` 必须从已验证的同版本规则集合推导；
+- `RuleInput.ruleVersion` 与 evaluator version 不一致时，必须返回 §2.1 定义的 LOW/UNKNOWN/LOW 安全降级结果；
 - 规则资产路径应可配置，避免把测试 fixture 路径硬编码为运行时路径；
 - 加载前必须校验 JSON 可解析、必填字段存在、枚举合法、规则 ID 唯一、版本一致；
 - 评测时还必须校验 `fixtureEventIds` 与 expected 文件中的 `expectedMatchedRules` 引用完整。

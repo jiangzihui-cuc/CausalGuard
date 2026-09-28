@@ -63,6 +63,10 @@ class RuleEvaluationResultTest {
         assertCanonicalMatchesAssessment(assessment, result)
         assertEquals(listOf("R-007", "R-002"), result.assessment.matchedRules)
         assertEquals(RiskLevel.HIGH, result.assessment.riskLevel)
+        assertEquals("r-e-20260921-0003", result.assessment.id)
+        assertEquals("rules-v0.1", result.assessment.ruleVersion)
+        assertEquals(listOf("e-20260921-0003"), result.assessment.evidenceIds)
+        assertEquals(0L, result.assessment.createdAt)
         assertEquals(RiskCategory.HIGH_RISK, result.assessment.category)
         assertEquals("limit_background_network", result.recommendationDecision.action)
         assertFalse(result.degradation.shouldShowUnknownDegradation)
@@ -146,6 +150,39 @@ class RuleEvaluationResultTest {
         val second = evaluator.assess(input)
 
         assertEquals(first, second)
+    }
+
+    @Test
+    fun inputRuleVersionMismatchReturnsDeterministicSafeDegradation() {
+        val input = RuleInput(
+            event = FixtureEvents.calculatorClipboard,
+            appProfile = FixtureEvents.calculatorProfile,
+            relatedEvents = listOf(FixtureEvents.calculatorNetwork),
+            ruleVersion = "rules-v9"
+        )
+
+        val first = evaluator.evaluate(input)
+        val second = evaluator.evaluate(input)
+        val assessment = first.assessment
+
+        assertEquals(first, second)
+        assertEquals("r-e-20260921-0003", assessment.id)
+        assertEquals("e-20260921-0003", assessment.eventId)
+        assertEquals("rules-v0.1", assessment.ruleVersion)
+        assertEquals(0, assessment.riskScore)
+        assertEquals(RiskLevel.LOW, assessment.riskLevel)
+        assertEquals(RiskCategory.UNKNOWN, assessment.category)
+        assertEquals(ScenarioMatch.UNKNOWN, assessment.scenarioMatch)
+        assertEquals(Confidence.LOW, assessment.confidence)
+        assertEquals(emptyList(), assessment.matchedRules)
+        assertEquals(listOf("e-20260921-0003"), assessment.evidenceIds)
+        assertEquals(0L, assessment.createdAt)
+        assertEquals(
+            "输入规则版本与当前规则资产版本不一致，未执行风险判定。",
+            assessment.explanationBoundary
+        )
+        assertEquals("none", first.recommendationDecision.action)
+        assertTrue(first.degradation.shouldShowUnknownDegradation)
     }
 
     private fun assertCanonicalMatchesAssessment(

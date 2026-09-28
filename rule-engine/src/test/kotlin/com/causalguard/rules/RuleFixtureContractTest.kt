@@ -27,11 +27,12 @@ class RuleFixtureContractTest {
         )
         val event = events.single { it.eventId == "e-20260921-0003" }
         val relatedNetwork = events.single { it.eventId == "e-20260921-0004" }
-        val rules = assertIs<RuleAssetLoadResult.Success>(
+        val loadedAsset = assertIs<RuleAssetLoadResult.Success>(
             RuleAssetLoader().loadFromPath(
                 repoFile("docs/fixtures/risk-rules-v0.1.json").toPath()
             )
-        ).rules
+        )
+        val rules = loadedAsset.rules
         val expectedRoot = json.parseToJsonElement(
             repoFile("docs/fixtures/privacy-events-v0.1.expected.json").readText()
         ).jsonObject
@@ -46,11 +47,10 @@ class RuleFixtureContractTest {
             )
         )
 
+        val expectedRuleVersion = expectedRoot.getValue("schema").jsonObject.requiredString("ruleVersion")
         assertEquals(expected.requiredString("eventId"), result.assessment.eventId)
-        assertEquals(
-            expectedRoot.getValue("schema").jsonObject.requiredString("ruleVersion"),
-            result.assessment.ruleVersion
-        )
+        assertEquals(loadedAsset.schema.ruleVersion, expectedRuleVersion)
+        assertEquals(loadedAsset.schema.ruleVersion, result.assessment.ruleVersion)
         assertEquals(expected.requiredString("expectedRiskLevel"), result.assessment.riskLevel.name.lowercase())
         assertEquals(expected.requiredString("expectedCategory"), result.assessment.category.name.lowercase())
         assertEquals(
@@ -68,6 +68,9 @@ class RuleFixtureContractTest {
             result.degradation.shouldShowUnknownDegradation
         )
         assertFalse(result.degradation.shouldShowUnknownDegradation)
+        assertEquals("r-${event.eventId}", result.assessment.id)
+        assertEquals(listOf(event.eventId), result.assessment.evidenceIds)
+        assertEquals(0L, result.assessment.createdAt)
     }
 
     private fun repoFile(relativePath: String): File {

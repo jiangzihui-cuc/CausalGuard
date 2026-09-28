@@ -10,15 +10,19 @@ import com.causalguard.core.model.RuleInput
 import com.causalguard.core.model.ScenarioMatch
 
 class RuleEvaluator(
-    rules: List<RiskRule>,
-    private val ruleVersion: String = RuleInput.DEFAULT_RULE_VERSION
+    rules: List<RiskRule>
 ) : RiskRuleEngine {
+    private val ruleVersion: String = requireConsistentRuleVersion(rules)
     private val sortedRules = rules.sortedWith(
         compareByDescending<RiskRule> { it.priority }.thenBy { it.id }
     )
 
     fun evaluate(input: RuleInput): RuleEvaluationResult {
         val event = input.event
+        if (input.ruleVersion != ruleVersion) {
+            return versionMismatchEvaluation(event)
+        }
+
         val matched = sortedRules.filter { it.matches(input) }
         if (matched.isEmpty()) {
             return noMatchEvaluation(event)
@@ -132,6 +136,33 @@ class RuleEvaluator(
             recommendationDecision = RecommendationDecision("none", "无需处置"),
             degradation = EvaluationDegradation(shouldShowUnknownDegradation = false)
         )
+
+    private fun versionMismatchEvaluation(event: PrivacyEvent): RuleEvaluationResult =
+        RuleEvaluationResult(
+            assessment = CoreRiskAssessment(
+                id = "r-${event.eventId}",
+                eventId = event.eventId,
+                ruleVersion = ruleVersion,
+                riskScore = 0,
+                riskLevel = RiskLevel.LOW,
+                scenarioMatch = ScenarioMatch.UNKNOWN,
+                confidence = Confidence.LOW,
+                category = RiskCategory.UNKNOWN,
+                explanationBoundary = "输入规则版本与当前规则资产版本不一致，未执行风险判定。",
+                evidenceIds = listOf(event.eventId),
+                matchedRules = emptyList(),
+                createdAt = 0L
+            ),
+            recommendationDecision = RecommendationDecision("none", "规则版本不匹配，暂不处置"),
+            degradation = EvaluationDegradation(shouldShowUnknownDegradation = true)
+        )
+
+    private fun requireConsistentRuleVersion(rules: List<RiskRule>): String {
+        require(rules.isNotEmpty()) { "RuleEvaluator requires at least one rule" }
+        val versions = rules.map { it.ruleVersion }.distinct()
+        require(versions.size == 1) { "RuleEvaluator requires one ruleVersion, got ${versions.sorted()}" }
+        return versions.single()
+    }
 
     private fun explanationBoundary(rules: List<RiskRule>): String =
         rules.joinToString(separator = "；") { it.explanationBoundary }
