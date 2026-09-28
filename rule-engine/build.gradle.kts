@@ -7,7 +7,7 @@ group = "io.causalguard"
 version = "0.1.0"
 
 android {
-    namespace = "io.causalguard.rules"
+    namespace = "com.causalguard.rules"
     compileSdk = 37
 
     defaultConfig {

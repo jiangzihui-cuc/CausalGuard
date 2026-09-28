@@ -1,4 +1,4 @@
-package io.causalguard.rules
+package com.causalguard.rules
 
 import com.causalguard.core.model.Confidence
 import com.causalguard.core.model.RiskCategory
