@@ -86,13 +86,13 @@
 | A3-4 | 导航/ViewModel 注入接口 | 不包含页面视觉和业务文案 | 已完成 |
 | A3-5 | DAO、Adapter、Repository 单元测试 | CI 通过 | 已完成 |
 
-> 阶段 3 进展（A 回填，2026-09-24）：A3-1～A3-5 已实现并合入 `main`（merge `feature/a-t3-room-repository`）——`:app` 新增 Room 实体/DAO/数据库与迁移登记（schema 导出到 `app/schemas/1.json`）、`PrivacyEventRepository` 等 Room 实现、`EventImporter` 导入 docs/09 fixture、真实/可替换 Provider 与 `AppContainer` 注入边界。单测 13 项通过（含 Robolectric Room 写入/查询/幂等/unknown 降级/重开持久化）。构建采用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容；旧 KSP 2.2.x 与 KGP 均不可用，见 18 风险清单 RK-21）。B3-1～B3-6 仍待 B。
+> 阶段 3 进展（A 回填，2026-09-24）：A3-1～A3-5 已实现并合入 `main`（merge `feature/a-t3-room-repository`）——`:app` 新增 Room 实体/DAO/数据库与迁移登记（schema 导出到 `app/schemas/1.json`）、`PrivacyEventRepository` 等 Room 实现、`EventImporter` 导入 docs/09 fixture、真实/可替换 Provider 与 `AppContainer` 注入边界。单测 13 项通过（含 Robolectric Room 写入/查询/幂等/unknown 降级/重开持久化）。构建采用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容；旧 KSP 2.2.x 与 KGP 均不可用，见 18 风险清单 RK-21）。B3-2、B3-4～B3-6 仍待 B。
 
 ### 成员 B：可运行产品闭环
 
 | 编号 | 任务 | 验收 | 状态 |
 |---|---|---|---|
-| B3-1 | `FakeEventRepository` | 无 VPN 也能播放 fixture | 未开始 |
+| B3-1 | FakeEventRepository | 无 VPN 也能播放 fixture | 已完成 |
 | B3-2 | 首页、时间线、详情、设置四个 P0 页面 | Fake 数据可完整浏览 | 未开始 |
 | B3-3 | 小型规则执行器与 5 条规则 | 正例、反例、unknown 测试通过 | 已完成 |
 | B3-4 | 证据卡片和本地解释模板 | 事实/推断/不可观测显示准确 | 未开始 |
@@ -102,6 +102,7 @@
 
 集成：`fixture → FakeEventRepository → 规则 → 证据 → 本地解释 → UI → Fake 处置`；随后只替换 `FakeEventRepository → RoomEventRepository`。
 > 阶段 3 成员 B 规则引擎进展（2026-09-28）：B3-3、B3-7 已完成。feature/b-rule-engine-core 已完成确定性规则执行器和 v0.1 规则资产，复用 :core-model 的 RuleInput / RiskAssessment，RuleEvaluator 实现 RiskRuleEngine，标准 assess() 返回 canonical RiskAssessment，rich evaluation metadata 由 evaluate() 提供；包名统一为 com.causalguard.rules，模块纳入根 Gradle 构建并移除旧 standalone Gradle 入口。当前 rule-engine unit test、lint 及根 gradle build 均通过。
+> B3-1 已完成：新增纯内存 FakePrivacyEventRepository，通过 canonical PrivacyEventRepository 播放冻结 v0.1 fixture；无需 VPN/Room，专项与回归测试通过。
 
 > 契约收敛说明（A，2026-09-24）：`RiskAssessment` 已按 docs/10 §2 在 `:core-model` 补齐 `matchedRules`/`category`，并新增 `RuleInput`/`RuleUsageContext`/`RiskRuleEngine`（`core-model/.../RuleApi.kt`）。B 侧需删除自建枚举与模型、改用 core-model 类型，规则动作建议改名 `RuleRecommendation` 以避开 docs/07 §2.7 的持久化 `Recommendation`。根 `settings.gradle` 已守卫式 include `:rule-engine`，B 合并分支时需同步其 `build.gradle.kts`（JDK17、依赖 `:core-model`、移除独立 `settings.gradle.kts` 与 `FAIL_ON_PROJECT_REPOS`）。
 
