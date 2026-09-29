@@ -1,15 +1,18 @@
 package com.causalguard
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.widget.Button
-import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.causalguard.network.UidAttributionProbe
 import com.causalguard.profile.PackageProfileCollector
 import com.causalguard.usage.UsageStatsCollector
+import com.causalguard.ui.CausalGuardApp
 import java.util.concurrent.Executors
 
 /**
@@ -18,25 +21,26 @@ import java.util.concurrent.Executors
  * 这是一个最小的验证壳：只负责触发采集、显示脱敏 JSON，并写入 logcat（tag=CausalGuardSpike）。
  * 正式产品 UI 在后续阶段实现，本类不代表最终界面。
  */
-class MainActivity : Activity() {
+class MainActivity : ComponentActivity() {
 
     private val executor = Executors.newSingleThreadExecutor()
-    private lateinit var output: TextView
+    private var outputText by mutableStateOf("（尚未采集）")
     private val tag = "CausalGuardSpike"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        output = findViewById(R.id.tv_output)
-
-        findViewById<Button>(R.id.btn_usage_settings).setOnClickListener {
-            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+        setContent {
+            CausalGuardApp(
+                output = outputText,
+                onOpenUsageSettings = {
+                    startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                },
+                onCollectPackage = ::runPackageCollect,
+                onCollectUsage = ::runUsageCollect,
+                onProbeUid = ::runUidProbe,
+                onClear = { outputText = "" },
+            )
         }
-        findViewById<Button>(R.id.btn_package).setOnClickListener { runPackageCollect() }
-        findViewById<Button>(R.id.btn_usage).setOnClickListener { runUsageCollect() }
-        findViewById<Button>(R.id.btn_uid).setOnClickListener { runUidProbe() }
-        findViewById<Button>(R.id.btn_clear).setOnClickListener { output.text = "" }
     }
 
     private fun runPackageCollect() {
@@ -75,6 +79,11 @@ class MainActivity : Activity() {
 
     private fun show(text: String) {
         Log.i(tag, text)
-        runOnUiThread { output.text = text }
+        runOnUiThread { outputText = text }
+    }
+
+    override fun onDestroy() {
+        executor.shutdown()
+        super.onDestroy()
     }
 }
