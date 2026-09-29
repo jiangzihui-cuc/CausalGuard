@@ -1,11 +1,11 @@
 # spike-results（阶段 1 技术 Spike 结果）
 
-> 版本：`v0.2`
-> 最后更新：2026-09-28
+> 版本：`v0.3`
+> 最后更新：2026-09-29
 > 责任人：成员 A
-> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
+> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8、A4-3
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测，见第 3 节）
+> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测；A4-3 跨进程网络事件端到端已于 2026-09-29 真机验证，见第 3 节）
 
 ---
 
@@ -227,6 +227,36 @@
 
 ---
 
+### A4-3 跨进程网络事件端到端（2026-09-29 真机 PJW110 / Android 16 / API 36）
+
+- [x] 真机端到端验证通过（2026-09-29）
+- 目标：打通“底座 VpnService 回调 → 跨进程显式包名广播 → CausalGuard Adapter → Ingestor → Room”的真实链路。
+- 设备/安装：
+  - 演示机 PJW110（Android 16 / API 36），经 WSL2 无线调试接入 adb。
+  - CausalGuard debug：`com.causalguard`（`app/build/outputs/apk/debug/app-debug.apk`，`adb install -r`）。
+  - 底座 fdroid debug：`net.kollnig.missioncontrol.fdroid.test`（`TrackerControl-fdroidDebug-latest.apk`），先 `./scripts/apply-trackercontrol-hook.sh` 应用 A4-3 补丁再构建；补丁已确认编译进 APK（`classes7.dex` 含 `CausalGuardNetworkHook`）。底座 VPN 正常起 `tun0`（`10.1.10.1/32`）。
+- 操作流程：CausalGuard 点「5) 启动网络采集（A4-3）」→ `collecting=true`；在真机打开 Chrome / 闲鱼 / 微信 / 淘宝并访问百度、腾讯等站点产生 TCP/UDP/DNS 流量 → 点「6) 停止网络采集」。
+- 结果（`run-as com.causalguard` 拉取 `databases/causalguard.db` + `-wal`）：
+
+| 指标 | 结果 |
+|---|---|
+| `network_event` / `privacy_event` | **486 / 486**（一一对应，同步入库） |
+| `source` / `evidenceLevel` | `vpn` / `E2`（全部） |
+| UID→包名归属 | 414 已归属（85.2%）、72 条 `uid=-1` 降级 |
+| DNS 域名线索 | 353/486 有 `domainHint`，**60** 个不同域名 |
+| 阻断记录 | 2 条 `UDP:53 blocked=1`（DNS 被底座阻断） |
+| 覆盖应用 | `com.android.chrome`(283)、`com.taobao.idlefish`(71)、`com.tencent.mm`(49)、`com.taobao.taobao`(5) 等 |
+
+- 归属样本：闲鱼 TCP→`yixiu-abtest.alicdn.com`、Chrome→`optimizationguide-pa.googleapis.com`、淘宝→`msgacs.m.taobao.com`，包名/协议/端口/域名均正确。
+- 降级证据（诚实记录）：
+  - `uid=-1` 共 72 条：ICMP 39 条（协议边界固定不归属，符合 `docs/02`/`docs/09`）、TCP 33 条（IPv4 14 / IPv6 19，含 `accounts.google.com`、`www.baidu.com`、`optimizationguide-pa.googleapis.com` 等），属底座在混合真实流量下未返回归属的诚实降级，保留 `packageName=unknown`。
+  - 无域名：`blocked` 的 DNS（UDP:53）记录 `domainHint` 为空，正确表达“有请求但被阻断”。
+- 去重说明：`dedupKey` 按 60s 时间窗生成；依 `docs/09` §4，`dedupKey` 仅用于查询期频率聚合、**不删原始事件留存**，故 486 条原始事件保留属预期。
+- 结论：满足 A4-3 阶段门——至少一种真实网络事件进入 Room、至少一个 App 获得使用上下文、无域名/UID 时诚实降级。跨进程 `setPackage("com.causalguard")` + App 侧 `RECEIVER_EXPORTED` 广播桥接在真机生效。
+- 遗留：A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）未实现；当前采集依赖手工 start/stop 且需保持 CausalGuard 进程存活。
+
+---
+
 ## 4. 决策记录
 
 | 决策 | 结论 | 日期 |
@@ -246,3 +276,4 @@
 1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）；A1-8 自测与量化成功率均完成（见第 3 节 A1-8，归属依赖底座）。
 2. 已补测：底座 UID 归属**量化成功率** 231/231 = 100%（TCP/UDP，真机 PJW110 / Android 16，2026-09-28，经 WSL2 无线调试采集 `TrackerControl.VPN` 日志）。
 3. 演示机 PJW110 为 Android 16 / API 36；早期 Spike 机 OPPO Reno12 Pro 的 Android 版本仍待补（基线 API 29+）。
+4. A4-3 跨进程网络事件端到端已于 2026-09-29 在 PJW110 真机验证（486 条事件入库，见第 3 节 A4-3）；A4-4 关联入库链路随该验证一并打通。**未决**：A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）尚未实现，真实采集仍需手工 start/stop 并保持进程存活。
