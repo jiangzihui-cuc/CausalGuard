@@ -15,17 +15,17 @@ import com.causalguard.core.model.RiskAssessmentRepository
 import com.causalguard.core.model.RuleVersionRepository
 import com.causalguard.core.model.UsageContextProvider
 import com.causalguard.core.model.UsageContextRepository
-import com.causalguard.data.fixture.RuntimeFixtureLoader
 import com.causalguard.data.importer.EventImporter
+import com.causalguard.data.ingest.NetworkCollector
 import com.causalguard.data.ingest.NetworkEventCollector
 import com.causalguard.data.ingest.NetworkEventIngestor
+import com.causalguard.data.ingest.NetworkMonitorController
 import com.causalguard.data.network.trackercontrol.AndroidPackageNameResolver
 import com.causalguard.data.network.trackercontrol.TrackerControlEventSource
 import com.causalguard.data.network.trackercontrol.TrackerControlNetworkAdapter
 import com.causalguard.data.local.CausalGuardDatabase
 import com.causalguard.data.provider.PackageManagerProfileProvider
 import com.causalguard.data.provider.UsageStatsContextProvider
-import com.causalguard.data.repository.FakePrivacyEventRepository
 import com.causalguard.data.repository.RoomAppProfileRepository
 import com.causalguard.data.repository.RoomAuditLogRepository
 import com.causalguard.data.repository.RoomDemoScenarioRepository
@@ -66,11 +66,14 @@ class AppContainer(
     override val appProfileProvider: AppProfileProvider = PackageManagerProfileProvider(context),
     override val usageContextProvider: UsageContextProvider = UsageStatsContextProvider(context),
     database: CausalGuardDatabase = CausalGuardDatabase.get(context),
-    override val privacyEventRepository: PrivacyEventRepository = FakePrivacyEventRepository(
-        RuntimeFixtureLoader.loadPrivacyEvents(context),
-    ),
 ) : AppDependencies {
 
+    /**
+     * 默认注入 Room 实现（docs/17 阶段门：至少一种真实网络事件进入 Room）。
+     * 纯内存 `FakePrivacyEventRepository` 仅用于无 VPN/Room 的演示与单测，需显式注入。
+     * 合并 Origin/main 时曾误取其 Fake 默认值，导致 A4 采集只写内存、Room 不增长，此处修正。
+     */
+    override val privacyEventRepository: PrivacyEventRepository = RoomPrivacyEventRepository(database)
     override val eventSink: EventSink = RoomEventSink(privacyEventRepository)
 
     /**
@@ -82,8 +85,8 @@ class AppContainer(
         adapter = TrackerControlNetworkAdapter(AndroidPackageNameResolver(context)),
     )
 
-    /** A4-4：source → `NetworkEventIngestor` → Room 的端到端采集器（前台服务/演示壳按需 start/stop）。 */
-    val networkEventCollector: NetworkEventCollector =
+    /** A4-4：source → `NetworkEventIngestor` → Room 的端到端采集器（A4-5 起由 `NetworkMonitorController` 驱动生命周期）。 */
+    val networkEventCollector: NetworkCollector by lazy {
         NetworkEventCollector(
             networkEventSource,
             NetworkEventIngestor(privacyEventRepository),
@@ -92,6 +95,14 @@ class AppContainer(
                 Log.i("CausalGuardNet", "ingested id=${event.eventId} app=${event.appId} blocked=${event.network?.blocked}")
             },
         )
+    }
+
+    /** A4-5：前台服务使用的生命周期控制器；异常时记录日志，绝不 crash 服务。 */
+    val networkMonitorController: NetworkMonitorController by lazy {
+        NetworkMonitorController(networkEventCollector) { throwable ->
+            Log.w("CausalGuardNet", "network monitor error: $throwable")
+        }
+    }
     override val appProfileRepository: AppProfileRepository = RoomAppProfileRepository(database)
     override val usageContextRepository: UsageContextRepository = RoomUsageContextRepository(database)
     override val riskAssessmentRepository: RiskAssessmentRepository = RoomRiskAssessmentRepository(database)
