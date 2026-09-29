@@ -15,6 +15,7 @@ import com.causalguard.core.model.RiskAssessmentRepository
 import com.causalguard.core.model.RuleVersionRepository
 import com.causalguard.core.model.UsageContextProvider
 import com.causalguard.core.model.UsageContextRepository
+import com.causalguard.data.fixture.RuntimeFixtureLoader
 import com.causalguard.data.importer.EventImporter
 import com.causalguard.data.ingest.NetworkEventCollector
 import com.causalguard.data.ingest.NetworkEventIngestor
@@ -24,6 +25,7 @@ import com.causalguard.data.network.trackercontrol.TrackerControlNetworkAdapter
 import com.causalguard.data.local.CausalGuardDatabase
 import com.causalguard.data.provider.PackageManagerProfileProvider
 import com.causalguard.data.provider.UsageStatsContextProvider
+import com.causalguard.data.repository.FakePrivacyEventRepository
 import com.causalguard.data.repository.RoomAppProfileRepository
 import com.causalguard.data.repository.RoomAuditLogRepository
 import com.causalguard.data.repository.RoomDemoScenarioRepository
@@ -64,9 +66,11 @@ class AppContainer(
     override val appProfileProvider: AppProfileProvider = PackageManagerProfileProvider(context),
     override val usageContextProvider: UsageContextProvider = UsageStatsContextProvider(context),
     database: CausalGuardDatabase = CausalGuardDatabase.get(context),
+    override val privacyEventRepository: PrivacyEventRepository = FakePrivacyEventRepository(
+        RuntimeFixtureLoader.loadPrivacyEvents(context),
+    ),
 ) : AppDependencies {
 
-    override val privacyEventRepository: PrivacyEventRepository = RoomPrivacyEventRepository(database)
     override val eventSink: EventSink = RoomEventSink(privacyEventRepository)
 
     /**

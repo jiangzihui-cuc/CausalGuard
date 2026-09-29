@@ -20,7 +20,7 @@
 
 ## 1. 已导入的第三方组件
 
-> 当前仓库尚未导入任何第三方源码。每次实际导入后，复制下面的模板追加条目。
+> 当前仓库未复制第三方源码。以下条目登记已通过构建系统引入的第三方依赖。
 
 <!-- 模板：
 ## <组件名称>
@@ -51,6 +51,46 @@
 - Registered by / date: 成员 A / 2026-09-27
 
 > 说明：按 `docs/20` 第 4.1 节与 A4-3 需要，源码以 submodule 固定版本引入，不 vendored 进本仓历史；克隆需 `git submodule update --init --recursive`。
+## kotlinx.serialization
+
+- Repository: https://github.com/Kotlin/kotlinx.serialization
+- Commit/Tag: 1.9.0（Maven artifact `org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0`）
+- License: Apache-2.0
+- Used files/modules: `rule-engine` 模块的 JSON 反序列化依赖
+- Local modifications: 无；未复制、改写或移植第三方源码
+- Purpose: 读取并反序列化 v0.1 风险规则 JSON 资产，供本地确定性规则引擎测试使用
+- Included license file: NO（当前仅通过 Maven 依赖引入；发布前需由许可证报告或人工清单补齐）
+- Source availability: Maven Central / 官方仓库
+- Team-original boundary: 规则资产契约、校验逻辑、领域对象、规则匹配与测试均由团队实现
+- Registered by / date: 成员 B / 2026-09-23
+
+## Jetpack Compose
+
+- Project: Jetpack Compose
+- Repository/source: https://github.com/android/compose-samples; Maven artifacts from Google's AndroidX Maven repository
+- Version/BOM: `androidx.compose:compose-bom:2026.09.00`
+- Artifacts: `androidx.compose.ui:ui`, `androidx.compose.material3:material3`, `androidx.compose.ui:ui-tooling-preview`, `androidx.compose.ui:ui-tooling`
+- License: Apache-2.0
+- Used module: `:app`
+- Purpose: Compose UI and Material3 compile foundation, preview annotation, and debug tooling
+- Copied source: no
+- Local modifications: none
+- Team-original boundary: `CausalGuardApp` and all CausalGuard UI, state, navigation, and business behavior
+- Registered by / date: 成员 B / 2026-09-29
+
+## Kotlin Compose Compiler Gradle Plugin
+
+- Project: Kotlin Compose Compiler Gradle Plugin
+- Repository/source: https://github.com/JetBrains/kotlin; Maven artifact `org.jetbrains.kotlin:compose-compiler-gradle-plugin`
+- Version/BOM: `2.2.10`
+- Artifacts: `org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.2.10`
+- License: Apache-2.0
+- Used module: root build configuration and `:app`
+- Purpose: Kotlin 2.x Compose compiler integration
+- Copied source: no
+- Local modifications: none
+- Team-original boundary: CausalGuard build configuration and source code
+- Registered by / date: 成员 B / 2026-09-29
 
 ### 1.1 构建与运行时技术依赖（阶段 1 / A1-7 登记）
 
@@ -139,3 +179,38 @@
 - 产品 UI、解释文案与评测数据集。
 
 第三方网络底座仅解决“网络事实采集与阻断”，上述“翻译、推理、解释、复查”价值由团队实现。
+## AndroidX Activity Compose
+
+- Project: AndroidX Activity
+- Artifact: `androidx.activity:activity-compose:1.13.0`
+- License: Apache-2.0
+- Used module: `:app`
+- Purpose: single-Activity Compose host integration
+- Copied source: no
+- Local modifications: none
+- Source: https://developer.android.com/jetpack/androidx/releases/activity
+- Registered by / date: 成员 B / 2026-09-29
+
+## AndroidX Navigation Compose
+
+- Project: AndroidX Navigation
+- Artifact: `androidx.navigation:navigation-compose:2.10.2`
+- License: Apache-2.0
+- Used module: `:app`
+- Purpose: minimal Compose navigation for Timeline, EventDetail, and SpikeDebug routes
+- Copied source: no
+- Local modifications: none
+- Source: https://developer.android.com/jetpack/androidx/releases/navigation
+- Registered by / date: 成员 B / 2026-09-29
+
+## AndroidX Lifecycle Compose
+
+- Project: AndroidX Lifecycle
+- Artifacts: `androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0`, `androidx.lifecycle:lifecycle-runtime-compose:2.11.0`
+- License: Apache-2.0
+- Used module: `:app`
+- Purpose: Compose ViewModel integration and lifecycle-aware StateFlow collection
+- Copied source: no
+- Local modifications: none
+- Source: https://developer.android.com/jetpack/androidx/releases/lifecycle
+- Registered by / date: 成员 B / 2026-09-29

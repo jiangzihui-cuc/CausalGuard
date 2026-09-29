@@ -184,10 +184,10 @@ Demo Calculator 在后台读取剪贴板，fixture 只记录长度和事件类�
 
 | 字段 | 预期值 |
 |---|---|
-| `riskLevel` | `medium` |
+| `riskLevel` | `high` |
 | `confidence` | `medium` |
-| `matchedRules` | `["R-002", "R-007"]` |
-| `recommendation.action` | `limit_background_activity` |
+| `matchedRules` | `["R-007", "R-002"]` |
+| `recommendation.action` | `limit_background_network` |
 
 ### 6.11 Evidence chain
 
@@ -201,11 +201,11 @@ Demo Calculator 在后台读取剪贴板，fixture 只记录长度和事件类�
 
 ### 6.12 User explanation
 
-Demo Calculator 在后台读取了剪贴板。计算器通常不需要在后台读取剪贴板，并且时间窗内存在同应用网络事件；当前不能确认剪贴板内容被发送。
+Demo Calculator 在后台读取了剪贴板。计算器通常不需要在后台读取剪贴板，并且 3 秒后存在同应用网络事件；R-007 将最终风险提升为 high，但当前不能确认剪贴板内容被发送。
 
 ### 6.13 Recommended action
 
-`limit_background_activity`：建议检查该应用的后台活动；若结合网络详情页展示，也可提示用户继续查看后台联网证据。
+`limit_background_network`：建议检查并限制该应用的后台网络访问，并结合后台活动继续复查。
 
 ### 6.14 Expected recheck
 

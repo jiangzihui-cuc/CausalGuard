@@ -40,17 +40,19 @@
 
 ### 成员 B：完全不等待 VPN
 
-| 编号 | 任务 | 交付物 | 状态 |
-|---|---|---|---|
-| B1-1 | 定义 v0.1 事件 fixture | `docs/fixtures/`（8~12 条 JSON） | 未开始 |
-| B1-2 | 定义 4 个 Demo 场景 | `docs/demo-scenarios.md` | 已完成 |
-| B1-3 | 证据文案模板 | 模板 JSON/文档：事实、能力、推断、不可观测不混写 | 未开始 |
-| B1-4 | 第三方组件登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 汇总 | 未开始 |
-| B1-5 | UI 状态草图 | 页面状态表：loading/empty/unknown/demo/error | 未开始 |
-| B1-6 | Android 能力边界表定稿 | [02-android-capability-matrix.md](02-android-capability-matrix.md) | 未开始 |
-| B1-7 | 真实/沙箱模式产品说明 | [01 项目章程](01-project-charter.md) 第 4 节 | 未开始 |
+| 编号 | 任务 | 交付物 | 状态 | 进展/证据 |
+|---|---|---|---|---|
+| B1-1 | 定义 v0.1 事件 fixture | `docs/fixtures/`（8~12 条 JSON） | 已完成 | [privacy-events-v0.1.json](fixtures/privacy-events-v0.1.json) 已覆盖 10 条事件、正常/风险/unknown/Demo；旁路预期与规则资产同步完成并校验。 |
+| B1-2 | 定义 4 个 Demo 场景 | `docs/demo-scenarios.md` | 已完成 | [demo-scenarios.md](demo-scenarios.md) 已通过 PR #7 合入，覆盖操作、真值、预期证据链和失败降级。 |
+| B1-3 | 证据文案模板 | 模板 JSON/文档：事实、能力、推断、不可观测不混写 | 已完成 | [explanation-templates-v0.1.json](fixtures/explanation-templates-v0.1.json) 已与 10 条事件逐一关联；正常、风险、unknown 和 Demo 场景均有明确解释边界，unknown 不生成确定处置。 |
+| B1-4 | 第三方组件登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 汇总 | 进行中 | 已登记 `kotlinx.serialization 1.9.0`（Apache-2.0，`rule-engine` 使用）；TrackerControl 及最终运行依赖待 A 分支合并后汇总。 |
+| B1-5 | UI 状态草图 | 页面状态表：loading/empty/unknown/demo/error | 未开始 | 尚未形成页面状态表；建议与 B1-2 一并落到 `docs/demo-scenarios.md`。 |
+| B1-6 | Android 能力边界表定稿 | [02-android-capability-matrix.md](02-android-capability-matrix.md) | 待验证 | 已有数据来源、证据等级和降级初稿；待 A 的 Spike 回填 UID/UsageStats/VPN 实测结论后定稿。 |
+| B1-7 | 真实/沙箱模式产品说明 | [01 项目章程](01-project-charter.md) 第 4 节 | 已完成 | 已明确真实观测模式与演示沙箱模式，并要求界面、数据模型和答辩材料区分演示数据。 |
 
 唯一集成点：A 导出的真实 NetworkEvent 必须可映射到 B 的 fixture schema；不一致只改 Adapter 或契约，不重写 VPN、规则或 UI。
+
+阶段 1 成员 B 进度快照（2026-09-24）：核心离线资产已完成 `B1-1`、`B1-3`、`B1-7`；`B1-4` 进行中，`B1-6` 待 A 的 Spike 结果验证；当前剩余首选项为 `B1-5`。阶段 1 总体门禁仍取决于 A 侧 VPN/NetworkEvent 验证，不能提前标记完成。
 
 ## 阶段 2：需求、架构与数据设计冻结（9/23-9/24）
 
@@ -84,21 +86,23 @@
 | A3-4 | 导航/ViewModel 注入接口 | 不包含页面视觉和业务文案 | 已完成 |
 | A3-5 | DAO、Adapter、Repository 单元测试 | CI 通过 | 已完成 |
 
-> 阶段 3 进展（A 回填，2026-09-24）：A3-1～A3-5 已实现并合入 `main`（merge `feature/a-t3-room-repository`）——`:app` 新增 Room 实体/DAO/数据库与迁移登记（schema 导出到 `app/schemas/1.json`）、`PrivacyEventRepository` 等 Room 实现、`EventImporter` 导入 docs/09 fixture、真实/可替换 Provider 与 `AppContainer` 注入边界。单测 13 项通过（含 Robolectric Room 写入/查询/幂等/unknown 降级/重开持久化）。构建采用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容；旧 KSP 2.2.x 与 KGP 均不可用，见 18 风险清单 RK-21）。B3-1～B3-6 仍待 B。
+> 阶段 3 进展（A 回填，2026-09-24）：A3-1～A3-5 已实现并合入 `main`（merge `feature/a-t3-room-repository`）——`:app` 新增 Room 实体/DAO/数据库与迁移登记（schema 导出到 `app/schemas/1.json`）、`PrivacyEventRepository` 等 Room 实现、`EventImporter` 导入 docs/09 fixture、真实/可替换 Provider 与 `AppContainer` 注入边界。单测 13 项通过（含 Robolectric Room 写入/查询/幂等/unknown 降级/重开持久化）。构建采用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容；旧 KSP 2.2.x 与 KGP 均不可用，见 18 风险清单 RK-21）。B3-2、B3-4～B3-6 仍待 B。
 
 ### 成员 B：可运行产品闭环
 
 | 编号 | 任务 | 验收 | 状态 |
 |---|---|---|---|
-| B3-1 | `FakeEventRepository` | 无 VPN 也能播放 fixture | 未开始 |
+| B3-1 | FakeEventRepository | 无 VPN 也能播放 fixture | 已完成 |
 | B3-2 | 首页、时间线、详情、设置四个 P0 页面 | Fake 数据可完整浏览 | 未开始 |
-| B3-3 | 小型规则执行器与 5 条规则 | 正例、反例、unknown 测试通过 | 进行中（核心已推送 `feature/b-rule-engine-core`，待契约收敛） |
+| B3-3 | 小型规则执行器与 5 条规则 | 正例、反例、unknown 测试通过 | 已完成 |
 | B3-4 | 证据卡片和本地解释模板 | 事实/推断/不可观测显示准确 | 未开始 |
 | B3-5 | Demo App 场景 A/B | 可单独编译、触发和复位 | 未开始 |
 | B3-6 | 第一批评测测试 | 至少 20 条自动运行 | 未开始 |
-| B3-7 | 规则引擎契约收敛：复用 `:core-model` 类型、实现 `RiskRuleEngine.assess(RuleInput)`、包名改 `com.causalguard.rules`、纳入根构建 | 规则模块依赖 `:core-model`，`gradle build` 通过 | 未开始 |
+| B3-7 | 规则引擎契约收敛：复用 `:core-model` 类型、实现 `RiskRuleEngine.assess(RuleInput)`、包名改 `com.causalguard.rules`、纳入根构建 | 规则模块依赖 `:core-model`，`gradle build` 通过 | 已完成 |
 
 集成：`fixture → FakeEventRepository → 规则 → 证据 → 本地解释 → UI → Fake 处置`；随后只替换 `FakeEventRepository → RoomEventRepository`。
+> 阶段 3 成员 B 规则引擎进展（2026-09-28）：B3-3、B3-7 已完成。feature/b-rule-engine-core 已完成确定性规则执行器和 v0.1 规则资产，复用 :core-model 的 RuleInput / RiskAssessment，RuleEvaluator 实现 RiskRuleEngine，标准 assess() 返回 canonical RiskAssessment，rich evaluation metadata 由 evaluate() 提供；包名统一为 com.causalguard.rules，模块纳入根 Gradle 构建并移除旧 standalone Gradle 入口。当前 rule-engine unit test、lint 及根 gradle build 均通过。
+> B3-1 已完成：新增纯内存 FakePrivacyEventRepository，通过 canonical PrivacyEventRepository 播放冻结 v0.1 fixture；无需 VPN/Room，专项与回归测试通过。
 
 > 契约收敛说明（A，2026-09-24）：`RiskAssessment` 已按 docs/10 §2 在 `:core-model` 补齐 `matchedRules`/`category`，并新增 `RuleInput`/`RuleUsageContext`/`RiskRuleEngine`（`core-model/.../RuleApi.kt`）。B 侧需删除自建枚举与模型、改用 core-model 类型，规则动作建议改名 `RuleRecommendation` 以避开 docs/07 §2.7 的持久化 `Recommendation`。根 `settings.gradle` 已守卫式 include `:rule-engine`，B 合并分支时需同步其 `build.gradle.kts`（JDK17、依赖 `:core-model`、移除独立 `settings.gradle.kts` 与 `FAIL_ON_PROJECT_REPOS`）。
 

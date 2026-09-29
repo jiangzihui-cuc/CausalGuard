@@ -107,7 +107,7 @@
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `id` | String (PK) | UUID |
+| `id` | String (PK) | v0.1 确定性当前评估 ID，格式为 `r-${eventId}`；不是 UUID |
 | `eventId` | String | 关联事件 |
 | `ruleVersion` | String | 规则版本 |
 | `riskScore` | Int | 0-100 |
@@ -116,9 +116,16 @@
 | `confidence` | String | low/medium/high |
 | `category` | String | necessary/analytics/high_risk/unknown（见 10 契约 §2） |
 | `explanationBoundary` | String | 解释边界说明 |
-| `evidenceIds` | String (JSON) | 证据链接列表 |
+| `evidenceIds` | String (JSON) | `PrivacyEvent.eventId` 字符串引用列表；v0.1 至少包含主事件 ID，不等同于 `EvidenceLink.id` |
 | `matchedRules` | String (JSON) | 命中的规则 ID 列表，供解释与评测展开（见 10 契约 §2） |
-| `createdAt` | Long | 时间 |
+| `createdAt` | Long | 规则引擎输出为 `0` 时表示尚未分配持久化时间戳 |
+
+v0.1 字段来源约束：
+
+- `RiskAssessment.id` 是当前评估身份，固定为 `r-${eventId}`；一个 `PrivacyEvent` 在 v0.1 只维护一个当前 `RiskAssessment`，不定义同一事件的多 `ruleVersion` 历史版本存储。
+- `RiskAssessment.createdAt = 0` 表示 `UNASSIGNED_AT_DETERMINISTIC_EVALUATION_BOUNDARY`，不是 Unix epoch 上真实发生的评估时间；真实持久化时间由后续集成契约定义。
+- `RiskAssessment.evidenceIds` 使用 `PrivacyEvent.eventId` 作为逻辑证据引用。v0.1 最低保证包含主事件 ID，完整 related/prior evidence 物化属于后续 evidence-chain 集成。
+- 如果未来支持同一事件的多规则版本历史，必须同步升级 ID、DAO 与存储契约，不能只修改规则引擎。
 
 ### 2.7 Recommendation
 
