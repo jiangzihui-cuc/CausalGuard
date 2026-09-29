@@ -1,9 +1,9 @@
 diff --git a/app/src/main/java/eu/faircode/netguard/CausalGuardNetworkHook.java b/app/src/main/java/eu/faircode/netguard/CausalGuardNetworkHook.java
 new file mode 100644
-index 0000000..177547d
+index 0000000..154603e
 --- /dev/null
 +++ b/app/src/main/java/eu/faircode/netguard/CausalGuardNetworkHook.java
-@@ -0,0 +1,89 @@
+@@ -0,0 +1,96 @@
 +/*
 + * CausalGuard team modification (A4-3), added on top of TrackerControl/NetGuard.
 + *
@@ -21,14 +21,16 @@ index 0000000..177547d
 +import android.content.Intent;
 +import android.util.Log;
 +
-+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-+
 +/**
 + * CausalGuard 广播桥接（团队新增，A4-3）。
 + *
 + * 在 `ServiceSinkhole.logPacket` / `dnsResolved` 回调末尾把最小脱敏元数据
-+ * （时间、协议、五元组、uid、allowed；DNS 的 qname/aname/ip）通过
-+ * LocalBroadcastManager 发给同进程的 CausalGuard 适配层。
++ * （时间、协议、五元组、uid、allowed；DNS 的 qname/aname/ip）以 **显式包名广播**
++ * （`Intent.setPackage`）发给独立进程的 CausalGuard 适配层。
++ *
++ * 进程边界说明：底座与 CausalGuard 是两个已安装 APK、两个进程，因此不能用
++ * LocalBroadcastManager（仅同进程）。这里用普通 `sendBroadcast` + `setPackage("com.causalguard")`：
++ * 只有目标包内处于运行状态的导出广播接收器能收到，其他应用无法注册接收发往别包的广播。
 + *
 + * 设计约束（docs/trackercontrol-adapter-boundary.md）：
 + * - 只发送连接元数据，绝不读请求体/响应体/TLS 明文；
@@ -36,6 +38,9 @@ index 0000000..177547d
 + * - native 回调线程只做轻量打包 + 异步投递，异常一律吞掉，绝不影响转发。
 + */
 +public final class CausalGuardNetworkHook {
++
++    /** CausalGuard 应用包名（独立 APK），广播只投递给该包。 */
++    public static final String CAUSALGUARD_PACKAGE = "com.causalguard";
 +
 +    public static final String ACTION_PACKET = "com.causalguard.intent.NETWORK_PACKET";
 +    public static final String ACTION_DNS = "com.causalguard.intent.NETWORK_DNS";
@@ -72,7 +77,8 @@ index 0000000..177547d
 +            intent.putExtra(EXTRA_DPORT, packet.dport);
 +            intent.putExtra(EXTRA_UID, packet.uid);
 +            intent.putExtra(EXTRA_ALLOWED, packet.allowed);
-+            LocalBroadcastManager.getInstance(service).sendBroadcast(intent);
++            intent.setPackage(CAUSALGUARD_PACKAGE);
++            service.sendBroadcast(intent);
 +        } catch (Throwable ex) {
 +            Log.e(TAG, "CausalGuard onPacket failed: " + ex);
 +        }
@@ -87,7 +93,8 @@ index 0000000..177547d
 +            intent.putExtra(EXTRA_QNAME, rr.QName);
 +            intent.putExtra(EXTRA_ANAME, rr.AName);
 +            intent.putExtra(EXTRA_RESOURCE, rr.Resource);
-+            LocalBroadcastManager.getInstance(service).sendBroadcast(intent);
++            intent.setPackage(CAUSALGUARD_PACKAGE);
++            service.sendBroadcast(intent);
 +        } catch (Throwable ex) {
 +            Log.e(TAG, "CausalGuard onDnsResolved failed: " + ex);
 +        }
@@ -101,14 +108,14 @@ index e181130..54ccebb 100644
  
      // Called from native code
      private void logPacket(Packet packet) {
-+        // CausalGuard A4-3: emit minimal metadata to the in-process adapter (non-blocking).
++        // CausalGuard A4-3: emit minimal metadata to the CausalGuard receiver (non-blocking).
 +        CausalGuardNetworkHook.onPacket(this, packet);
          logHandler.queue(packet);
      }
  
      // Called from native code
      private void dnsResolved(ResourceRecord rr) {
-+        // CausalGuard A4-3: map DNS answer to IP for domain hints (non-blocking).
++        // CausalGuard A4-3: map DNS answer for CausalGuard domain hints (non-blocking).
 +        CausalGuardNetworkHook.onDnsResolved(this, rr);
          if (DatabaseHelper.getInstance(ServiceSinkhole.this).insertDns(rr)) {
              Log.i(TAG, "New IP " + rr);

@@ -108,7 +108,7 @@
 |---|---|---|---|---|
 | A4-1 | PackageManager Provider | 成员 A | - | 已完成（A3-3 `PackageManagerProfileProvider`） |
 | A4-2 | UsageStats Provider | 成员 A | - | 已完成（A3-3 `UsageStatsContextProvider`） |
-| A4-3 | TrackerControl/NetGuard Network Adapter | 成员 A | - | 代码完成（submodule 已导入；广播桥接 App 侧契约/Receiver/Source + 底座 `ServiceSinkhole` Hook 补丁 + 应用脚本已就绪并单测，真机端到端联调并入 A4-5） |
+| A4-3 | TrackerControl/NetGuard Network Adapter | 成员 A | - | 代码完成（submodule 已导入；广播桥接改为**跨进程显式包名广播** `setPackage("com.causalguard")` + App 侧 `RECEIVER_EXPORTED` 动态注册，底座 Hook 补丁 + 应用脚本已就绪并单测；待真机端到端联调） |
 | A4-4 | UID/包名/域名/时间窗口关联（含补 A1-8 遗留：adb 抓 `Get uid=` 统计底座归属量化成功率） | 成员 A | - | 代码完成（关联入库链路 + `NetworkEventCollector` 端到端源→入库已接 `AppContainer`；A1-8 量化成功率真机补测 231/231=100%；真实事件端到端待 A4-3 底座补丁真机联调） |
 | A4-5 | VPN 生命周期、前台服务、网络切换和异常恢复 | 成员 A | - | 未开始 |
 | B4-1 | 只选一套 tracker 数据，固定版本并生成 50~200 条精简离线表 | 成员 B | 成员 A | 未开始 |
@@ -125,7 +125,11 @@
 >
 > A 侧阶段 4 已合入分支登记：`feature/a-t4-network-ingest`→`24e71a9`（A4-4 关联入库 + DB v2）、`feature/a-t4-trackercontrol-submodule`→`990e96c`（A4-3 底座 submodule）、`feature/a-rule-contract-extension`→`4224cdf`（规则契约扩展）、`feature/a-t3-room-repository`→`3479330`（A3 数据层）。当前 `:app` 单测 31 项通过，`gradle build` 通过（CI 同）。
 >
-> A4-3/A4-4 代码进展（A 回填，2026-09-28）：采用**广播桥接**（底座独立 Gradle 工程无法 import `com.causalguard.*`，冻结的 `TrackerControlCallback` 契约不变，详见 [adapter 边界](trackercontrol-adapter-boundary.md) §9）。App 侧新增 `data/network/trackercontrol/TrackerControlBroadcast`（广播契约 + 纯解析）、`TrackerControlEventReceiver`、`TrackerControlEventSource`（`NetworkEventSource` 实现，`LocalBroadcastManager` 注册/注销），及 A4-4 端到端 `data/ingest/NetworkEventCollector`（`NetworkEventSource → NetworkEventIngestor → Room`，`start/stop` 幂等），已接入 `AppContainer`；`app/build.gradle` 增 `androidx.localbroadcastmanager:localbroadcastmanager:1.1.0`。底座侧不改 submodule，改以补丁交付：`third_party/patches/a4-3-serversinkhole-network-hook.patch`（新增 `eu.faircode.netguard.CausalGuardNetworkHook`，在 `ServiceSinkhole.logPacket`/`dnsResolved` 各挂一处）与 `scripts/apply-trackercontrol-hook.sh`（应用/`--revert`）；submodule 保持干净、`git apply --check` 通过。`:app` 单测 41 项通过（新增 Broadcast 5 / EventSource 3 / Collector 2），`./gradlew --offline build` 通过。真机端到端与 VPN 生命周期（A4-5）未验证。
+> A4-3/A4-4 代码进展（A 回填，2026-09-28）：采用**广播桥接**（底座独立 Gradle 工程无法 import `com.causalguard.*`，冻结的 `TrackerControlCallback` 契约不变，详见 [adapter 边界](trackercontrol-adapter-boundary.md) §9）。App 侧新增 `data/network/trackercontrol/TrackerControlBroadcast`（广播契约 + 纯解析）、`TrackerControlEventReceiver`、`TrackerControlEventSource`，及 A4-4 端到端 `data/ingest/NetworkEventCollector`（`NetworkEventSource → NetworkEventIngestor → Room`，`start/stop` 幂等），已接入 `AppContainer`。底座侧不改 submodule，改以补丁交付：`third_party/patches/a4-3-serversinkhole-network-hook.patch`（新增 `eu.faircode.netguard.CausalGuardNetworkHook`，在 `ServiceSinkhole.logPacket`/`dnsResolved` 各挂一处）与 `scripts/apply-trackercontrol-hook.sh`（应用/`--revert`）；submodule 保持干净、`git apply --check` 通过。`:app` 单测 41 项通过（新增 Broadcast 5 / EventSource 3 / Collector 2）。
+>
+> **进程边界修正（A 回填，2026-09-28）**：底座与 CausalGuard 是两个已安装 APK、两个进程，第一版 `LocalBroadcastManager`（仅同进程）真机收不到事件。已将桥接改为**跨进程显式包名广播**：底座 `sendBroadcast` + `intent.setPackage("com.causalguard")`；App 侧 `TrackerControlEventSource` 改用 `Context.registerReceiver(..., RECEIVER_EXPORTED)`（API 33+ 显式导出标志），移除 `androidx.localbroadcastmanager` 依赖，`TrackerControlBroadcast` 增 `TARGET_PACKAGE` 常量，单测改用普通广播 + Robolectric looper idle。`MainActivity` 增加「启动/停止网络采集」按钮作为真机验证入口（生产生命周期属 A4-5）。`:app` 单测 41 项全部通过。真机端到端与 VPN 生命周期（A4-5）未验证。
+>
+> **A4-3 剩余真机步骤（待 A 执行）**：① 安装 CausalGuard debug 并保持其进程存活（前台 Activity）；② `./scripts/apply-trackercontrol-hook.sh` 后构建并 `adb install -r` 底座 fdroid debug（`net.kollnig.missioncontrol.fdroid.test`），启动并授权 VPN；③ CausalGuard 点「启动网络采集」，在演示机产生 TCP/UDP/DNS 流量；④ 从 logcat/DB 核对 `NetworkEvent`→`PrivacyEvent` 入库、`uid→packageName`、`domainHint`、`blocked`、去重；⑤ 记录 `uid=-1`/无域名等降级证据，回填 [spike-results](spike-results.md)；⑥ 更新本看板 A4-3 为已完成并提 PR。
 
 ## 阶段 5：场景推理、因果链与处置复查（10/1-10/3）
 

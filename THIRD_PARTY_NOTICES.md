@@ -64,7 +64,7 @@
 | Android SDK Platform | android-37.0 | Android SDK 条款 | 编译目标 |
 | Android SDK Build-Tools | 37.0.0 | Android SDK 条款 | 打包 |
 | Android SDK Platform-Tools | 37.0.1 | Apache-2.0（含 adb） | 设备工具 |
-| AndroidX LocalBroadcastManager | 1.1.0 | Apache-2.0 | A4-3 底座事件广播桥接（同进程） |
+| AndroidX LocalBroadcastManager | 1.1.0 | Apache-2.0 | 底座（TrackerControl）自身 UI 广播依赖；A4-3 桥接已改为跨进程显式包名广播，App 侧不再使用 |
 | Android NDK | 27.2.12479018 | 见 NDK 内 NOTICE（含 LLVM/clang，Apache-2.0 with LLVM exceptions 等） | JNI/CMake 原生编译 |
 | CMake | 3.22.1 | BSD-3-Clause | 原生构建 |
 | Rust 工具链 | 1.95.0 | MIT OR Apache-2.0 | 编译 WireGuard 桥 |

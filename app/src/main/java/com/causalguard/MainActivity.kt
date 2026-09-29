@@ -7,10 +7,12 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
+import com.causalguard.di.AppContainer
 import com.causalguard.network.UidAttributionProbe
 import com.causalguard.profile.PackageProfileCollector
 import com.causalguard.usage.UsageStatsCollector
 import java.util.concurrent.Executors
+import kotlinx.coroutines.runBlocking
 
 /**
  * A1-3 / A1-4 Spike 验证入口。
@@ -24,6 +26,13 @@ class MainActivity : Activity() {
     private lateinit var output: TextView
     private val tag = "CausalGuardSpike"
 
+    /**
+     * A4-3 真机验证入口：手工 start/stop 网络采集链路
+     * （底座广播 → Adapter → NetworkEventIngestor → Room）。
+     * 正式生命周期（前台服务、网络切换恢复）属 A4-5。
+     */
+    private val container by lazy { AppContainer(applicationContext) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -36,7 +45,29 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.btn_package).setOnClickListener { runPackageCollect() }
         findViewById<Button>(R.id.btn_usage).setOnClickListener { runUsageCollect() }
         findViewById<Button>(R.id.btn_uid).setOnClickListener { runUidProbe() }
+        findViewById<Button>(R.id.btn_net_start).setOnClickListener { startNetworkCollect() }
+        findViewById<Button>(R.id.btn_net_stop).setOnClickListener { stopNetworkCollect() }
         findViewById<Button>(R.id.btn_clear).setOnClickListener { output.text = "" }
+    }
+
+    /**
+     * A4-3：注册底座广播接收器并开始入库。需先安装/启动打过补丁的底座并授权其 VPN，
+     * 再在另一进程产生 TCP/UDP/DNS 流量；事件落入 Room 事件库。
+     */
+    private fun startNetworkCollect() {
+        executor.execute {
+            runCatching { runBlocking { container.networkEventCollector.start() } }
+                .onSuccess { show("=== A4-3 网络采集已启动（collecting=${container.networkEventCollector.isCollecting}）===") }
+                .onFailure { show("=== A4-3 启动失败：${it.message ?: it} ===") }
+        }
+    }
+
+    private fun stopNetworkCollect() {
+        executor.execute {
+            runCatching { runBlocking { container.networkEventCollector.stop() } }
+                .onSuccess { show("=== A4-3 网络采集已停止 ===") }
+                .onFailure { show("=== A4-3 停止失败：${it.message ?: it} ===") }
+        }
     }
 
     private fun runPackageCollect() {

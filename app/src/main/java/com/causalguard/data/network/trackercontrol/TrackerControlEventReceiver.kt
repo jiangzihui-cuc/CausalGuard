@@ -9,8 +9,8 @@ import android.content.Intent
  * 转成 [PacketMeta]/[DnsRecordMeta] 并交给 [TrackerControlCallback]（即 Adapter）。
  *
  * 只做解析与转发，不做重活；真正的事件转换、队列与丢包计数在 Adapter 内。
- * 广播与 Adapter 同进程（LocalBroadcastManager），生命周期由
- * [TrackerControlEventSource] 管理。
+ * 广播来自另一个进程（底座），由 [TrackerControlEventSource] 以
+ * `Context.registerReceiver(..., RECEIVER_EXPORTED)` 动态注册与注销。
  */
 class TrackerControlEventReceiver(
     private val callback: TrackerControlCallback,

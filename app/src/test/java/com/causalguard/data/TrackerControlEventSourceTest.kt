@@ -2,7 +2,7 @@ package com.causalguard.data
 
 import android.content.Context
 import android.content.Intent
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import com.causalguard.core.model.NetworkProtocol
 import com.causalguard.data.network.trackercontrol.PackageNameResolver
@@ -19,6 +19,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -48,8 +49,10 @@ class TrackerControlEventSourceTest {
             putExtra(TrackerControlBroadcast.EXTRA_RESOURCE, address)
         }
 
-    private fun send(context: Context, intent: Intent) =
-        LocalBroadcastManager.getInstance(context).sendBroadcastSync(intent)
+    private fun send(context: Context, intent: Intent) {
+        context.sendBroadcast(intent)
+        shadowOf(Looper.getMainLooper()).idle()
+    }
 
     @Test
     fun broadcastPacketBecomesNetworkEvent() = runBlocking {

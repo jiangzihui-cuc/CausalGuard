@@ -1,6 +1,7 @@
 package com.causalguard.di
 
 import android.content.Context
+import android.util.Log
 import com.causalguard.core.model.AppProfileProvider
 import com.causalguard.core.model.AppProfileRepository
 import com.causalguard.core.model.AuditLogRepository
@@ -79,7 +80,14 @@ class AppContainer(
 
     /** A4-4：source → `NetworkEventIngestor` → Room 的端到端采集器（前台服务/演示壳按需 start/stop）。 */
     val networkEventCollector: NetworkEventCollector =
-        NetworkEventCollector(networkEventSource, NetworkEventIngestor(privacyEventRepository))
+        NetworkEventCollector(
+            networkEventSource,
+            NetworkEventIngestor(privacyEventRepository),
+            onIngested = { event ->
+                // A4-3 真机验证：只记录脱敏后的应用与阻断状态，不打印 IP/域名。
+                Log.i("CausalGuardNet", "ingested id=${event.eventId} app=${event.appId} blocked=${event.network?.blocked}")
+            },
+        )
     override val appProfileRepository: AppProfileRepository = RoomAppProfileRepository(database)
     override val usageContextRepository: UsageContextRepository = RoomUsageContextRepository(database)
     override val riskAssessmentRepository: RiskAssessmentRepository = RoomRiskAssessmentRepository(database)

@@ -6,13 +6,16 @@ import android.os.Bundle
  * A4-3 广播桥接契约（docs/trackercontrol-adapter-boundary.md §4/§5）。
  *
  * 底座侧 `eu.faircode.netguard.CausalGuardNetworkHook` 在 `logPacket`/`dnsResolved`
- * 回调末尾发送 LocalBroadcast（同进程）。本对象是两侧唯一的字符串契约：action 与
- * extra key 必须与底座补丁 `third_party/patches/a4-3-serversinkhole-network-hook.patch`
- * 完全一致，改动需同步。
+ * 回调末尾发送**显式包名广播**（`Intent.setPackage("com.causalguard")`），跨进程投递给
+ * 本应用。本对象是两侧唯一的字符串契约：包名、action 与 extra key 必须与底座补丁
+ * `third_party/patches/a4-3-serversinkhole-network-hook.patch` 完全一致，改动需同步。
  *
  * 解析函数保持纯逻辑（只依赖 [Bundle]），便于单元测试；底座类型不越过本文件。
  */
 object TrackerControlBroadcast {
+
+    /** 底座广播的目标包名（本应用 applicationId）。 */
+    const val TARGET_PACKAGE = "com.causalguard"
 
     const val ACTION_PACKET = "com.causalguard.intent.NETWORK_PACKET"
     const val ACTION_DNS = "com.causalguard.intent.NETWORK_DNS"
