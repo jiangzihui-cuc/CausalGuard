@@ -54,6 +54,7 @@ class RuleEvaluationResultTest {
         val input = RuleInput(
             event = FixtureEvents.calculatorClipboard,
             appProfile = FixtureEvents.calculatorProfile,
+            scenarioMatch = ScenarioMatch.MISMATCH,
             relatedEvents = listOf(FixtureEvents.calculatorNetwork)
         )
 
@@ -77,6 +78,7 @@ class RuleEvaluationResultTest {
         val input = RuleInput(
             event = FixtureEvents.calculatorNetwork,
             appProfile = FixtureEvents.calculatorProfile,
+            scenarioMatch = ScenarioMatch.MISMATCH,
             relatedEvents = listOf(FixtureEvents.calculatorClipboard)
         )
 
@@ -129,6 +131,7 @@ class RuleEvaluationResultTest {
         val input = RuleInput(
             event = FixtureEvents.calculatorClipboard,
             appProfile = FixtureEvents.calculatorProfile,
+            scenarioMatch = ScenarioMatch.MISMATCH,
             relatedEvents = listOf(FixtureEvents.calculatorNetwork)
         )
 
@@ -143,6 +146,7 @@ class RuleEvaluationResultTest {
         val input = RuleInput(
             event = FixtureEvents.calculatorNetwork,
             appProfile = FixtureEvents.calculatorProfile,
+            scenarioMatch = ScenarioMatch.MISMATCH,
             relatedEvents = listOf(FixtureEvents.calculatorClipboard)
         )
 
@@ -157,6 +161,7 @@ class RuleEvaluationResultTest {
         val input = RuleInput(
             event = FixtureEvents.calculatorClipboard,
             appProfile = FixtureEvents.calculatorProfile,
+            scenarioMatch = ScenarioMatch.MISMATCH,
             relatedEvents = listOf(FixtureEvents.calculatorNetwork),
             ruleVersion = "rules-v9"
         )
