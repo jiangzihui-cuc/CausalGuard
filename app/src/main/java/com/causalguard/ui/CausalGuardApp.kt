@@ -25,12 +25,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.PrivacyEventRepository
-import com.causalguard.data.repository.FakePrivacyEventRepository
 import com.causalguard.ui.eventdetail.EventDetailScreen
 import com.causalguard.ui.eventdetail.EventDetailViewModel
 import com.causalguard.ui.timeline.TimelineScreen
 import com.causalguard.ui.timeline.TimelineViewModel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 private const val TimelineRoute = "timeline"
 private const val SpikeDebugRoute = "spikeDebug"
@@ -156,7 +158,7 @@ private fun SpikeDebugPanel(
 @Composable
 private fun CausalGuardAppPreview() {
     CausalGuardApp(
-        privacyEventRepository = FakePrivacyEventRepository(),
+        privacyEventRepository = PreviewPrivacyEventRepository,
         output = "Spike / Debug output preview",
         onOpenUsageSettings = {},
         onCollectPackage = {},
@@ -164,4 +166,16 @@ private fun CausalGuardAppPreview() {
         onProbeUid = {},
         onClear = {},
     )
+}
+
+private object PreviewPrivacyEventRepository : PrivacyEventRepository {
+    override suspend fun insert(event: PrivacyEvent) = Unit
+
+    override suspend fun insertAll(events: List<PrivacyEvent>) = Unit
+
+    override suspend fun getById(eventId: String): PrivacyEvent? = null
+
+    override fun observeAll(): Flow<List<PrivacyEvent>> = flowOf(emptyList())
+
+    override fun observeByApp(appId: String): Flow<List<PrivacyEvent>> = flowOf(emptyList())
 }

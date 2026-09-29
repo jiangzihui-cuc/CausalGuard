@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.causalguard.core.model.PrivacyEvent
+import com.causalguard.ui.provenanceLabel
 import com.causalguard.ui.timeline.FactLine
 import com.causalguard.ui.timeline.formatTimestamp
 
@@ -62,7 +63,7 @@ private fun EventFacts(event: PrivacyEvent) {
     FactLine("Foreground", event.foregroundState.wire)
     FactLine("Evidence", event.evidenceLevel.wire)
     FactLine("Evidence summary", event.evidenceSummary)
-    FactLine("Mode", if (event.isDemo) "Demo" else "Real")
+    FactLine("Mode", event.provenanceLabel())
     FactLine("Category", event.category.wire)
     FactLine("Risk score", event.riskScore.toString())
     FactLine("Confidence", event.confidence.wire)

@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.RiskCategory
+import com.causalguard.ui.provenanceLabel
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -94,7 +95,7 @@ private fun EventRow(
             FactLine("Time", event.timestamp.formatTimestamp())
             FactLine("Foreground", event.foregroundState.wire)
             FactLine("Evidence", event.evidenceLevel.wire)
-            FactLine("Mode", if (event.isDemo) "Demo" else "Real")
+            FactLine("Mode", event.provenanceLabel())
             if (event.category != RiskCategory.UNKNOWN) {
                 FactLine("Category", event.category.wire)
             }
