@@ -178,3 +178,14 @@
 - 产品 UI、解释文案与评测数据集。
 
 第三方网络底座仅解决“网络事实采集与阻断”，上述“翻译、推理、解释、复查”价值由团队实现。
+## AndroidX Activity Compose
+
+- Project: AndroidX Activity
+- Artifact: `androidx.activity:activity-compose:1.13.0`
+- License: Apache-2.0
+- Used module: `:app`
+- Purpose: single-Activity Compose host integration
+- Copied source: no
+- Local modifications: none
+- Source: https://developer.android.com/jetpack/androidx/releases/activity
+- Registered by / date: 成员 B / 2026-09-29
