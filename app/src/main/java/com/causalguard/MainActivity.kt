@@ -9,6 +9,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.causalguard.di.AppContainer
+import com.causalguard.di.AppDependencies
 import com.causalguard.network.UidAttributionProbe
 import com.causalguard.profile.PackageProfileCollector
 import com.causalguard.usage.UsageStatsCollector
@@ -26,11 +28,14 @@ class MainActivity : ComponentActivity() {
     private val executor = Executors.newSingleThreadExecutor()
     private var outputText by mutableStateOf("（尚未采集）")
     private val tag = "CausalGuardSpike"
+    private lateinit var appDependencies: AppDependencies
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        appDependencies = AppContainer(applicationContext)
         setContent {
             CausalGuardApp(
+                privacyEventRepository = appDependencies.privacyEventRepository,
                 output = outputText,
                 onOpenUsageSettings = {
                     startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))

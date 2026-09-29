@@ -1,5 +1,6 @@
 package com.causalguard.ui
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,13 +13,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.causalguard.core.model.PrivacyEventRepository
+import com.causalguard.data.repository.FakePrivacyEventRepository
+import com.causalguard.ui.eventdetail.EventDetailScreen
+import com.causalguard.ui.eventdetail.EventDetailViewModel
+import com.causalguard.ui.timeline.TimelineScreen
+import com.causalguard.ui.timeline.TimelineViewModel
+
+private const val TimelineRoute = "timeline"
+private const val SpikeDebugRoute = "spikeDebug"
+private const val EventDetailRoute = "eventDetail/{eventId}"
+private const val EventIdArgument = "eventId"
 
 @Composable
 fun CausalGuardApp(
+    privacyEventRepository: PrivacyEventRepository,
     output: String,
     onOpenUsageSettings: () -> Unit,
     onCollectPackage: () -> Unit,
@@ -28,14 +49,51 @@ fun CausalGuardApp(
 ) {
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            SpikeDebugPanel(
-                output = output,
-                onOpenUsageSettings = onOpenUsageSettings,
-                onCollectPackage = onCollectPackage,
-                onCollectUsage = onCollectUsage,
-                onProbeUid = onProbeUid,
-                onClear = onClear,
-            )
+            val navController = rememberNavController()
+            NavHost(
+                navController = navController,
+                startDestination = TimelineRoute,
+            ) {
+                composable(TimelineRoute) {
+                    val timelineViewModel: TimelineViewModel = viewModel(
+                        factory = TimelineViewModel.Factory(privacyEventRepository),
+                    )
+                    val state by timelineViewModel.uiState.collectAsStateWithLifecycle()
+                    TimelineScreen(
+                        state = state,
+                        onEventClick = { eventId ->
+                            navController.navigate("eventDetail/${Uri.encode(eventId)}")
+                        },
+                        onOpenSpikeDebug = { navController.navigate(SpikeDebugRoute) },
+                    )
+                }
+                composable(
+                    route = EventDetailRoute,
+                    arguments = listOf(navArgument(EventIdArgument) { type = NavType.StringType }),
+                ) { backStackEntry ->
+                    val eventId = requireNotNull(backStackEntry.arguments?.getString(EventIdArgument))
+                    val detailViewModel: EventDetailViewModel = viewModel(
+                        key = "event-detail-$eventId",
+                        factory = EventDetailViewModel.Factory(eventId, privacyEventRepository),
+                    )
+                    val state by detailViewModel.uiState.collectAsStateWithLifecycle()
+                    EventDetailScreen(
+                        state = state,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(SpikeDebugRoute) {
+                    SpikeDebugPanel(
+                        output = output,
+                        onOpenUsageSettings = onOpenUsageSettings,
+                        onCollectPackage = onCollectPackage,
+                        onCollectUsage = onCollectUsage,
+                        onProbeUid = onProbeUid,
+                        onClear = onClear,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+            }
         }
     }
 }
@@ -48,6 +106,7 @@ private fun SpikeDebugPanel(
     onCollectUsage: () -> Unit,
     onProbeUid: () -> Unit,
     onClear: () -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
     Column(
         modifier = Modifier
@@ -63,6 +122,11 @@ private fun SpikeDebugPanel(
             text = "阶段 1 采集验证壳，不是正式产品页面。",
             style = MaterialTheme.typography.bodyMedium,
         )
+        onBack?.let {
+            Button(onClick = it) {
+                Text("Back")
+            }
+        }
         Button(onClick = onOpenUsageSettings) {
             Text("Usage Access Settings")
         }
@@ -92,6 +156,7 @@ private fun SpikeDebugPanel(
 @Composable
 private fun CausalGuardAppPreview() {
     CausalGuardApp(
+        privacyEventRepository = FakePrivacyEventRepository(),
         output = "Spike / Debug output preview",
         onOpenUsageSettings = {},
         onCollectPackage = {},
