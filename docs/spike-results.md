@@ -3,9 +3,9 @@
 > 版本：`v0.3`
 > 最后更新：2026-09-29
 > 责任人：成员 A
-> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8、A4-3
+> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8、A4-3、A4-5
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测；A4-3 跨进程网络事件端到端已于 2026-09-29 真机验证，见第 3 节）
+> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测；A4-3 跨进程网络事件端到端已于 2026-09-29 真机验证；A4-5 前台服务与网络切换恢复已于 2026-09-29 真机验证，见第 3 节）
 
 ---
 
@@ -253,7 +253,31 @@
   - 无域名：`blocked` 的 DNS（UDP:53）记录 `domainHint` 为空，正确表达“有请求但被阻断”。
 - 去重说明：`dedupKey` 按 60s 时间窗生成；依 `docs/09` §4，`dedupKey` 仅用于查询期频率聚合、**不删原始事件留存**，故 486 条原始事件保留属预期。
 - 结论：满足 A4-3 阶段门——至少一种真实网络事件进入 Room、至少一个 App 获得使用上下文、无域名/UID 时诚实降级。跨进程 `setPackage("com.causalguard")` + App 侧 `RECEIVER_EXPORTED` 广播桥接在真机生效。
-- 遗留：A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）未实现；当前采集依赖手工 start/stop 且需保持 CausalGuard 进程存活。
+- 遗留：A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）见下节；本节验证时为手工 start/stop 且需保持 CausalGuard 进程存活，下节前台服务已补齐。
+
+### A4-5 前台服务与网络切换/VPN 回收自动恢复（2026-09-29 真机 PJW110 / Android 16 / API 36）
+
+- [x] 真机验证通过（2026-09-29）
+- 目标：以 `dataSync` 前台服务维持采集进程存活；VPN 被系统回收 / 网络切换后自动 `stop() → start()` 重新订阅，历史事件已在 Room 不丢（`docs/trackercontrol-adapter-boundary` §5）。
+- 实现：
+  - `data/ingest/NetworkCollector`：采集器最小契约（生产实现为 `NetworkEventCollector`）。
+  - `data/ingest/NetworkMonitorController`：`start/stop/restart` 经 `Mutex` 串行化，异常回调 `onError` 后回到可重试状态，绝不 crash。纯逻辑，可 JVM 单测。
+  - `service/NetworkMonitorService`：`START_STICKY` 前台服务 + `FOREGROUND_SERVICE_TYPE_DATA_SYNC` 常驻通知；网络回调经 800ms 去抖合并为一次 restart。
+  - `service/AndroidConnectivityWatcher`：`registerDefaultNetworkCallback`，忽略注册时的基线回调，仅在真实 `onLost/onAvailable`/VPN 能力变化时通知。
+- 操作流程：CausalGuard 点「Start Network Monitor (A4-5)」→ 前台服务常驻；`adb shell am force-stop net.kollnig.missioncontrol.fdroid.test` 模拟 VPN 回收，随后 `monkey` 重启底座恢复 VPN。
+- 结果：
+
+| 指标 | 结果 |
+|---|---|
+| 前台服务 | `isForeground=true`、`foregroundId=1001`、`types=0x1`（dataSync），常驻通知与渠道 `causalguard_network_monitor` 建立 |
+| VPN 回收 | `network changed: lost/available/vpn-down` → 去抖后仅一次 `network restart done: active=true collecting=true` |
+| VPN 恢复 | `network changed: available/vpn-up` → 一次 restart，`active=true collecting=true` |
+| 事件不丢 | Room `privacy_event`/`network_event` 同步增长 **486 → 495 → 510**（重启前后持续入库、一一对应） |
+| 并发安全 | 修复注册基线/多回调并发 `restart` 造成的 `IllegalArgumentException: Receiver not registered`（`Mutex` 串行化 + 基线抑制 + 去抖） |
+| 停止 | UI「Stop Network Monitor」后 `dumpsys activity services com.causalguard` 无 ServiceRecord、通知消失 |
+
+- 关键修复（合并 `origin/main` 回归）：`AppContainer.privacyEventRepository` 曾采用 main 的 `FakePrivacyEventRepository` 默认值，导致 A4 采集只写内存、Room 不增长；已恢复为 `RoomPrivacyEventRepository(database)`，对齐 `docs/17` 阶段门与「Room 为唯一写入口」。
+- 遗留：厂商（ColorOS/Oppo）后台限制对 `START_STICKY` 的长期影响、锁屏/深度 Doze 下的保活需后续实测；通知权限未授权时服务仍运行但不显示常驻通知。
 
 ---
 
@@ -276,4 +300,4 @@
 1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）；A1-8 自测与量化成功率均完成（见第 3 节 A1-8，归属依赖底座）。
 2. 已补测：底座 UID 归属**量化成功率** 231/231 = 100%（TCP/UDP，真机 PJW110 / Android 16，2026-09-28，经 WSL2 无线调试采集 `TrackerControl.VPN` 日志）。
 3. 演示机 PJW110 为 Android 16 / API 36；早期 Spike 机 OPPO Reno12 Pro 的 Android 版本仍待补（基线 API 29+）。
-4. A4-3 跨进程网络事件端到端已于 2026-09-29 在 PJW110 真机验证（486 条事件入库，见第 3 节 A4-3）；A4-4 关联入库链路随该验证一并打通。**未决**：A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）尚未实现，真实采集仍需手工 start/stop 并保持进程存活。
+4. A4-3 跨进程网络事件端到端已于 2026-09-29 在 PJW110 真机验证（486 条事件入库，见第 3 节 A4-3）；A4-4 关联入库链路随该验证一并打通。A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）已于 2026-09-29 真机验证（`dataSync` 前台服务、VPN 回收/恢复各触发一次去抖 restart、事件 486→510 持续入库、停止后服务注销），见第 3 节 A4-5；遗留为 ColorOS 后台限制与深度 Doze 保活的长期观察。

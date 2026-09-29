@@ -1,6 +1,6 @@
 # 17 任务看板
 
-> 版本：`v0.9`
+> 版本：`v0.10`
 > 最后更新：2026-09-29
 > 责任人：成员 B（协作：成员 A）
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
@@ -114,7 +114,7 @@
 | A4-2 | UsageStats Provider | 成员 A | - | 已完成（A3-3 `UsageStatsContextProvider`） |
 | A4-3 | TrackerControl/NetGuard Network Adapter | 成员 A | - | 已完成（跨进程显式包名广播 `setPackage("com.causalguard")` + App 侧 `RECEIVER_EXPORTED`；2026-09-29 真机 PJW110/Android 16 端到端验证通过，486 条事件入库，见 `docs/spike-results.md` §3 A4-3） |
 | A4-4 | UID/包名/域名/时间窗口关联（含补 A1-8 遗留：adb 抓 `Get uid=` 统计底座归属量化成功率） | 成员 A | - | 已完成（关联入库链路 `NetworkEventCollector` 已接 `AppContainer`；A1-8 量化成功率 231/231=100%；2026-09-29 真机端到端随 A4-3 验证通过：486 条 `network_event`/`privacy_event` 一一对应、414 条归属、353 条有域名线索） |
-| A4-5 | VPN 生命周期、前台服务、网络切换和异常恢复 | 成员 A | - | 未开始 |
+| A4-5 | VPN 生命周期、前台服务、网络切换和异常恢复 | 成员 A | - | 已完成（`dataSync` 前台服务 `NetworkMonitorService` + `NetworkMonitorController`（Mutex 串行化 restart）+ `AndroidConnectivityWatcher`（基线抑制/800ms 去抖）；2026-09-29 真机 PJW110/Android 16 验证：VPN 回收/恢复各触发一次 restart、`active=true collecting=true`、事件 486→510 持续入库、停止后服务注销。见 `docs/spike-results.md` §3 A4-5） |
 | B4-1 | 只选一套 tracker 数据，固定版本并生成 50~200 条精简离线表 | 成员 B | 成员 A | 未开始 |
 | B4-2 | `TrackerClassifier` 和域名归一化 | 成员 B | 成员 A | 未开始 |
 | B4-3 | 无权限/无域名/无法归属/VPN 停止/真实沙箱标签 | 成员 B | - | 未开始 |
@@ -133,7 +133,9 @@
 >
 > **进程边界修正（A 回填，2026-09-28）**：底座与 CausalGuard 是两个已安装 APK、两个进程，第一版 `LocalBroadcastManager`（仅同进程）真机收不到事件。已将桥接改为**跨进程显式包名广播**：底座 `sendBroadcast` + `intent.setPackage("com.causalguard")`；App 侧 `TrackerControlEventSource` 改用 `Context.registerReceiver(..., RECEIVER_EXPORTED)`（API 33+ 显式导出标志），移除 `androidx.localbroadcastmanager` 依赖，`TrackerControlBroadcast` 增 `TARGET_PACKAGE` 常量，单测改用普通广播 + Robolectric looper idle。`MainActivity` 增加「启动/停止网络采集」按钮作为真机验证入口（生产生命周期属 A4-5）。`:app` 单测 41 项全部通过。真机端到端与 VPN 生命周期（A4-5）未验证。
 >
-> **A4-3 真机验证完成（A 回填，2026-09-29）**：按上述 6 步在演示机 **PJW110 / Android 16（API 36）** 执行完毕。底座（`net.kollnig.missioncontrol.fdroid.test`，已应用 `scripts/apply-trackercontrol-hook.sh` 补丁并确认 `CausalGuardNetworkHook` 编入 `classes7.dex`）VPN 起 `tun0`；CausalGuard（`com.causalguard`）点「启动/停止网络采集」，产生 Chrome/闲鱼/微信/淘宝等真实 TCP/UDP/DNS 流量。结果：**486 条 `network_event` 与 486 条 `privacy_event` 一一对应入库**，`source=vpn`、`evidenceLevel=E2`，414 条归属到包名、353 条有 `domainHint`（60 个不同域名）、2 条 DNS 阻断（`UDP:53 blocked=1`）。降级证据：72 条 `uid=-1`（ICMP 39 + TCP 33，含 IPv4 14/IPv6 19）诚实保留 `packageName=unknown`；去掉 `dedupKey` 按 `docs/09` §4 仅做查询期聚合、不删原始留存。详见 [spike-results](spike-results.md) §3 A4-3。**A4-3/A4-4 真机端到端完成**；A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）仍未开始，当前采集需手工 start/stop 并保持 CausalGuard 进程存活。
+> **A4-3 真机验证完成（A 回填，2026-09-29）**：按上述 6 步在演示机 **PJW110 / Android 16（API 36）** 执行完毕。底座（`net.kollnig.missioncontrol.fdroid.test`，已应用 `scripts/apply-trackercontrol-hook.sh` 补丁并确认 `CausalGuardNetworkHook` 编入 `classes7.dex`）VPN 起 `tun0`；CausalGuard（`com.causalguard`）点「启动/停止网络采集」，产生 Chrome/闲鱼/微信/淘宝等真实 TCP/UDP/DNS 流量。结果：**486 条 `network_event` 与 486 条 `privacy_event` 一一对应入库**，`source=vpn`、`evidenceLevel=E2`，414 条归属到包名、353 条有 `domainHint`（60 个不同域名）、2 条 DNS 阻断（`UDP:53 blocked=1`）。降级证据：72 条 `uid=-1`（ICMP 39 + TCP 33，含 IPv4 14/IPv6 19）诚实保留 `packageName=unknown`；去掉 `dedupKey` 按 `docs/09` §4 仅做查询期聚合、不删原始留存。详见 [spike-results](spike-results.md) §3 A4-3。**A4-3/A4-4 真机端到端完成**。
+>
+> **A4-5 完成与合并回归修复（A 回填，2026-09-29）**：新增 `data/ingest/NetworkCollector`（采集契约）与 `NetworkMonitorController`（`start/stop/restart` 经 `Mutex` 串行化、异常回调后仍可重试），`service/NetworkMonitorService`（`START_STICKY` + `FOREGROUND_SERVICE_TYPE_DATA_SYNC` 常驻通知，回调 800ms 去抖）与 `service/AndroidConnectivityWatcher`（`registerDefaultNetworkCallback`，忽略注册基线）。真机 **PJW110 / Android 16** 验证：VPN 回收（`force-stop` 底座）与恢复各触发一次 `network restart done: active=true collecting=true`，事件在 Room **486→495→510** 持续入库，停止后 `dumpsys` 无 ServiceRecord。同时修复合并 `origin/main` 引入的回归：`AppContainer.privacyEventRepository` 曾取 main 的 `FakePrivacyEventRepository` 默认值，使采集只写内存、Room 不增长；已恢复 `RoomPrivacyEventRepository(database)`（对齐本阶段门“真实网络事件进入 Room”与 Room 唯一写入口）。`:app` 单测 59 项通过。详见 [spike-results](spike-results.md) §3 A4-5。
 
 ## 阶段 5：场景推理、因果链与处置复查（10/1-10/3）
 
