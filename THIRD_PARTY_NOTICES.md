@@ -193,7 +193,7 @@
 ## AndroidX Navigation Compose
 
 - Project: AndroidX Navigation
-- Artifact: `androidx.navigation:navigation-compose:2.9.5`
+- Artifact: `androidx.navigation:navigation-compose:2.10.2`
 - License: Apache-2.0
 - Used module: `:app`
 - Purpose: minimal Compose navigation for Timeline, EventDetail, and SpikeDebug routes
@@ -205,7 +205,7 @@
 ## AndroidX Lifecycle Compose
 
 - Project: AndroidX Lifecycle
-- Artifacts: `androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0`, `androidx.lifecycle:lifecycle-runtime-compose:2.10.0`
+- Artifacts: `androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0`, `androidx.lifecycle:lifecycle-runtime-compose:2.11.0`
 - License: Apache-2.0
 - Used module: `:app`
 - Purpose: Compose ViewModel integration and lifecycle-aware StateFlow collection
