@@ -64,6 +64,34 @@
 - Team-original boundary: 规则资产契约、校验逻辑、领域对象、规则匹配与测试均由团队实现
 - Registered by / date: 成员 B / 2026-09-23
 
+## Jetpack Compose
+
+- Project: Jetpack Compose
+- Repository/source: https://github.com/android/compose-samples; Maven artifacts from Google's AndroidX Maven repository
+- Version/BOM: `androidx.compose:compose-bom:2026.09.00`
+- Artifacts: `androidx.compose.ui:ui`, `androidx.compose.material3:material3`, `androidx.compose.ui:ui-tooling-preview`, `androidx.compose.ui:ui-tooling`
+- License: Apache-2.0
+- Used module: `:app`
+- Purpose: Compose UI and Material3 compile foundation, preview annotation, and debug tooling
+- Copied source: no
+- Local modifications: none
+- Team-original boundary: `CausalGuardApp` and all CausalGuard UI, state, navigation, and business behavior
+- Registered by / date: 成员 B / 2026-09-29
+
+## Kotlin Compose Compiler Gradle Plugin
+
+- Project: Kotlin Compose Compiler Gradle Plugin
+- Repository/source: https://github.com/JetBrains/kotlin; Maven artifact `org.jetbrains.kotlin:compose-compiler-gradle-plugin`
+- Version/BOM: `2.2.10`
+- Artifacts: `org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.2.10`
+- License: Apache-2.0
+- Used module: root build configuration and `:app`
+- Purpose: Kotlin 2.x Compose compiler integration
+- Copied source: no
+- Local modifications: none
+- Team-original boundary: CausalGuard build configuration and source code
+- Registered by / date: 成员 B / 2026-09-29
+
 ### 1.1 构建与运行时技术依赖（阶段 1 / A1-7 登记）
 
 > 这些是构建底座 APK 时实际使用的工具链与运行时依赖；许可证以各版本内 `LICENSE`/`NOTICE` 为准。
