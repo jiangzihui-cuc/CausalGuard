@@ -40,6 +40,7 @@ class TrackerControlEventSource(
         addAction(TrackerControlBroadcast.ACTION_DNS)
     }
 
+    @Volatile
     private var registered: Boolean = false
 
     /** 底座是否可用（已授权 VPN 且前台服务存活）。 */

@@ -29,18 +29,22 @@ class NetworkEventCollector(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
     /** 每成功入库一条事件后的观察回调（默认 no-op，便于真机用 logcat 观察而不污染纯 JVM 测试）。 */
     private val onIngested: (PrivacyEvent) -> Unit = {},
-) {
+) : NetworkCollector {
 
     private var scope: CoroutineScope? = null
     private var job: Job? = null
 
+    @Volatile
+    private var started: Boolean = false
+
     /** 是否正在采集。 */
-    val isCollecting: Boolean
+    override val isCollecting: Boolean
         get() = job?.isActive == true
 
-    suspend fun start() {
-        if (isCollecting) return
+    override suspend fun start() {
+        if (started) return
         source.start()
+        started = true
         val collectorScope = CoroutineScope(SupervisorJob() + dispatcher)
         scope = collectorScope
         job = collectorScope.launch {
@@ -48,7 +52,9 @@ class NetworkEventCollector(
         }
     }
 
-    suspend fun stop() {
+    override suspend fun stop() {
+        if (!started) return
+        started = false
         job?.cancelAndJoin()
         job = null
         scope?.cancel()

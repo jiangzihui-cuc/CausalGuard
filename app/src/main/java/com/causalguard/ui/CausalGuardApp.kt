@@ -148,10 +148,10 @@ private fun SpikeDebugPanel(
             Text("UID Probe")
         }
         Button(onClick = onStartNetworkCollect) {
-            Text("Network Collect Start (A4-3)")
+            Text("Start Network Monitor (A4-5)")
         }
         Button(onClick = onStopNetworkCollect) {
-            Text("Network Collect Stop (A4-3)")
+            Text("Stop Network Monitor (A4-5)")
         }
         Button(onClick = onClear) {
             Text("Clear")
