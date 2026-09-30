@@ -53,7 +53,9 @@
 
 ## 2. v0.1 fixture 预期结果旁路格式
 
-阶段 1 的固定事件样例由 [fixtures/privacy-events-v0.1.json](fixtures/privacy-events-v0.1.json) 提供；对应预期结果由 [fixtures/privacy-events-v0.1.expected.json](fixtures/privacy-events-v0.1.expected.json) 提供。
+阶段 1 的固定事件样例由 [fixtures/privacy-events-v0.1.json](fixtures/privacy-events-v0.1.json) 提供；规则所需的独立上游输入由 [fixtures/rule-input-context-v0.1.json](fixtures/rule-input-context-v0.1.json) 提供；对应预期结果由 [fixtures/privacy-events-v0.1.expected.json](fixtures/privacy-events-v0.1.expected.json) 提供。
+
+评测资产严格分为三类：`privacy-events-v0.1.json` 是事件输入，`rule-input-context-v0.1.json` 是上游规则上下文输入，`privacy-events-v0.1.expected.json` 是输出 oracle。解释模板同样只能用于输出校验；expected 和 template 永远不能用于构造 `RuleInput`。
 
 `privacy-events-v0.1.expected.json` 是**评测/测试旁路数据**，不属于 `PrivacyEvent` 正式事件契约，不得把 `expectedRiskLevel`、`expectedMatchedRules` 等预期字段写入事件 JSON 或事件库。正式事件字段仍以 [09 事件契约](09-event-contract.md) 为准。
 

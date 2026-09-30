@@ -29,6 +29,7 @@ class RuleEvaluatorTest {
         val input = RuleInput(
             event = FixtureEvents.calculatorClipboard,
             appProfile = FixtureEvents.calculatorProfile,
+            scenarioMatch = ScenarioMatch.MISMATCH,
             relatedEvents = listOf(FixtureEvents.calculatorNetwork)
         )
 
@@ -45,6 +46,7 @@ class RuleEvaluatorTest {
             RuleInput(
                 event = FixtureEvents.calculatorClipboard,
                 appProfile = FixtureEvents.calculatorProfile,
+                scenarioMatch = ScenarioMatch.MISMATCH,
                 relatedEvents = listOf(FixtureEvents.calculatorNetwork)
             )
         )
@@ -132,6 +134,7 @@ class RuleEvaluatorTest {
             RuleInput(
                 event = FixtureEvents.calculatorNetwork,
                 appProfile = FixtureEvents.calculatorProfile,
+                scenarioMatch = ScenarioMatch.MISMATCH,
                 relatedEvents = listOf(FixtureEvents.calculatorClipboard)
             )
         )
@@ -139,6 +142,7 @@ class RuleEvaluatorTest {
             RuleInput(
                 event = FixtureEvents.calculatorNetwork,
                 appProfile = FixtureEvents.calculatorProfile,
+                scenarioMatch = ScenarioMatch.MISMATCH,
                 relatedEvents = listOf(FixtureEvents.calculatorClipboard)
             )
         )
@@ -451,6 +455,7 @@ internal object FixtureRules {
             priority = 85,
             condition = RuleCondition(
                 eventTypes = setOf(EventType.CLIPBOARD, EventType.NETWORK),
+                scenarioMatchRequired = ScenarioMatch.MISMATCH,
                 timeWindowMs = 60_000,
                 relatedEventTypes = setOf(EventType.CLIPBOARD, EventType.LOCATION, EventType.CONTACTS, EventType.NETWORK)
             ),

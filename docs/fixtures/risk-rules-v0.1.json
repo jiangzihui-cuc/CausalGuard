@@ -152,6 +152,7 @@
       "priority": 85,
       "condition": {
         "eventTypes": ["clipboard", "network"],
+        "scenarioMatchRequired": "mismatch",
         "timeWindowMs": 60000,
         "relatedEventTypes": ["clipboard", "location", "contacts", "network"],
         "notes": "Matches a sensitive event and a network event from the same app within the evaluation time window."
