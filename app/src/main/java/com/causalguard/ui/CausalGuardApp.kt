@@ -27,6 +27,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.PrivacyEventRepository
+import com.causalguard.analysis.EventAnalysisResult
+import com.causalguard.analysis.EventAnalysisService
 import com.causalguard.ui.eventdetail.EventDetailScreen
 import com.causalguard.ui.eventdetail.EventDetailViewModel
 import com.causalguard.ui.timeline.TimelineScreen
@@ -42,6 +44,7 @@ private const val EventIdArgument = "eventId"
 @Composable
 fun CausalGuardApp(
     privacyEventRepository: PrivacyEventRepository,
+    eventAnalysisService: EventAnalysisService,
     output: String,
     onOpenUsageSettings: () -> Unit,
     onCollectPackage: () -> Unit,
@@ -76,7 +79,7 @@ fun CausalGuardApp(
                     val eventId = requireNotNull(backStackEntry.arguments?.getString(EventIdArgument))
                     val detailViewModel: EventDetailViewModel = viewModel(
                         key = "event-detail-$eventId",
-                        factory = EventDetailViewModel.Factory(eventId, privacyEventRepository),
+                        factory = EventDetailViewModel.Factory(eventId, eventAnalysisService),
                     )
                     val state by detailViewModel.uiState.collectAsStateWithLifecycle()
                     EventDetailScreen(
@@ -159,6 +162,7 @@ private fun SpikeDebugPanel(
 private fun CausalGuardAppPreview() {
     CausalGuardApp(
         privacyEventRepository = PreviewPrivacyEventRepository,
+        eventAnalysisService = PreviewEventAnalysisService,
         output = "Spike / Debug output preview",
         onOpenUsageSettings = {},
         onCollectPackage = {},
@@ -178,4 +182,8 @@ private object PreviewPrivacyEventRepository : PrivacyEventRepository {
     override fun observeAll(): Flow<List<PrivacyEvent>> = flowOf(emptyList())
 
     override fun observeByApp(appId: String): Flow<List<PrivacyEvent>> = flowOf(emptyList())
+}
+
+private object PreviewEventAnalysisService : EventAnalysisService {
+    override suspend fun analyze(eventId: String): EventAnalysisResult? = null
 }

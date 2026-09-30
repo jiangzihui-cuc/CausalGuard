@@ -95,7 +95,7 @@
 | B3-1 | FakeEventRepository | 无 VPN 也能播放 fixture | 已完成 |
 | B3-2 | 首页、时间线、详情、设置四个 P0 页面 | Fake 数据可完整浏览 | 未开始 |
 | B3-3 | 小型规则执行器与 5 条规则 | 正例、反例、unknown 测试通过 | 已完成 |
-| B3-4 | 证据卡片和本地解释模板 | 事实/推断/不可观测显示准确 | 未开始 |
+| B3-4 | 证据卡片和本地解释模板 | 事实/推断/不可观测显示准确 | 已完成 |
 | B3-5 | Demo App 场景 A/B | 可单独编译、触发和复位 | 未开始 |
 | B3-6 | 第一批评测测试 | 至少 20 条自动运行 | 未开始 |
 | B3-7 | 规则引擎契约收敛：复用 `:core-model` 类型、实现 `RiskRuleEngine.assess(RuleInput)`、包名改 `com.causalguard.rules`、纳入根构建 | 规则模块依赖 `:core-model`，`gradle build` 通过 | 已完成 |
