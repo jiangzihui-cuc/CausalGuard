@@ -31,12 +31,15 @@ import com.causalguard.analysis.EventAnalysisResult
 import com.causalguard.analysis.EventAnalysisService
 import com.causalguard.ui.eventdetail.EventDetailScreen
 import com.causalguard.ui.eventdetail.EventDetailViewModel
+import com.causalguard.ui.home.HomeScreen
+import com.causalguard.ui.home.HomeViewModel
 import com.causalguard.ui.timeline.TimelineScreen
 import com.causalguard.ui.timeline.TimelineViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 private const val TimelineRoute = "timeline"
+private const val HomeRoute = "home"
 private const val SpikeDebugRoute = "spikeDebug"
 private const val EventDetailRoute = "eventDetail/{eventId}"
 private const val EventIdArgument = "eventId"
@@ -57,8 +60,21 @@ fun CausalGuardApp(
             val navController = rememberNavController()
             NavHost(
                 navController = navController,
-                startDestination = TimelineRoute,
+                startDestination = HomeRoute,
             ) {
+                composable(HomeRoute) {
+                    val homeViewModel: HomeViewModel = viewModel(
+                        factory = HomeViewModel.Factory(privacyEventRepository, eventAnalysisService),
+                    )
+                    val state by homeViewModel.uiState.collectAsStateWithLifecycle()
+                    HomeScreen(
+                        state = state,
+                        onOpenTimeline = { navController.navigate(TimelineRoute) },
+                        onOpenEvent = { eventId ->
+                            navController.navigate("eventDetail/${Uri.encode(eventId)}")
+                        },
+                    )
+                }
                 composable(TimelineRoute) {
                     val timelineViewModel: TimelineViewModel = viewModel(
                         factory = TimelineViewModel.Factory(privacyEventRepository),
@@ -186,4 +202,6 @@ private object PreviewPrivacyEventRepository : PrivacyEventRepository {
 
 private object PreviewEventAnalysisService : EventAnalysisService {
     override suspend fun analyze(eventId: String): EventAnalysisResult? = null
+
+    override suspend fun analyzeAll(): List<EventAnalysisResult> = emptyList()
 }

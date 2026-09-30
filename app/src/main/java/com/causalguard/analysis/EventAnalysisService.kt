@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.first
 
 interface EventAnalysisService {
     suspend fun analyze(eventId: String): EventAnalysisResult?
+
+    suspend fun analyzeAll(): List<EventAnalysisResult>
 }
 
 data class EventAnalysisResult(
@@ -47,6 +49,18 @@ class FixtureEventAnalysisService(
     override suspend fun analyze(eventId: String): EventAnalysisResult? {
         val events = repository.observeAll().first()
         val event = events.firstOrNull { it.eventId == eventId } ?: return null
+        return analyzeEvent(event, events)
+    }
+
+    override suspend fun analyzeAll(): List<EventAnalysisResult> {
+        val events = repository.observeAll().first()
+        return events.map { event -> analyzeEvent(event, events) }
+    }
+
+    private fun analyzeEvent(
+        event: PrivacyEvent,
+        events: List<PrivacyEvent>,
+    ): EventAnalysisResult {
         val input = RuleInput(
             event = event,
             appProfile = inputContext.appProfiles.singleOrNull { it.packageName == event.appId },
