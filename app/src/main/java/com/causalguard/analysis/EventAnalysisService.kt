@@ -13,6 +13,8 @@ import com.causalguard.rules.RuleEvaluator
 import kotlinx.coroutines.flow.first
 
 interface EventAnalysisService {
+    val ruleVersion: String
+
     suspend fun analyze(eventId: String): EventAnalysisResult?
 
     suspend fun analyzeAll(): List<EventAnalysisResult>
@@ -45,6 +47,9 @@ class FixtureEventAnalysisService(
         ?: error("Unable to load runtime rule asset")
     private val evaluator = RuleEvaluator(ruleAsset.rules)
     private val templatesByEventId = templates.associateBy { it.eventId }
+
+    override val ruleVersion: String
+        get() = ruleAsset.schema.ruleVersion
 
     override suspend fun analyze(eventId: String): EventAnalysisResult? {
         val events = repository.observeAll().first()

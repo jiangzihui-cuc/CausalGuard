@@ -18,9 +18,11 @@ class EventAnalysisServiceTest {
 
     @Test
     fun analyzeAllReturnsAllFixtureEventsFromOneSnapshot() = runTest {
-        val results = fixtureAnalysisService().analyzeAll()
+        val service = fixtureAnalysisService()
+        val results = service.analyzeAll()
 
         assertEquals(10, results.size)
+        assertEquals("rules-v0.1", service.ruleVersion)
         assertEquals(10, results.map { it.event.eventId }.toSet().size)
         assertTrue(results.all { it.event.eventId.startsWith("e-") })
     }

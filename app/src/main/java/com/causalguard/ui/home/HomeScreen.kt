@@ -27,6 +27,7 @@ fun HomeScreen(
     state: HomeUiState,
     onOpenTimeline: () -> Unit,
     onOpenEvent: (String) -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -39,6 +40,9 @@ fun HomeScreen(
         Text("CausalGuard", style = MaterialTheme.typography.headlineSmall)
         Text("隐私因果哨兵", style = MaterialTheme.typography.titleMedium)
         Text("基于事件证据和本地规则解释隐私行为。")
+        Button(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
+            Text("设置与隐私控制")
+        }
 
         when (state) {
             HomeUiState.Loading -> Text("正在加载当前数据集...")
