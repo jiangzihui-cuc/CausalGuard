@@ -36,6 +36,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CausalGuardApp(
                 privacyEventRepository = appDependencies.privacyEventRepository,
+                eventAnalysisService = appDependencies.eventAnalysisService,
                 output = outputText,
                 onOpenUsageSettings = {
                     startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))

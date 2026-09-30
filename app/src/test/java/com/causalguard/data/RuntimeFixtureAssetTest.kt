@@ -11,8 +11,12 @@ class RuntimeFixtureAssetTest {
 
     @Test
     fun runtimeAssetMatchesDocsFixtureAndParsesToTenUniqueEvents() {
-        val docsJson = repoFile("docs/fixtures/privacy-events-v0.1.json").readText()
-        val assetJson = repoFile("app/src/main/assets/privacy-events-v0.1.json").readText()
+        val docsFixture = repoPath("docs/fixtures/privacy-events-v0.1.json")
+        val runtimeAsset = repoPath("app/src/main/assets/privacy-events-v0.1.json")
+        check(docsFixture.isFile)
+        check(runtimeAsset.isFile)
+        val docsJson = docsFixture.readText()
+        val assetJson = runtimeAsset.readText()
 
         assertEquals(docsJson.trim(), assetJson.trim())
 
@@ -24,13 +28,39 @@ class RuntimeFixtureAssetTest {
         assertEquals(10, events.map { it.eventId }.toSet().size)
     }
 
-    private fun repoFile(relative: String): File {
-        val candidates = listOf(
-            File(relative),
-            File("../$relative"),
-            File("../../$relative"),
+    @Test
+    fun runtimeRuleContextAndTemplatesMatchDocsCanonicalAssets() {
+        assertDocsAssetMatchesRuntime("risk-rules-v0.1.json")
+        assertDocsAssetMatchesRuntime("rule-input-context-v0.1.json")
+        assertDocsAssetMatchesRuntime("explanation-templates-v0.1.json")
+    }
+
+    @Test
+    fun expectedOracleIsNotCopiedToRuntimeAssets() {
+        val assetsDir = repoPath("app/src/main/assets")
+        check(assetsDir.isDirectory)
+        val runtimeAssets = assetsDir.list()?.toSet().orEmpty()
+        assertEquals(false, "privacy-events-v0.1.expected.json" in runtimeAssets)
+    }
+
+    private fun assertDocsAssetMatchesRuntime(name: String) {
+        val docsAsset = repoPath("docs/fixtures/$name")
+        val runtimeAsset = repoPath("app/src/main/assets/$name")
+        check(docsAsset.isFile)
+        check(runtimeAsset.isFile)
+        assertEquals(
+            docsAsset.readText().trim(),
+            runtimeAsset.readText().trim(),
         )
-        return candidates.firstOrNull { it.isFile }
-            ?: error("fixture not found: $relative (cwd=${File(".").absolutePath})")
+    }
+
+    private fun repoPath(relative: String): File {
+        var directory = File(".").absoluteFile
+        while (true) {
+            val candidate = File(directory, relative)
+            if (candidate.exists()) return candidate
+            directory = directory.parentFile ?: break
+        }
+        error("repo path not found: $relative (cwd=${File(".").absolutePath})")
     }
 }

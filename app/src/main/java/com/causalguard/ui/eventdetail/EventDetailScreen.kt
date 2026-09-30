@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.causalguard.core.model.PrivacyEvent
+import com.causalguard.analysis.EventAnalysisResult
 import com.causalguard.ui.provenanceLabel
 import com.causalguard.ui.timeline.FactLine
 import com.causalguard.ui.timeline.formatTimestamp
@@ -42,13 +44,14 @@ fun EventDetailScreen(
             EventDetailUiState.Loading -> Text("Loading event...")
             EventDetailUiState.NotFound -> Text("Event not found")
             is EventDetailUiState.Error -> Text("Error: ${state.message}")
-            is EventDetailUiState.Content -> EventFacts(event = state.event)
+            is EventDetailUiState.Content -> EventFacts(analysis = state.analysis)
         }
     }
 }
 
 @Composable
-private fun EventFacts(event: PrivacyEvent) {
+private fun EventFacts(analysis: EventAnalysisResult) {
+    val event = analysis.event
     Text(
         text = event.appName?.takeIf { it.isNotBlank() } ?: event.appId,
         style = MaterialTheme.typography.titleLarge,
@@ -88,5 +91,59 @@ private fun EventFacts(event: PrivacyEvent) {
         FactLine("Package", usage.packageName)
         FactLine("State", usage.state.wire)
         FactLine("Screen on", usage.screenOn.toString())
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+    Text("Risk Assessment", style = MaterialTheme.typography.titleMedium)
+    FactLine("Risk level", analysis.assessment.riskLevel.wire)
+    FactLine("Category", analysis.assessment.category.wire)
+    FactLine("Confidence", analysis.assessment.confidence.wire)
+    FactLine("Scenario match", analysis.assessment.scenarioMatch.wire)
+    FactLine("Matched rules", analysis.assessment.matchedRules.joinToString().ifBlank { "None" })
+
+    Spacer(modifier = Modifier.height(16.dp))
+    Text("Why / Explanation", style = MaterialTheme.typography.titleMedium)
+    FactLine("What happened", analysis.explanation.summary)
+    FactLine("Why care", analysis.explanation.whyCare)
+    FactLine("Evidence", analysis.explanation.evidence)
+    FactLine("Action", analysis.explanation.action)
+    FactLine("Boundary", analysis.explanation.caveat)
+
+    Spacer(modifier = Modifier.height(16.dp))
+    Text("Evidence", style = MaterialTheme.typography.titleMedium)
+    if (analysis.evidence.isEmpty()) {
+        Text("No referenced evidence is available.")
+    } else {
+        analysis.evidence.forEach { evidence ->
+            EvidenceCard(event = evidence)
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+    Text("Recommendation", style = MaterialTheme.typography.titleMedium)
+    FactLine("Suggestion", analysis.recommendation.title)
+    FactLine("Action", analysis.recommendation.action)
+    Text("This is a recommendation only; no action has been executed.")
+
+    if (analysis.degradation.shouldShowUnknownDegradation ||
+        analysis.assessment.category.wire == "unknown" ||
+        analysis.assessment.confidence.wire == "low"
+    ) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Boundary / Unknown", style = MaterialTheme.typography.titleMedium)
+        Text("当前证据不足以确认风险。")
+    }
+}
+
+@Composable
+private fun EvidenceCard(event: PrivacyEvent) {
+    Card(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            FactLine("Event ID", event.eventId)
+            FactLine("Evidence level", event.evidenceLevel.wire)
+            FactLine("Source", event.source.wire)
+            FactLine("Timestamp", event.timestamp.formatTimestamp())
+            FactLine("Summary", event.evidenceSummary)
+        }
     }
 }

@@ -1,6 +1,8 @@
 package com.causalguard.di
 
 import android.content.Context
+import com.causalguard.analysis.EventAnalysisService
+import com.causalguard.analysis.FixtureEventAnalysisService
 import com.causalguard.core.model.AppProfileProvider
 import com.causalguard.core.model.AppProfileRepository
 import com.causalguard.core.model.AuditLogRepository
@@ -36,6 +38,7 @@ import com.causalguard.data.repository.RoomUsageContextRepository
  */
 interface AppDependencies {
     val privacyEventRepository: PrivacyEventRepository
+    val eventAnalysisService: EventAnalysisService
     val eventSink: EventSink
     val appProfileRepository: AppProfileRepository
     val usageContextRepository: UsageContextRepository
@@ -63,6 +66,13 @@ class AppContainer(
         RuntimeFixtureLoader.loadPrivacyEvents(context),
     ),
 ) : AppDependencies {
+
+    override val eventAnalysisService: EventAnalysisService = FixtureEventAnalysisService(
+        repository = privacyEventRepository,
+        rules = RuntimeFixtureLoader.loadRules(context),
+        inputContext = RuntimeFixtureLoader.loadRuleInputContext(context),
+        templates = RuntimeFixtureLoader.loadExplanationTemplates(context).templates,
+    )
 
     override val eventSink: EventSink = RoomEventSink(privacyEventRepository)
     override val appProfileRepository: AppProfileRepository = RoomAppProfileRepository(database)
