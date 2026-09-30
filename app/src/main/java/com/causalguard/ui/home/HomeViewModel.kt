@@ -7,13 +7,12 @@ import com.causalguard.analysis.EventAnalysisResult
 import com.causalguard.analysis.EventAnalysisService
 import com.causalguard.core.model.PrivacyEventRepository
 import com.causalguard.core.model.RiskLevel
+import com.causalguard.ui.FixtureRuntimeMode
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
-
-private const val FixtureRuntimeMode = "Fixture / 离线演示分析"
 
 class HomeViewModel(
     repository: PrivacyEventRepository,
