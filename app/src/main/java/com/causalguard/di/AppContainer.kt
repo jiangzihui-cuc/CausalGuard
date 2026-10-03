@@ -2,6 +2,8 @@ package com.causalguard.di
 
 import android.content.Context
 import android.util.Log
+import com.causalguard.analysis.EventAnalysisService
+import com.causalguard.analysis.FixtureEventAnalysisService
 import com.causalguard.core.model.AppProfileProvider
 import com.causalguard.core.model.AppProfileRepository
 import com.causalguard.core.model.AuditLogRepository
@@ -15,6 +17,7 @@ import com.causalguard.core.model.RiskAssessmentRepository
 import com.causalguard.core.model.RuleVersionRepository
 import com.causalguard.core.model.UsageContextProvider
 import com.causalguard.core.model.UsageContextRepository
+import com.causalguard.data.fixture.RuntimeFixtureLoader
 import com.causalguard.data.importer.EventImporter
 import com.causalguard.data.ingest.NetworkCollector
 import com.causalguard.data.ingest.NetworkEventCollector
@@ -43,6 +46,7 @@ import com.causalguard.data.repository.RoomUsageContextRepository
  */
 interface AppDependencies {
     val privacyEventRepository: PrivacyEventRepository
+    val eventAnalysisService: EventAnalysisService
     val eventSink: EventSink
     val appProfileRepository: AppProfileRepository
     val usageContextRepository: UsageContextRepository
@@ -74,6 +78,14 @@ class AppContainer(
      * 合并 Origin/main 时曾误取其 Fake 默认值，导致 A4 采集只写内存、Room 不增长，此处修正。
      */
     override val privacyEventRepository: PrivacyEventRepository = RoomPrivacyEventRepository(database)
+
+    override val eventAnalysisService: EventAnalysisService = FixtureEventAnalysisService(
+        repository = privacyEventRepository,
+        rules = RuntimeFixtureLoader.loadRules(context),
+        inputContext = RuntimeFixtureLoader.loadRuleInputContext(context),
+        templates = RuntimeFixtureLoader.loadExplanationTemplates(context).templates,
+    )
+
     override val eventSink: EventSink = RoomEventSink(privacyEventRepository)
 
     /**

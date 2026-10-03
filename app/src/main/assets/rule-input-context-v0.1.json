@@ -1,0 +1,20 @@
+{
+  "schema": {
+    "name": "rule-input-context-v0.1",
+    "purpose": "Independent upstream context inputs for evaluating privacy-events-v0.1.json.",
+    "eventFixture": "privacy-events-v0.1.json"
+  },
+  "appProfiles": [
+    {
+      "packageName": "com.demo.calculator",
+      "appName": "Demo Calculator",
+      "sceneType": "calculator"
+    }
+  ],
+  "scenarioMatches": [
+    { "eventId": "e-20260921-0001", "value": "match" },
+    { "eventId": "e-20260921-0002", "value": "match" },
+    { "eventId": "e-20260921-0003", "value": "mismatch" },
+    { "eventId": "e-20260921-0004", "value": "mismatch" }
+  ]
+}

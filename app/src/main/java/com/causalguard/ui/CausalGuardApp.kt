@@ -27,14 +27,22 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.PrivacyEventRepository
+import com.causalguard.analysis.EventAnalysisResult
+import com.causalguard.analysis.EventAnalysisService
 import com.causalguard.ui.eventdetail.EventDetailScreen
 import com.causalguard.ui.eventdetail.EventDetailViewModel
+import com.causalguard.ui.home.HomeScreen
+import com.causalguard.ui.home.HomeViewModel
+import com.causalguard.ui.settings.SettingsScreen
+import com.causalguard.ui.settings.SettingsViewModel
 import com.causalguard.ui.timeline.TimelineScreen
 import com.causalguard.ui.timeline.TimelineViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 private const val TimelineRoute = "timeline"
+private const val HomeRoute = "home"
+private const val SettingsRoute = "settings"
 private const val SpikeDebugRoute = "spikeDebug"
 private const val EventDetailRoute = "eventDetail/{eventId}"
 private const val EventIdArgument = "eventId"
@@ -42,6 +50,7 @@ private const val EventIdArgument = "eventId"
 @Composable
 fun CausalGuardApp(
     privacyEventRepository: PrivacyEventRepository,
+    eventAnalysisService: EventAnalysisService,
     output: String,
     onOpenUsageSettings: () -> Unit,
     onCollectPackage: () -> Unit,
@@ -56,8 +65,31 @@ fun CausalGuardApp(
             val navController = rememberNavController()
             NavHost(
                 navController = navController,
-                startDestination = TimelineRoute,
+                startDestination = HomeRoute,
             ) {
+                composable(HomeRoute) {
+                    val homeViewModel: HomeViewModel = viewModel(
+                        factory = HomeViewModel.Factory(privacyEventRepository, eventAnalysisService),
+                    )
+                    val state by homeViewModel.uiState.collectAsStateWithLifecycle()
+                    HomeScreen(
+                        state = state,
+                        onOpenTimeline = { navController.navigate(TimelineRoute) },
+                        onOpenEvent = { eventId ->
+                            navController.navigate("eventDetail/${Uri.encode(eventId)}")
+                        },
+                        onOpenSettings = { navController.navigate(SettingsRoute) },
+                    )
+                }
+                composable(SettingsRoute) {
+                    val settingsViewModel: SettingsViewModel = viewModel(
+                        factory = SettingsViewModel.Factory(eventAnalysisService),
+                    )
+                    SettingsScreen(
+                        state = settingsViewModel.uiState,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
                 composable(TimelineRoute) {
                     val timelineViewModel: TimelineViewModel = viewModel(
                         factory = TimelineViewModel.Factory(privacyEventRepository),
@@ -78,7 +110,7 @@ fun CausalGuardApp(
                     val eventId = requireNotNull(backStackEntry.arguments?.getString(EventIdArgument))
                     val detailViewModel: EventDetailViewModel = viewModel(
                         key = "event-detail-$eventId",
-                        factory = EventDetailViewModel.Factory(eventId, privacyEventRepository),
+                        factory = EventDetailViewModel.Factory(eventId, eventAnalysisService),
                     )
                     val state by detailViewModel.uiState.collectAsStateWithLifecycle()
                     EventDetailScreen(
@@ -171,6 +203,7 @@ private fun SpikeDebugPanel(
 private fun CausalGuardAppPreview() {
     CausalGuardApp(
         privacyEventRepository = PreviewPrivacyEventRepository,
+        eventAnalysisService = PreviewEventAnalysisService,
         output = "Spike / Debug output preview",
         onOpenUsageSettings = {},
         onCollectPackage = {},
@@ -192,4 +225,12 @@ private object PreviewPrivacyEventRepository : PrivacyEventRepository {
     override fun observeAll(): Flow<List<PrivacyEvent>> = flowOf(emptyList())
 
     override fun observeByApp(appId: String): Flow<List<PrivacyEvent>> = flowOf(emptyList())
+}
+
+private object PreviewEventAnalysisService : EventAnalysisService {
+    override val ruleVersion: String = "preview"
+
+    override suspend fun analyze(eventId: String): EventAnalysisResult? = null
+
+    override suspend fun analyzeAll(): List<EventAnalysisResult> = emptyList()
 }

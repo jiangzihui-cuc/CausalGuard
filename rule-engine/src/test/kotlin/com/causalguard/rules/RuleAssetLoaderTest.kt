@@ -4,6 +4,7 @@ import com.causalguard.core.model.Confidence
 import com.causalguard.core.model.RiskCategory
 import com.causalguard.core.model.RiskLevel
 import com.causalguard.core.model.RuleInput
+import com.causalguard.core.model.ScenarioMatch
 import java.io.File
 import java.nio.file.Path
 import kotlin.test.Test
@@ -35,6 +36,7 @@ class RuleAssetLoaderTest {
             RuleInput(
                 event = FixtureEvents.calculatorClipboard,
                 appProfile = FixtureEvents.calculatorProfile,
+                scenarioMatch = ScenarioMatch.MISMATCH,
                 relatedEvents = listOf(FixtureEvents.calculatorNetwork)
             )
         )
@@ -42,6 +44,7 @@ class RuleAssetLoaderTest {
             RuleInput(
                 event = FixtureEvents.calculatorNetwork,
                 appProfile = FixtureEvents.calculatorProfile,
+                scenarioMatch = ScenarioMatch.MISMATCH,
                 relatedEvents = listOf(FixtureEvents.calculatorClipboard)
             )
         )
