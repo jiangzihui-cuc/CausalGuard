@@ -1,10 +1,12 @@
 # 17 任务看板
 
-> 版本：`v0.10`
-> 最后更新：2026-09-30
+> 版本：`v0.11`
+> 最后更新：2026-10-03
 > 责任人：成员 B（协作：成员 A）
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
 > 依据：[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)。阶段内任务按 A（平台/网络/系统/发布）与 B（产品/规则/证据/UI/评测）两条并行链拆分；每人每天最多保留“今日必须完成 1 项 + 完成后再做 1 项 + 阻塞替代 1 项”。
+>
+> **看板同步说明（回填，2026-10-03）**：按仓库实际状态校正阶段 0~3 的 B 侧条目——`B1-4`、`B1-6` 实际已完成；`B2-1`~`B2-5`、`T2-4`、`T2-5`、`B3-5`、`B3-6` 已有部分产出但未达验收，改为「进行中」；`B3-5` 代码位于未合并分支 `feature/b-t3-demo-app`（`fa6939e`）。A 侧阶段 0~3 无缺口。
 
 ## 阶段 0：项目启动与范围冻结（9/20）
 
@@ -45,9 +47,9 @@
 | B1-1 | 定义 v0.1 事件 fixture | `docs/fixtures/`（8~12 条 JSON） | 已完成 | [privacy-events-v0.1.json](fixtures/privacy-events-v0.1.json) 已覆盖 10 条事件、正常/风险/unknown/Demo；旁路预期与规则资产同步完成并校验。 |
 | B1-2 | 定义 4 个 Demo 场景 | `docs/demo-scenarios.md` | 已完成 | [demo-scenarios.md](demo-scenarios.md) 已通过 PR #7 合入，覆盖操作、真值、预期证据链和失败降级。 |
 | B1-3 | 证据文案模板 | 模板 JSON/文档：事实、能力、推断、不可观测不混写 | 已完成 | [explanation-templates-v0.1.json](fixtures/explanation-templates-v0.1.json) 已与 10 条事件逐一关联；正常、风险、unknown 和 Demo 场景均有明确解释边界，unknown 不生成确定处置。 |
-| B1-4 | 第三方组件登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 汇总 | 进行中 | 已登记 `kotlinx.serialization 1.9.0`（Apache-2.0，`rule-engine` 使用）；TrackerControl 及最终运行依赖待 A 分支合并后汇总。 |
+| B1-4 | 第三方组件登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 汇总 | 已完成 | `THIRD_PARTY_NOTICES.md` 已登记 TrackerControl Android（commit `9504d41b`，GPL-3.0，含补丁/本地修改）、`kotlinx.serialization 1.9.0`、Compose BOM + AndroidX，以及构建/运行时依赖（AGP/Gradle/Kotlin/SDK/NDK/CMake/Rust/wgbridge-rs 等）。 |
 | B1-5 | UI 状态草图 | 页面状态表：loading/empty/unknown/demo/error | 未开始 | 尚未形成页面状态表；建议与 B1-2 一并落到 `docs/demo-scenarios.md`。 |
-| B1-6 | Android 能力边界表定稿 | [02-android-capability-matrix.md](02-android-capability-matrix.md) | 待验证 | 已有数据来源、证据等级和降级初稿；待 A 的 Spike 回填 UID/UsageStats/VPN 实测结论后定稿。 |
+| B1-6 | Android 能力边界表定稿 | [02-android-capability-matrix.md](02-android-capability-matrix.md) | 已完成 | `docs/02` 技术事实已按阶段 1 Spike 定稿（A2-1，2026-09-24），UID 归属量化成功率 231/231=100% 已回填。 |
 | B1-7 | 真实/沙箱模式产品说明 | [01 项目章程](01-project-charter.md) 第 4 节 | 已完成 | 已明确真实观测模式与演示沙箱模式，并要求界面、数据模型和答辩材料区分演示数据。 |
 
 唯一集成点：A 导出的真实 NetworkEvent 必须可映射到 B 的 fixture schema；不一致只改 Adapter 或契约，不重写 VPN、规则或 UI。
@@ -64,13 +66,13 @@
 | A2-4 | 修订 Room schema（实现延后到阶段 3） | 成员 A | 成员 B | 已完成 |
 | A2-5 | 冻结 TrackerControl Adapter 边界 | 成员 A | 成员 B | 已完成 |
 | A2-6 | 确定 Compose、依赖注入与模块结构 | 成员 A | 成员 B | 已完成 |
-| B2-1 | 冻结 PRD 的 P0/P1/P2 | 成员 B | 成员 A | 未开始 |
-| B2-2 | 冻结 `RiskAssessment`、`ExplanationResult` | 成员 B | 成员 A | 未开始 |
-| B2-3 | 5 条 P0 规则定义、场景知识草案、解释模板 | 成员 B | 成员 A | 未开始 |
-| B2-4 | 补全权限拒绝/无域名/无法归属/断网等 UI 状态 | 成员 B | 成员 A | 未开始 |
-| B2-5 | 建立首批 20 条评测样例 | 成员 B | 成员 A | 未开始 |
-| T2-4 | 三类契约冻结 v0.1（独立 PR） | 两人 | - | 未开始 |
-| T2-5 | 更新被 Spike 推翻的 05~15 文档 | 两人 | - | 未开始 |
+| B2-1 | 冻结 PRD 的 P0/P1/P2 | 成员 B | 成员 A | 进行中（P0/P1/P2 已在 `docs/01` §5/§6 枚举；`docs/04` 尚缺冻结标记） |
+| B2-2 | 冻结 `RiskAssessment`、`ExplanationResult` | 成员 B | 成员 A | 进行中（`RiskAssessment` 已定型；`ExplanationResult` 尚未在 `:core-model` 落地） |
+| B2-3 | 5 条 P0 规则定义、场景知识草案、解释模板 | 成员 B | 成员 A | 进行中（`risk-rules-v0.1.json` 9 条、解释模板 10 条已齐；缺独立场景知识资产） |
+| B2-4 | 补全权限拒绝/无域名/无法归属/断网等 UI 状态 | 成员 B | 成员 A | 进行中（unknown/无法归属已处理；权限拒绝/无域名/断网无专门状态） |
+| B2-5 | 建立首批 20 条评测样例 | 成员 B | 成员 A | 进行中（现 10 条事件/预期，`docs/14` 仅 2 条示例） |
+| T2-4 | 三类契约冻结 v0.1（独立 PR） | 两人 | - | 进行中（`docs/09` 已冻结；`docs/10` 半冻结、`docs/11` 未冻结） |
+| T2-5 | 更新被 Spike 推翻的 05~15 文档 | 两人 | - | 进行中（`02/05/06/07/09/10/14` 已更新；`11/12/13/15/16` 未更新） |
 
 > 阶段 2 进展（A 回填，2026-09-24）：A2-1～A2-6 已完成并合入 `main`——`feature/a-t2-event-contract`（A2-2/A2-4：docs/07/08/09）、`feature/a-t2-arch-freeze`（A2-1/A2-5/A2-6：docs/02/05/06 + `docs/trackercontrol-adapter-boundary.md`）、`feature/a-t2-core-model`（A2-3：`:core-model` 模块与接口骨架，含契约 JSON 解析测试）。`docs/08` 的 Room 实现延后到阶段 3。B2-1～B2-5、T2-4/T2-5 仍待 B/两人推进。
 
@@ -96,8 +98,8 @@
 | B3-2 | 首页、时间线、详情、设置四个 P0 页面 | Fake 数据可完整浏览 | 已完成 |
 | B3-3 | 小型规则执行器与 5 条规则 | 正例、反例、unknown 测试通过 | 已完成 |
 | B3-4 | 证据卡片和本地解释模板 | 事实/推断/不可观测显示准确 | 已完成 |
-| B3-5 | Demo App 场景 A/B | 可单独编译、触发和复位 | 未开始 |
-| B3-6 | 第一批评测测试 | 至少 20 条自动运行 | 未开始 |
+| B3-5 | Demo App 场景 A/B | 可单独编译、触发和复位 | 进行中（代码在未合并分支 `feature/b-t3-demo-app`（`fa6939e`）；DEMO-B 于 Android 10+ 未真机验证） |
+| B3-6 | 第一批评测测试 | 至少 20 条自动运行 | 进行中（现 10 条评测事件，未达 20） |
 | B3-7 | 规则引擎契约收敛：复用 `:core-model` 类型、实现 `RiskRuleEngine.assess(RuleInput)`、包名改 `com.causalguard.rules`、纳入根构建 | 规则模块依赖 `:core-model`，`gradle build` 通过 | 已完成 |
 
 集成：`fixture → FakeEventRepository → 规则 → 证据 → 本地解释 → UI → Fake 处置`；随后只替换 `FakeEventRepository → RoomEventRepository`。
@@ -144,12 +146,12 @@
 
 | 编号 | 任务 | 状态 |
 |---|---|---|
-| A5-1 | 实现真实 `MitigationExecutor` | 未开始 |
-| A5-2 | P0 只保证域名阻断，App 级阻断视稳定性进入 P1 | 未开始 |
-| A5-3 | 系统设置跳转 | 未开始 |
-| A5-4 | 处置记录和观察窗口持久化 | 未开始 |
-| A5-5 | 按 App/域名/时间窗提供前后聚合查询 | 未开始 |
-| A5-6 | 区分“没有请求”和“有请求但已阻断” | 未开始 |
+| A5-1 | 实现真实 `MitigationExecutor` | 完成（底座补丁待真机） |
+| A5-2 | P0 只保证域名阻断，App 级阻断视稳定性进入 P1 | 完成 |
+| A5-3 | 系统设置跳转 | 完成 |
+| A5-4 | 处置记录和观察窗口持久化 | 完成 |
+| A5-5 | 按 App/域名/时间窗提供前后聚合查询 | 完成 |
+| A5-6 | 区分“没有请求”和“有请求但已阻断” | 完成 |
 
 ### 成员 B：原创分析层
 
@@ -164,6 +166,16 @@
 | B5-7 | 至少 8 条处置前后评测样例 | 未开始 |
 
 集成契约：`B：Recommendation → A：MitigationExecutor → A：MitigationRecord + 新事件 → B：RecheckResult + 页面`。
+
+> **阶段 5 执行层进展（A 回填，2026-10-03）**：A5-1~A5-6 代码完成，`:app` 单测 81 项通过（新增 `DeviceMitigationExecutorTest` 9 项、`RoomNetworkObservationRepositoryTest` 3 项）。契约新增 `core-model/.../MitigationApi.kt`（`MitigationAction`/`MitigationStatus`/`MitigationRequest`/`MitigationExecution`/`MitigationExecutor`/`NetworkObservation`/`NetworkRequestPresence`/`NetworkObservationRepository`）。实现：
+> - **A5-1**：`mitigation/DeviceMitigationExecutor` 按 action 分派；`DomainBlockController` 经 ordered broadcast（`TrackerControlBroadcast.ACTION_BLOCK_DOMAIN`）请求底座阻断，仅 `RESULT_OK` 回执为 `CONFIRMED`，超时/未接线一律 `UNAVAILABLE`，绝不谎报。
+> - **A5-2**：P0 只保证 `BLOCK_DOMAIN`；`BLOCK_APP` 明确 `UNSUPPORTED` 待 P1；`NONE` 无动作；缺域名目标亦 `UNSUPPORTED`。
+> - **A5-3**：`mitigation/AndroidAppSettingsLauncher` 经 `ACTION_APPLICATION_DETAILS_SETTINGS` 跳转系统应用详情页，不声称“已生效”。
+> - **A5-4**：仅 `BLOCK_DOMAIN`/`OPEN_SETTINGS` 落 `MitigationRecord`，写入处置前窗口快照（`preSnapshot`，`NetworkObservation` JSON）与 `observationEnd=now+window`（默认 5 分钟），`postResult` 初始 `unknown`；`MitigationRepository.updateOutcome` 供 B 复查回填。
+> - **A5-5**：`RoomNetworkObservationRepository` 基于 `network_event` 按 App/域名/时间窗聚合连接数与阻断数。
+> - **A5-6**：`NetworkObservation.presence` 区分 `NO_REQUEST`/`ALL_BLOCKED`/`SOME_BLOCKED`/`ALLOWED`。
+>
+> 已接入 `AppContainer`/`AppDependencies`（`networkObservationRepository`、`mitigationExecutor`）。**遗留**：底座侧 `ACTION_BLOCK_DOMAIN` 接收器属 GPL 补丁，尚未实现，真机阻断将走 `UNAVAILABLE` 降级；待补丁与真机验证后回填。
 
 ## 阶段 6：AI 解释、评测与可用性（10/4-10/5）
 
