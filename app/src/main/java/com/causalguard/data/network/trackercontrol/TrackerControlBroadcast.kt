@@ -17,8 +17,21 @@ object TrackerControlBroadcast {
     /** 底座广播的目标包名（本应用 applicationId）。 */
     const val TARGET_PACKAGE = "com.causalguard"
 
+    /**
+     * A5-1 控制通道的底座目标包名。演示机使用 TrackerControl fdroid debug 变体
+     * （`net.kollnig.missioncontrol` + `.fdroid` + `.test`）；正式环境按安装变体覆盖。
+     */
+    const val TRACKERCONTROL_PACKAGE = "net.kollnig.missioncontrol.fdroid.test"
+
     const val ACTION_PACKET = "com.causalguard.intent.NETWORK_PACKET"
     const val ACTION_DNS = "com.causalguard.intent.NETWORK_DNS"
+
+    /**
+     * A5-1 控制通道：CausalGuard → 底座，请求按域名阻断（ordered broadcast，底座回传结果）。
+     * 底座侧处理器必须只对已确认生效的阻断回复 `Activity.RESULT_OK`；
+     * 未安装/未接线/无法确认时保持默认 `RESULT_CANCELED`，业务侧据此诚实降级为 `UNAVAILABLE`。
+     */
+    const val ACTION_BLOCK_DOMAIN = "com.causalguard.intent.BLOCK_DOMAIN"
 
     const val EXTRA_TIME = "time"
     const val EXTRA_PROTOCOL = "protocol"
@@ -28,6 +41,9 @@ object TrackerControlBroadcast {
     const val EXTRA_DPORT = "dport"
     const val EXTRA_UID = "uid"
     const val EXTRA_ALLOWED = "allowed"
+
+    /** `BLOCK_DOMAIN` 请求的阻断目标域名。 */
+    const val EXTRA_DOMAIN = "domain"
 
     const val EXTRA_QNAME = "qname"
     const val EXTRA_ANAME = "aname"

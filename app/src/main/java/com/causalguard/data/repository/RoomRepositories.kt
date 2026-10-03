@@ -6,6 +6,8 @@ import com.causalguard.core.model.AuditLog
 import com.causalguard.core.model.DemoScenario
 import com.causalguard.core.model.ForegroundState
 import com.causalguard.core.model.MitigationRecord
+import com.causalguard.core.model.NetworkObservation
+import com.causalguard.core.model.NetworkObservationRepository
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.Recommendation
 import com.causalguard.core.model.RiskAssessment
@@ -132,8 +134,56 @@ class RoomMitigationRepository(
 
     override suspend fun record(record: MitigationRecord): Long = dao.insert(record.toEntity())
 
+    override suspend fun get(id: Long): MitigationRecord? = dao.get(id)?.toModel()
+
     override fun observeByApp(packageName: String): Flow<List<MitigationRecord>> =
         dao.observeByApp(packageName).map { rows -> rows.map { it.toModel() } }
+
+    override suspend fun updateOutcome(
+        id: Long,
+        postResult: String,
+        reviewNotes: String?,
+        observationEnd: Long?,
+    ) {
+        dao.updateOutcome(id, postResult, reviewNotes, observationEnd)
+    }
+}
+
+/**
+ * A5-5：基于 `network_event` 的处置前后聚合查询。
+ * 只返回计数事实；`NO_REQUEST` vs `ALL_BLOCKED` 等结论由 [NetworkObservation.presence] 表达。
+ */
+class RoomNetworkObservationRepository(
+    private val database: CausalGuardDatabase,
+) : NetworkObservationRepository {
+
+    private val dao = database.networkEventDao()
+
+    override suspend fun observeWindow(
+        packageName: String,
+        domain: String?,
+        start: Long,
+        end: Long,
+    ): NetworkObservation {
+        val normalizedDomain = domain?.takeIf { it.isNotBlank() }
+        val requestCount: Int
+        val blockedCount: Int
+        if (normalizedDomain == null) {
+            requestCount = dao.countInWindow(packageName, start, end)
+            blockedCount = dao.countBlockedInWindow(packageName, start, end)
+        } else {
+            requestCount = dao.countDomainInWindow(packageName, normalizedDomain, start, end)
+            blockedCount = dao.countDomainBlockedInWindow(packageName, normalizedDomain, start, end)
+        }
+        return NetworkObservation(
+            packageName = packageName,
+            domain = normalizedDomain,
+            windowStart = start,
+            windowEnd = end,
+            requestCount = requestCount,
+            blockedCount = blockedCount,
+        )
+    }
 }
 
 class RoomRuleVersionRepository(

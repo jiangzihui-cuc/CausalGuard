@@ -9,8 +9,10 @@ import com.causalguard.core.model.AppProfileRepository
 import com.causalguard.core.model.AuditLogRepository
 import com.causalguard.core.model.EventSink
 import com.causalguard.core.model.DemoScenarioRepository
+import com.causalguard.core.model.MitigationExecutor
 import com.causalguard.core.model.MitigationRepository
 import com.causalguard.core.model.NetworkEventSource
+import com.causalguard.core.model.NetworkObservationRepository
 import com.causalguard.core.model.PrivacyEventRepository
 import com.causalguard.core.model.RecommendationRepository
 import com.causalguard.core.model.RiskAssessmentRepository
@@ -34,11 +36,15 @@ import com.causalguard.data.repository.RoomAuditLogRepository
 import com.causalguard.data.repository.RoomDemoScenarioRepository
 import com.causalguard.data.repository.RoomEventSink
 import com.causalguard.data.repository.RoomMitigationRepository
+import com.causalguard.data.repository.RoomNetworkObservationRepository
 import com.causalguard.data.repository.RoomPrivacyEventRepository
 import com.causalguard.data.repository.RoomRecommendationRepository
 import com.causalguard.data.repository.RoomRiskAssessmentRepository
 import com.causalguard.data.repository.RoomRuleVersionRepository
 import com.causalguard.data.repository.RoomUsageContextRepository
+import com.causalguard.mitigation.AndroidAppSettingsLauncher
+import com.causalguard.mitigation.DeviceMitigationExecutor
+import com.causalguard.mitigation.TrackerControlDomainBlockController
 
 /**
  * 依赖注入边界（A3-4）：ViewModel/导航只依赖本接口暴露的 Repository 与 Provider，
@@ -53,6 +59,8 @@ interface AppDependencies {
     val riskAssessmentRepository: RiskAssessmentRepository
     val recommendationRepository: RecommendationRepository
     val mitigationRepository: MitigationRepository
+    val networkObservationRepository: NetworkObservationRepository
+    val mitigationExecutor: MitigationExecutor
     val ruleVersionRepository: RuleVersionRepository
     val auditLogRepository: AuditLogRepository
     val demoScenarioRepository: DemoScenarioRepository
@@ -120,6 +128,24 @@ class AppContainer(
     override val riskAssessmentRepository: RiskAssessmentRepository = RoomRiskAssessmentRepository(database)
     override val recommendationRepository: RecommendationRepository = RoomRecommendationRepository(database)
     override val mitigationRepository: MitigationRepository = RoomMitigationRepository(database)
+
+    /** A5-5：处置前后按 App/域名/时间窗的聚合查询。 */
+    override val networkObservationRepository: NetworkObservationRepository =
+        RoomNetworkObservationRepository(database)
+
+    /**
+     * A5-1：真实处置执行器。域名阻断经底座 ordered broadcast（未接线时诚实 `UNAVAILABLE`），
+     * 系统设置跳转经 `ACTION_APPLICATION_DETAILS_SETTINGS`。
+     */
+    override val mitigationExecutor: MitigationExecutor by lazy {
+        DeviceMitigationExecutor(
+            observationRepository = networkObservationRepository,
+            mitigationRepository = mitigationRepository,
+            domainBlockController = TrackerControlDomainBlockController(context),
+            appSettingsLauncher = AndroidAppSettingsLauncher(context),
+        )
+    }
+
     override val ruleVersionRepository: RuleVersionRepository = RoomRuleVersionRepository(database)
     override val auditLogRepository: AuditLogRepository = RoomAuditLogRepository(database)
     override val demoScenarioRepository: DemoScenarioRepository = RoomDemoScenarioRepository(database)
