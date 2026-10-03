@@ -43,7 +43,19 @@ interface RecommendationRepository {
 
 interface MitigationRepository {
     suspend fun record(record: MitigationRecord): Long
+    suspend fun get(id: Long): MitigationRecord?
     fun observeByApp(packageName: String): Flow<List<MitigationRecord>>
+
+    /**
+     * 观察窗口结束后回填复查结果（A5-4；由 B 的 `RecheckComparator` 调用）。
+     * `postResult` 取值见 docs/07 §2.8：`reduced`/`no_change`/`unknown` 等。
+     */
+    suspend fun updateOutcome(
+        id: Long,
+        postResult: String,
+        reviewNotes: String? = null,
+        observationEnd: Long? = null,
+    )
 }
 
 interface RuleVersionRepository {
