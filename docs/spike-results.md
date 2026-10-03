@@ -1,11 +1,11 @@
 # spike-results（阶段 1 技术 Spike 结果）
 
-> 版本：`v0.1`
-> 最后更新：2026-09-23
+> 版本：`v0.3`
+> 最后更新：2026-09-29
 > 责任人：成员 A
-> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
+> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8、A4-3、A4-5
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**基本完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；仅底座 UID 归属量化成功率待 adb 打通后补）
+> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测；A4-3 跨进程网络事件端到端已于 2026-09-29 真机验证；A4-5 前台服务与网络切换恢复已于 2026-09-29 真机验证，见第 3 节）
 
 ---
 
@@ -60,8 +60,8 @@
 | CMake | 3.22.1（SDK 包） |
 | NDK | 27.2.12479018 |
 | Rust / WireGuard | rustup 1.29.1 + Rust 1.95.0（4 个 Android target）+ cargo-ndk 4.1.2；APK 打包必须构建 `libwgbridge.so` |
-| 演示机型号 | OPPO Reno12 Pro |
-| Android 版本 | _待补（基线 API 29+）_ |
+| 演示机型号 | OPPO Reno12 Pro（A1-3/A1-4 Spike）；PJW110（A1-8 量化 + A4-4 真机，2026-09-28） |
+| Android 版本 | PJW110：Android 16 / API 36（adb 无线调试，2026-09-28）；Reno12 Pro：_待补（基线 API 29+）_ |
 | 构建命令 | `gradle --no-daemon assembleFdroidDebug`（Gradle 9.6.1；wrapper 分发地址被网络策略拦截，改用系统安装的 9.6.1） |
 | 构建结果 | **成功**，BUILD SUCCESSFUL in 9m 6s（首次）/ 3m 10s（缓存命中） |
 | APK 路径 | 构建产物 `app/build/outputs/apk/fdroid/debug/TrackerControl-fdroidDebug-latest.apk`；已复制持久副本到构建机 `~/trackercontrol-apk/` |
@@ -208,7 +208,76 @@
   2. 因此不能由 App 自行实现 UID 归属，必须复用底座在 **VpnService 内**的归属路径（`ServiceSinkhole.getUidQ` → `Packet.uid`），这也是底座能按 App 记录/拦截的原因（A1-5、A1-6 已在真机验证 per-App 事实）。
   3. 协议边界不变：底座仅对 TCP(6)/UDP(17) 调 `getUidQ`，ICMP 固定不归属。
 - 结论：满足 A1-8——**网络事件中的 `uid` 一律取自底座回调（`Packet.uid`），App 侧不重复调用系统 API**；归属失败时按 `docs/02`、`docs/09` 降级为 `unknown`。
-- 遗留：底座在真机上的**量化成功率**（成功归属条数 / 总连接条数）需在 adb 可用后从 `TrackerControl.VPN` 日志（`Get uid=...`）统计，当前演示机 adb 未打通，列为待补。
+- 遗留：底座 UID 归属**量化成功率**已于 2026-09-28 在真机 PJW110 补测，见下。
+
+#### A1-8 底座 UID 归属量化成功率（2026-09-28 真机 PJW110 / Android 16 / API 36）
+
+- 采集方式：`adb logcat -s TrackerControl.VPN`，读取底座 `ServiceSinkhole.getUidQ`（`ServiceSinkhole.java:2274/2276`）的 `Get uid local=... remote=...`（查询）与 `Get uid=<uid>`（结果）两行；分母 = TCP/UDP 查询次数（非 TCP/UDP 如 ICMP 不进入 `getUidQ`，不计入）。
+- 设备/安装：PJW110（Android 16 / API 36），安装 fdroid debug 包 `net.kollnig.missioncontrol.fdroid.test`（构建机持久副本 `~/trackercontrol-apk/TrackerControl-fdroidDebug-latest.apk`，`adb install -r` 侧载；经 WSL2 无线调试连接）。
+
+| 轮次 | 窗口 | TCP/UDP 查询（分母） | 成功返回有效 uid | `Get uid=-1` | 成功率 | ICMP/系统未归属（不计分母） |
+|---|---|---|---|---|---|---|
+| #1 单 App（闲鱼） | 19:59 | 137 | 137 | 0 | 100% | 13 |
+| #2 多 App | 20:02 | 94 | 94 | 0 | 100% | 1 |
+| **合计** | - | **231** | **231** | **0** | **100%** | 14 |
+
+- 第 2 轮覆盖多 App 且均正确归属到各自 uid：番茄小说 `com.phoenix.read`(10379) 49 条、微信 `com.tencent.mm`(10331) 32 条、支付宝 `com.eg.android.AlipayGphone`(10326) 11 条、企业微信 `com.tencent.wework`(10349) 2 条；第 1 轮全部为闲鱼 `com.taobao.idlefish`(10343)。
+- 结论：底座 VpnService 内 `getConnectionOwnerUid` 在 TCP/UDP 上成功率为 **231/231 = 100%**，且能区分多个 App；唯一未归属的是 ICMP（`p1`），与协议边界一致（`docs/02` §4、`docs/09`）。
+- 局限：两轮各约 1 分钟、4~5 个 App，样本量有限；后续可在长时、更多 App 与网络切换场景下复测。
+
+---
+
+### A4-3 跨进程网络事件端到端（2026-09-29 真机 PJW110 / Android 16 / API 36）
+
+- [x] 真机端到端验证通过（2026-09-29）
+- 目标：打通“底座 VpnService 回调 → 跨进程显式包名广播 → CausalGuard Adapter → Ingestor → Room”的真实链路。
+- 设备/安装：
+  - 演示机 PJW110（Android 16 / API 36），经 WSL2 无线调试接入 adb。
+  - CausalGuard debug：`com.causalguard`（`app/build/outputs/apk/debug/app-debug.apk`，`adb install -r`）。
+  - 底座 fdroid debug：`net.kollnig.missioncontrol.fdroid.test`（`TrackerControl-fdroidDebug-latest.apk`），先 `./scripts/apply-trackercontrol-hook.sh` 应用 A4-3 补丁再构建；补丁已确认编译进 APK（`classes7.dex` 含 `CausalGuardNetworkHook`）。底座 VPN 正常起 `tun0`（`10.1.10.1/32`）。
+- 操作流程：CausalGuard 点「5) 启动网络采集（A4-3）」→ `collecting=true`；在真机打开 Chrome / 闲鱼 / 微信 / 淘宝并访问百度、腾讯等站点产生 TCP/UDP/DNS 流量 → 点「6) 停止网络采集」。
+- 结果（`run-as com.causalguard` 拉取 `databases/causalguard.db` + `-wal`）：
+
+| 指标 | 结果 |
+|---|---|
+| `network_event` / `privacy_event` | **486 / 486**（一一对应，同步入库） |
+| `source` / `evidenceLevel` | `vpn` / `E2`（全部） |
+| UID→包名归属 | 414 已归属（85.2%）、72 条 `uid=-1` 降级 |
+| DNS 域名线索 | 353/486 有 `domainHint`，**60** 个不同域名 |
+| 阻断记录 | 2 条 `UDP:53 blocked=1`（DNS 被底座阻断） |
+| 覆盖应用 | `com.android.chrome`(283)、`com.taobao.idlefish`(71)、`com.tencent.mm`(49)、`com.taobao.taobao`(5) 等 |
+
+- 归属样本：闲鱼 TCP→`yixiu-abtest.alicdn.com`、Chrome→`optimizationguide-pa.googleapis.com`、淘宝→`msgacs.m.taobao.com`，包名/协议/端口/域名均正确。
+- 降级证据（诚实记录）：
+  - `uid=-1` 共 72 条：ICMP 39 条（协议边界固定不归属，符合 `docs/02`/`docs/09`）、TCP 33 条（IPv4 14 / IPv6 19，含 `accounts.google.com`、`www.baidu.com`、`optimizationguide-pa.googleapis.com` 等），属底座在混合真实流量下未返回归属的诚实降级，保留 `packageName=unknown`。
+  - 无域名：`blocked` 的 DNS（UDP:53）记录 `domainHint` 为空，正确表达“有请求但被阻断”。
+- 去重说明：`dedupKey` 按 60s 时间窗生成；依 `docs/09` §4，`dedupKey` 仅用于查询期频率聚合、**不删原始事件留存**，故 486 条原始事件保留属预期。
+- 结论：满足 A4-3 阶段门——至少一种真实网络事件进入 Room、至少一个 App 获得使用上下文、无域名/UID 时诚实降级。跨进程 `setPackage("com.causalguard")` + App 侧 `RECEIVER_EXPORTED` 广播桥接在真机生效。
+- 遗留：A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）见下节；本节验证时为手工 start/stop 且需保持 CausalGuard 进程存活，下节前台服务已补齐。
+
+### A4-5 前台服务与网络切换/VPN 回收自动恢复（2026-09-29 真机 PJW110 / Android 16 / API 36）
+
+- [x] 真机验证通过（2026-09-29）
+- 目标：以 `dataSync` 前台服务维持采集进程存活；VPN 被系统回收 / 网络切换后自动 `stop() → start()` 重新订阅，历史事件已在 Room 不丢（`docs/trackercontrol-adapter-boundary` §5）。
+- 实现：
+  - `data/ingest/NetworkCollector`：采集器最小契约（生产实现为 `NetworkEventCollector`）。
+  - `data/ingest/NetworkMonitorController`：`start/stop/restart` 经 `Mutex` 串行化，异常回调 `onError` 后回到可重试状态，绝不 crash。纯逻辑，可 JVM 单测。
+  - `service/NetworkMonitorService`：`START_STICKY` 前台服务 + `FOREGROUND_SERVICE_TYPE_DATA_SYNC` 常驻通知；网络回调经 800ms 去抖合并为一次 restart。
+  - `service/AndroidConnectivityWatcher`：`registerDefaultNetworkCallback`，忽略注册时的基线回调，仅在真实 `onLost/onAvailable`/VPN 能力变化时通知。
+- 操作流程：CausalGuard 点「Start Network Monitor (A4-5)」→ 前台服务常驻；`adb shell am force-stop net.kollnig.missioncontrol.fdroid.test` 模拟 VPN 回收，随后 `monkey` 重启底座恢复 VPN。
+- 结果：
+
+| 指标 | 结果 |
+|---|---|
+| 前台服务 | `isForeground=true`、`foregroundId=1001`、`types=0x1`（dataSync），常驻通知与渠道 `causalguard_network_monitor` 建立 |
+| VPN 回收 | `network changed: lost/available/vpn-down` → 去抖后仅一次 `network restart done: active=true collecting=true` |
+| VPN 恢复 | `network changed: available/vpn-up` → 一次 restart，`active=true collecting=true` |
+| 事件不丢 | Room `privacy_event`/`network_event` 同步增长 **486 → 495 → 510**（重启前后持续入库、一一对应） |
+| 并发安全 | 修复注册基线/多回调并发 `restart` 造成的 `IllegalArgumentException: Receiver not registered`（`Mutex` 串行化 + 基线抑制 + 去抖） |
+| 停止 | UI「Stop Network Monitor」后 `dumpsys activity services com.causalguard` 无 ServiceRecord、通知消失 |
+
+- 关键修复（合并 `origin/main` 回归）：`AppContainer.privacyEventRepository` 曾采用 main 的 `FakePrivacyEventRepository` 默认值，导致 A4 采集只写内存、Room 不增长；已恢复为 `RoomPrivacyEventRepository(database)`，对齐 `docs/17` 阶段门与「Room 为唯一写入口」。
+- 遗留：厂商（ColorOS/Oppo）后台限制对 `START_STICKY` 的长期影响、锁屏/深度 Doze 下的保活需后续实测；通知权限未授权时服务仍运行但不显示常驻通知。
 
 ---
 
@@ -228,6 +297,7 @@
 
 ## 5. 未决/阻塞
 
-1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）；A1-8 自测完成（见上，归属依赖底座）。
-2. 待补：底座 UID 归属**量化成功率**，需 adb 打通后从 `TrackerControl.VPN` 日志统计（演示机 adb 当前不可用）。
-3. 演示机型号 OPPO Reno12 Pro；Android 版本待补。
+1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）；A1-8 自测与量化成功率均完成（见第 3 节 A1-8，归属依赖底座）。
+2. 已补测：底座 UID 归属**量化成功率** 231/231 = 100%（TCP/UDP，真机 PJW110 / Android 16，2026-09-28，经 WSL2 无线调试采集 `TrackerControl.VPN` 日志）。
+3. 演示机 PJW110 为 Android 16 / API 36；早期 Spike 机 OPPO Reno12 Pro 的 Android 版本仍待补（基线 API 29+）。
+4. A4-3 跨进程网络事件端到端已于 2026-09-29 在 PJW110 真机验证（486 条事件入库，见第 3 节 A4-3）；A4-4 关联入库链路随该验证一并打通。A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）已于 2026-09-29 真机验证（`dataSync` 前台服务、VPN 回收/恢复各触发一次去抖 restart、事件 486→510 持续入库、停止后服务注销），见第 3 节 A4-5；遗留为 ColorOS 后台限制与深度 Doze 保活的长期观察。

@@ -1,11 +1,15 @@
 package com.causalguard
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,6 +17,7 @@ import com.causalguard.di.AppContainer
 import com.causalguard.di.AppDependencies
 import com.causalguard.network.UidAttributionProbe
 import com.causalguard.profile.PackageProfileCollector
+import com.causalguard.service.NetworkMonitorService
 import com.causalguard.usage.UsageStatsCollector
 import com.causalguard.ui.CausalGuardApp
 import java.util.concurrent.Executors
@@ -30,9 +35,22 @@ class MainActivity : ComponentActivity() {
     private val tag = "CausalGuardSpike"
     private lateinit var appDependencies: AppDependencies
 
+    /**
+     * A4-3 真机验证入口：手工 start/stop 网络采集链路
+     * （底座广播 → Adapter → NetworkEventIngestor → Room）。
+     * A4-5 起改为驱动 [NetworkMonitorService] 前台服务，由其维持采集与自动恢复。
+     */
+    private val container by lazy { AppContainer(applicationContext) }
+
+    /** Android 13+ 前台服务常驻通知需要运行时授权；未授权服务仍可运行，仅无通知。 */
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            show("=== 通知权限：${if (granted) "已授权" else "未授权（服务仍运行，无通知）"} ===")
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        appDependencies = AppContainer(applicationContext)
+        appDependencies = container
         setContent {
             CausalGuardApp(
                 privacyEventRepository = appDependencies.privacyEventRepository,
@@ -44,9 +62,32 @@ class MainActivity : ComponentActivity() {
                 onCollectPackage = ::runPackageCollect,
                 onCollectUsage = ::runUsageCollect,
                 onProbeUid = ::runUidProbe,
+                onStartNetworkCollect = ::startNetworkCollect,
+                onStopNetworkCollect = ::stopNetworkCollect,
                 onClear = { outputText = "" },
             )
         }
+    }
+
+    /**
+     * A4-5：启动前台监测服务（内部注册底座广播并持续入库，网络切换/VPN 回收时自动恢复）。
+     * Android 13+ 顺带申请通知权限，以便展示常驻通知；未授权不影响服务运行。
+     */
+    private fun startNetworkCollect() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        runCatching { NetworkMonitorService.start(applicationContext) }
+            .onSuccess { show("=== A4-5 网络监测前台服务已启动（网络切换自动恢复）===") }
+            .onFailure { show("=== A4-5 启动服务失败：${it.message ?: it} ===") }
+    }
+
+    private fun stopNetworkCollect() {
+        runCatching { NetworkMonitorService.stop(applicationContext) }
+            .onSuccess { show("=== A4-5 网络监测前台服务停止中 ===") }
+            .onFailure { show("=== A4-5 停止服务失败：${it.message ?: it} ===") }
     }
 
     private fun runPackageCollect() {

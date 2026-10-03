@@ -1,6 +1,7 @@
 package com.causalguard.di
 
 import android.content.Context
+import android.util.Log
 import com.causalguard.analysis.EventAnalysisService
 import com.causalguard.analysis.FixtureEventAnalysisService
 import com.causalguard.core.model.AppProfileProvider
@@ -9,6 +10,7 @@ import com.causalguard.core.model.AuditLogRepository
 import com.causalguard.core.model.EventSink
 import com.causalguard.core.model.DemoScenarioRepository
 import com.causalguard.core.model.MitigationRepository
+import com.causalguard.core.model.NetworkEventSource
 import com.causalguard.core.model.PrivacyEventRepository
 import com.causalguard.core.model.RecommendationRepository
 import com.causalguard.core.model.RiskAssessmentRepository
@@ -17,10 +19,16 @@ import com.causalguard.core.model.UsageContextProvider
 import com.causalguard.core.model.UsageContextRepository
 import com.causalguard.data.fixture.RuntimeFixtureLoader
 import com.causalguard.data.importer.EventImporter
+import com.causalguard.data.ingest.NetworkCollector
+import com.causalguard.data.ingest.NetworkEventCollector
+import com.causalguard.data.ingest.NetworkEventIngestor
+import com.causalguard.data.ingest.NetworkMonitorController
+import com.causalguard.data.network.trackercontrol.AndroidPackageNameResolver
+import com.causalguard.data.network.trackercontrol.TrackerControlEventSource
+import com.causalguard.data.network.trackercontrol.TrackerControlNetworkAdapter
 import com.causalguard.data.local.CausalGuardDatabase
 import com.causalguard.data.provider.PackageManagerProfileProvider
 import com.causalguard.data.provider.UsageStatsContextProvider
-import com.causalguard.data.repository.FakePrivacyEventRepository
 import com.causalguard.data.repository.RoomAppProfileRepository
 import com.causalguard.data.repository.RoomAuditLogRepository
 import com.causalguard.data.repository.RoomDemoScenarioRepository
@@ -58,14 +66,18 @@ interface AppDependencies {
  * Provider 允许注入 Fake 实现，便于无 VPN/无权限时用 fixture 驱动。
  */
 class AppContainer(
-    context: Context,
+    private val context: Context,
     override val appProfileProvider: AppProfileProvider = PackageManagerProfileProvider(context),
     override val usageContextProvider: UsageContextProvider = UsageStatsContextProvider(context),
     database: CausalGuardDatabase = CausalGuardDatabase.get(context),
-    override val privacyEventRepository: PrivacyEventRepository = FakePrivacyEventRepository(
-        RuntimeFixtureLoader.loadPrivacyEvents(context),
-    ),
 ) : AppDependencies {
+
+    /**
+     * 默认注入 Room 实现（docs/17 阶段门：至少一种真实网络事件进入 Room）。
+     * 纯内存 `FakePrivacyEventRepository` 仅用于无 VPN/Room 的演示与单测，需显式注入。
+     * 合并 Origin/main 时曾误取其 Fake 默认值，导致 A4 采集只写内存、Room 不增长，此处修正。
+     */
+    override val privacyEventRepository: PrivacyEventRepository = RoomPrivacyEventRepository(database)
 
     override val eventAnalysisService: EventAnalysisService = FixtureEventAnalysisService(
         repository = privacyEventRepository,
@@ -75,6 +87,34 @@ class AppContainer(
     )
 
     override val eventSink: EventSink = RoomEventSink(privacyEventRepository)
+
+    /**
+     * A4-3：真实网络事件源（底座广播桥接）。未授权 VPN 或无底座时 `isAvailable=false`，
+     * 事件流为空，绝不伪造连接；无 VPN 场景用 `ReplayNetworkEventSource` 替代。
+     */
+    val networkEventSource: NetworkEventSource = TrackerControlEventSource(
+        context = context,
+        adapter = TrackerControlNetworkAdapter(AndroidPackageNameResolver(context)),
+    )
+
+    /** A4-4：source → `NetworkEventIngestor` → Room 的端到端采集器（A4-5 起由 `NetworkMonitorController` 驱动生命周期）。 */
+    val networkEventCollector: NetworkCollector by lazy {
+        NetworkEventCollector(
+            networkEventSource,
+            NetworkEventIngestor(privacyEventRepository),
+            onIngested = { event ->
+                // A4-3 真机验证：只记录脱敏后的应用与阻断状态，不打印 IP/域名。
+                Log.i("CausalGuardNet", "ingested id=${event.eventId} app=${event.appId} blocked=${event.network?.blocked}")
+            },
+        )
+    }
+
+    /** A4-5：前台服务使用的生命周期控制器；异常时记录日志，绝不 crash 服务。 */
+    val networkMonitorController: NetworkMonitorController by lazy {
+        NetworkMonitorController(networkEventCollector) { throwable ->
+            Log.w("CausalGuardNet", "network monitor error: $throwable")
+        }
+    }
     override val appProfileRepository: AppProfileRepository = RoomAppProfileRepository(database)
     override val usageContextRepository: UsageContextRepository = RoomUsageContextRepository(database)
     override val riskAssessmentRepository: RiskAssessmentRepository = RoomRiskAssessmentRepository(database)

@@ -199,10 +199,10 @@ app/src/main/java/<our.pkg>/
 
 接入点二选一：
 
-- **方案 1（侵入小）**：在 `ServiceSinkhole` 的 4 个回调末尾调用我们的 `NetworkEventCollector.onPacket/onDns/onUid/onBlocked`。
-- **方案 2（侵入更小）**：实现一个 `BroadcastReceiver`/本地 Binder，让适配层订阅，但底座目前没有广播事件出口，需要额外补一个广播发送——反而改动更大。
+- **方案 1（直接调用）**：在 `ServiceSinkhole` 的回调末尾直接调用 CausalGuard 的 `TrackerControlCallback`。
+- **方案 2（广播桥接，已采用）**：底座回调末尾发显式包名广播（`Intent.setPackage("com.causalguard")`，跨进程），`BroadcastReceiver` 接收后喂给 `TrackerControlNetworkAdapter`。
 
-**当前建议方案 1**：改动集中、可回滚，且符合“团队修改另起 commit”的许可证要求。
+**A4-3 采用方案 2（广播桥接）**：底座是独立 Gradle 工程、与 CausalGuard 是两个已安装 APK/两个进程，无法 import `com.causalguard.*`，方案 1 会迫使底座依赖本仓代码、难以回滚且不利于本仓 CI 验证；`LocalBroadcastManager` 仅同进程也不可行。显式包名广播让桥接契约留在 `:app`、底座改动自包含，冻结的 `TrackerControlCallback` 契约不变。实现见 [adapter 边界](trackercontrol-adapter-boundary.md) §9，底座改动以 `third_party/patches/a4-3-serversinkhole-network-hook.patch` 补丁交付，符合“团队修改另起 commit 并登记”的许可证要求。
 
 ---
 

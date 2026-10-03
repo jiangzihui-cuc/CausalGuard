@@ -56,6 +56,8 @@ fun CausalGuardApp(
     onCollectPackage: () -> Unit,
     onCollectUsage: () -> Unit,
     onProbeUid: () -> Unit,
+    onStartNetworkCollect: () -> Unit,
+    onStopNetworkCollect: () -> Unit,
     onClear: () -> Unit,
 ) {
     MaterialTheme {
@@ -123,6 +125,8 @@ fun CausalGuardApp(
                         onCollectPackage = onCollectPackage,
                         onCollectUsage = onCollectUsage,
                         onProbeUid = onProbeUid,
+                        onStartNetworkCollect = onStartNetworkCollect,
+                        onStopNetworkCollect = onStopNetworkCollect,
                         onClear = onClear,
                         onBack = { navController.popBackStack() },
                     )
@@ -139,6 +143,8 @@ private fun SpikeDebugPanel(
     onCollectPackage: () -> Unit,
     onCollectUsage: () -> Unit,
     onProbeUid: () -> Unit,
+    onStartNetworkCollect: () -> Unit,
+    onStopNetworkCollect: () -> Unit,
     onClear: () -> Unit,
     onBack: (() -> Unit)? = null,
 ) {
@@ -173,6 +179,12 @@ private fun SpikeDebugPanel(
         Button(onClick = onProbeUid) {
             Text("UID Probe")
         }
+        Button(onClick = onStartNetworkCollect) {
+            Text("Start Network Monitor (A4-5)")
+        }
+        Button(onClick = onStopNetworkCollect) {
+            Text("Stop Network Monitor (A4-5)")
+        }
         Button(onClick = onClear) {
             Text("Clear")
         }
@@ -197,6 +209,8 @@ private fun CausalGuardAppPreview() {
         onCollectPackage = {},
         onCollectUsage = {},
         onProbeUid = {},
+        onStartNetworkCollect = {},
+        onStopNetworkCollect = {},
         onClear = {},
     )
 }
