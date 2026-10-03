@@ -101,6 +101,41 @@ interface NetworkEventDao {
     @Query("SELECT * FROM network_event WHERE packageName = :packageName ORDER BY timestamp DESC")
     fun observeByApp(packageName: String): Flow<List<NetworkEventEntity>>
 
+    /** A5-5：App 在时间窗内的连接次数（`blocked` 与否都计入）。 */
+    @Query(
+        "SELECT COUNT(*) FROM network_event " +
+            "WHERE packageName = :packageName AND timestamp BETWEEN :start AND :end",
+    )
+    suspend fun countInWindow(packageName: String, start: Long, end: Long): Int
+
+    /** A5-5：App 在时间窗内被阻断的连接次数。 */
+    @Query(
+        "SELECT COUNT(*) FROM network_event " +
+            "WHERE packageName = :packageName AND timestamp BETWEEN :start AND :end AND blocked = 1",
+    )
+    suspend fun countBlockedInWindow(packageName: String, start: Long, end: Long): Int
+
+    /** A5-5：App 在时间窗内到指定域名的连接次数。 */
+    @Query(
+        "SELECT COUNT(*) FROM network_event " +
+            "WHERE packageName = :packageName AND domainHint = :domain " +
+            "AND timestamp BETWEEN :start AND :end",
+    )
+    suspend fun countDomainInWindow(packageName: String, domain: String, start: Long, end: Long): Int
+
+    /** A5-5：App 在时间窗内到指定域名被阻断的连接次数。 */
+    @Query(
+        "SELECT COUNT(*) FROM network_event " +
+            "WHERE packageName = :packageName AND domainHint = :domain " +
+            "AND timestamp BETWEEN :start AND :end AND blocked = 1",
+    )
+    suspend fun countDomainBlockedInWindow(
+        packageName: String,
+        domain: String,
+        start: Long,
+        end: Long,
+    ): Int
+
     @Query("DELETE FROM network_event")
     suspend fun deleteAll()
 }
@@ -162,8 +197,22 @@ interface MitigationDao {
     @Insert
     suspend fun insert(record: MitigationRecordEntity): Long
 
+    @Query("SELECT * FROM mitigation_record WHERE id = :id LIMIT 1")
+    suspend fun get(id: Long): MitigationRecordEntity?
+
     @Query("SELECT * FROM mitigation_record WHERE packageName = :packageName ORDER BY executedAt DESC")
     fun observeByApp(packageName: String): Flow<List<MitigationRecordEntity>>
+
+    @Query(
+        "UPDATE mitigation_record SET postResult = :postResult, reviewNotes = :reviewNotes, " +
+            "observationEnd = COALESCE(:observationEnd, observationEnd) WHERE id = :id",
+    )
+    suspend fun updateOutcome(
+        id: Long,
+        postResult: String,
+        reviewNotes: String?,
+        observationEnd: Long?,
+    ): Int
 
     @Query("DELETE FROM mitigation_record")
     suspend fun deleteAll()
