@@ -1,7 +1,7 @@
 # 14 评测数据集方案
 
 > 版本：`v0.1`（P0 设计基线）
-> 最后更新：2026-09-20
+> 最后更新：2026-10-02
 > 责任人：成员 B（协作：成员 A）
 > 目的：建立可复现、带标签的评测集，用数据证明“场景推理”和“处置闭环”的价值。
 
@@ -77,6 +77,8 @@
 
 该旁路格式用于 Fake Repository、规则引擎、证据链、解释页面和评测脚本共享同一组预期，不改变采集层事件格式。
 
+v0.1 首批自动规则评测由 frozen fixture 的 10 条事件和独立 evaluation extension 的 15 条事件组成，共 25 个可复现 case。扩展集物理拆分为 `fixtures/evaluation-events-v0.1.json`（事件输入）、`fixtures/evaluation-context-v0.1.json`（独立上游上下文）和 `fixtures/evaluation-expected-v0.1.json`（输出 oracle）。回归入口为 `RuleEvaluationDatasetTest`，只执行 deterministic rule layer；输入、上游 context 和输出 oracle 严格隔离，测试按 timestamp/appId 机械构造 related/prior events，不跨数据集关联。
+
 ## 3. 分布建议
 
 | 类别 | 比例 |
@@ -88,11 +90,12 @@
 
 ## 4. 评测流程
 
-对每条样例分别运行规则引擎与 AI 摘要，记录：
+对每条样例运行规则引擎，记录：
 
 - 实际分类、风险等级、场景一致性；
-- AI 摘要是否与输入事实一致（事实一致率）；
 - 是否误报/漏报/无法确认。
+
+本批回归不运行 AI 模型，也不报告 AI 事实一致率；AI 解释评测属于后续任务。
 
 ## 5. 重点指标
 
