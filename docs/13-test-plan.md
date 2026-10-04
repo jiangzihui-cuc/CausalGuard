@@ -1,7 +1,7 @@
 # 13 测试计划
 
 > 版本：`v0.1`（P0 设计基线）
-> 最后更新：2026-09-20
+> 最后更新：2026-10-02
 > 责任人：成员 B（协作：成员 A）
 > 目的：在开发前确定“做完怎样算完成”。
 
@@ -61,3 +61,5 @@
 - 关键权限拒绝时有清晰提示，不闪退；
 - 高风险结论没有无证据来源；
 - 演示数据与真实数据明确区分。
+
+B3-6 已形成首批 25 条自动规则评测案例：10 条 frozen fixture 加 15 条独立 evaluation extension。测试自动比较 RiskAssessment、recommendation action 和 unknown degradation oracle；不包含 VPN、真机或 AI 完成性结论。

@@ -1,0 +1,27 @@
+{
+  "schema": {
+    "name": "evaluation-context-v0.1",
+    "purpose": "Independent upstream context inputs for the evaluation extension event set.",
+    "eventFixture": "evaluation-events-v0.1.json"
+  },
+  "appProfiles": [
+    { "packageName": "com.eval.map", "appName": "Evaluation Map", "sceneType": "map" },
+    { "packageName": "com.eval.reader", "appName": "Evaluation Reader", "sceneType": "reader" },
+    { "packageName": "com.eval.social", "appName": "Evaluation Social", "sceneType": "social" },
+    { "packageName": "com.eval.calculator", "appName": "Evaluation Calculator", "sceneType": "calculator" }
+  ],
+  "scenarioMatches": [
+    { "eventId": "eval-20261001-0001", "value": "match" },
+    { "eventId": "eval-20261001-0002", "value": "match" },
+    { "eventId": "eval-20261001-0003", "value": "mismatch" },
+    { "eventId": "eval-20261001-0004", "value": "mismatch" },
+    { "eventId": "eval-20261001-0005", "value": "mismatch" },
+    { "eventId": "eval-20261001-0007", "value": "match" },
+    { "eventId": "eval-20261001-0009", "value": "mismatch" },
+    { "eventId": "eval-20261001-0010", "value": "mismatch" },
+    { "eventId": "eval-20261001-0011", "value": "mismatch" },
+    { "eventId": "eval-20261001-0013", "value": "mismatch" },
+    { "eventId": "eval-20261001-0014", "value": "mismatch" },
+    { "eventId": "eval-20261001-0015", "value": "mismatch" }
+  ]
+}

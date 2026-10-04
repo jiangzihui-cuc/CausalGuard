@@ -1,0 +1,230 @@
+[
+  {
+    "eventId": "eval-20261001-0001",
+    "appId": "com.eval.map",
+    "appName": "Evaluation Map",
+    "eventType": "location",
+    "timestamp": 1790899200000,
+    "foregroundState": "foreground",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic foreground map location access for rule evaluation.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-20261001-0002",
+    "appId": "com.eval.map",
+    "appName": "Evaluation Map",
+    "eventType": "network",
+    "timestamp": 1790899300000,
+    "foregroundState": "foreground",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Synthetic foreground map tile connection.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.20",
+      "remotePort": 443,
+      "domainHint": "tiles.eval.test",
+      "uid": 20001,
+      "packageName": "com.eval.map"
+    }
+  },
+  {
+    "eventId": "eval-20261001-0003",
+    "appId": "com.eval.reader",
+    "appName": "Evaluation Reader",
+    "eventType": "clipboard",
+    "timestamp": 1790899400000,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic background clipboard access; original content omitted.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-20261001-0004",
+    "appId": "com.eval.reader",
+    "appName": "Evaluation Reader",
+    "eventType": "contacts",
+    "timestamp": 1790899500000,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic background contacts access; only a count is retained.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-20261001-0005",
+    "appId": "com.eval.reader",
+    "appName": "Evaluation Reader",
+    "eventType": "location",
+    "timestamp": 1790899600000,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic background location access; coordinates omitted.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-20261001-0006",
+    "appId": "com.eval.reader",
+    "appName": "Evaluation Reader",
+    "eventType": "network",
+    "timestamp": 1790899700000,
+    "foregroundState": "foreground",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Synthetic connection without a domain attribution.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.30",
+      "remotePort": 443,
+      "domainHint": "",
+      "uid": 20002,
+      "packageName": "com.eval.reader"
+    }
+  },
+  {
+    "eventId": "eval-20261001-0007",
+    "appId": "com.eval.map",
+    "appName": "Evaluation Map",
+    "eventType": "network",
+    "timestamp": 1790899800000,
+    "foregroundState": "foreground",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Synthetic foreground connection to a classified analytics domain.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.40",
+      "remotePort": 443,
+      "domainHint": "analytics.example.test",
+      "uid": 20001,
+      "packageName": "com.eval.map"
+    }
+  },
+  {
+    "eventId": "eval-20261001-0008",
+    "appId": "unknown",
+    "appName": "Unknown Evaluation App",
+    "eventType": "network",
+    "timestamp": 1790899900000,
+    "foregroundState": "unknown",
+    "source": "vpn",
+    "evidenceLevel": "E5",
+    "evidenceSummary": "Synthetic network event with unavailable attribution.",
+    "network": {
+      "protocol": "UDP",
+      "remoteIp": "198.51.100.50",
+      "remotePort": 443,
+      "domainHint": "",
+      "uid": -1,
+      "packageName": "unknown"
+    }
+  },
+  {
+    "eventId": "eval-20261001-0009",
+    "appId": "com.eval.social",
+    "appName": "Evaluation Social",
+    "eventType": "network",
+    "timestamp": 1790900000000,
+    "foregroundState": "background",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Synthetic background tracker connection near a sensitive event.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.60",
+      "remotePort": 443,
+      "domainHint": "tracker.example.test",
+      "uid": 20003,
+      "packageName": "com.eval.social"
+    }
+  },
+  {
+    "eventId": "eval-20261001-0010",
+    "appId": "com.eval.social",
+    "appName": "Evaluation Social",
+    "eventType": "contacts",
+    "timestamp": 1790899990000,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic contacts access used as a related event; content omitted.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-20261001-0011",
+    "appId": "com.eval.social",
+    "appName": "Evaluation Social",
+    "eventType": "network",
+    "timestamp": 1790901000000,
+    "foregroundState": "background",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Synthetic background tracker connection outside the correlation window.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.61",
+      "remotePort": 443,
+      "domainHint": "tracker.example.test",
+      "uid": 20003,
+      "packageName": "com.eval.social"
+    }
+  },
+  {
+    "eventId": "eval-20261001-0012",
+    "appId": "com.eval.calculator",
+    "appName": "Evaluation Calculator",
+    "eventType": "permission",
+    "timestamp": 1790902000000,
+    "foregroundState": "recent",
+    "source": "system_api",
+    "evidenceLevel": "E1",
+    "evidenceSummary": "Synthetic permission state changed to revoked."
+  },
+  {
+    "eventId": "eval-20261001-0013",
+    "appId": "com.eval.calculator",
+    "appName": "Evaluation Calculator",
+    "eventType": "location",
+    "timestamp": 1790902001000,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic post-revocation background location access; coordinates omitted.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-20261001-0014",
+    "appId": "com.eval.calculator",
+    "appName": "Evaluation Calculator",
+    "eventType": "location",
+    "timestamp": 1790901999000,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic location access before the permission context event; coordinates omitted.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-20261001-0015",
+    "appId": "com.eval.calculator",
+    "appName": "Evaluation Calculator",
+    "eventType": "network",
+    "timestamp": 1790903000000,
+    "foregroundState": "background",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Synthetic calculator background connection to a tracker domain.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.70",
+      "remotePort": 443,
+      "domainHint": "tracker.example.test",
+      "uid": 20004,
+      "packageName": "com.eval.calculator"
+    }
+  }
+]
