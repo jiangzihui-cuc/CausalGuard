@@ -1,0 +1,615 @@
+{
+  "schemaVersion": "tracker-domains-v0.1",
+  "source": {
+    "upstreamName": "Disconnect Tracking Protection",
+    "upstreamDataset": "services.json",
+    "snapshotSource": "TrackerControl bundled asset",
+    "trackerControlCommit": "9504d41b9f6fa1509d784e5503c084d4b428307d",
+    "bundledAsset": "third_party/tracker-control-android/app/src/main/assets/disconnect-blacklist.reversed.json",
+    "bundledAssetSha": "6fa1d74b3dd74a174fe1a90af5d2b59edd7865dc",
+    "dataLicense": "CC BY-NC-SA 4.0",
+    "generatedBy": "scripts/generate-tracker-dataset.py"
+  },
+  "entries": [
+    {
+      "domain": "00px.net",
+      "category": "Advertising",
+      "source": "disconnect",
+      "entity": "AdxSpace"
+    },
+    {
+      "domain": "1-2-1marketing.com",
+      "category": "EmailAggressive",
+      "source": "disconnect",
+      "entity": "Clubessential Holdings"
+    },
+    {
+      "domain": "103092804.com",
+      "category": "Advertising",
+      "source": "disconnect",
+      "entity": "Kitara Media"
+    },
+    {
+      "domain": "10web.io",
+      "category": "Email",
+      "source": "disconnect",
+      "entity": "10Web"
+    },
+    {
+      "domain": "11ctch.com",
+      "category": "Analytics",
+      "source": "disconnect",
+      "entity": "Catch"
+    },
+    {
+      "domain": "1dmp.io",
+      "category": "Advertising",
+      "source": "disconnect",
+      "entity": "CleverData"
+    },
+    {
+      "domain": "1film.to",
+      "category": "FingerprintingInvasive",
+      "source": "disconnect",
+      "entity": "1film.to"
+    },
+    {
+      "domain": "1rx.io",
+      "category": "Advertising",
+      "source": "disconnect",
+      "entity": "Nexxen"
+    },
+    {
+      "domain": "23trgaaddg.com",
+      "category": "Advertising",
+      "source": "disconnect",
+      "entity": "23trgaaddg.com"
+    },
+    {
+      "domain": "2449march2024.com",
+      "category": "FingerprintingInvasive",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "2467april2024.com",
+      "category": "Analytics",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "2475april2024.com",
+      "category": "FingerprintingInvasive",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "2477april2024.com",
+      "category": "FingerprintingInvasive",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "2487may2024.com",
+      "category": "FingerprintingInvasive",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "2489may2024.com",
+      "category": "FingerprintingInvasive",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "2493may2024.com",
+      "category": "FingerprintingInvasive",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "2495may2024.com",
+      "category": "Analytics",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "2497may2024.com",
+      "category": "FingerprintingInvasive",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "24log.com",
+      "category": "Advertising",
+      "source": "disconnect",
+      "entity": "24Log"
+    },
+    {
+      "domain": "24metrics.com",
+      "category": "FingerprintingGeneral",
+      "source": "disconnect",
+      "entity": "24metrics"
+    },
+    {
+      "domain": "24smi.net",
+      "category": "FingerprintingInvasive",
+      "source": "disconnect",
+      "entity": "Smi"
+    },
+    {
+      "domain": "24ttl.stream",
+      "category": "Advertising",
+      "source": "disconnect",
+      "entity": "24TTL"
+    },
+    {
+      "domain": "2514june2024.com",
+      "category": "Analytics",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "2522june2024.com",
+      "category": "Analytics",
+      "source": "disconnect",
+      "entity": "horonstogly.com"
+    },
+    {
+      "domain": "2leep.com",
+      "category": "Advertising",
+      "source": "disconnect",
+      "entity": "2leep.com"
+    },
+    {
+      "domain": "2mdn.net",
+      "category": "FingerprintingGeneral",
+      "source": "disconnect",
+      "entity": "Google"
+    },
+    {
+      "domain": "2o7.net",
+      "category": "Email",
+      "source": "disconnect",
+      "entity": "Adobe"
+    },
+    {
+      "domain": "2trk.info",
+      "category": "Advertising",
+      "source": "disconnect",
+      "entity": "Preciso"
+    },
+    {
+      "domain": "33across.com",
+      "category": "Advertising",
+      "source": "disconnect",
+      "entity": "33Across"
+    },
+    {
+      "domain": "3dstats.com",
+      "category": "Analytics",
+      "source": "disconnect",
+      "entity": "AddFreeStats"
+    },
+    {
+      "domain": "3gl.net",
+      "category": "Analytics",
+      "source": "disconnect",
+      "entity": "Catchpoint"
+    },
+    {
+      "domain": "4dem.it",
+      "category": "Email",
+      "source": "disconnect",
+      "entity": "4dem"
+    },
+    {
+      "domain": "4u.pl",
+      "category": "Analytics",
+      "source": "disconnect",
+      "entity": "stat4u"
+    },
+    {
+      "domain": "5min.com",
+      "category": "Content",
+      "source": "disconnect",
+      "entity": "Yahoo!"
+    },
+    {
+      "domain": "63squares.com",
+      "category": "Analytics",
+      "source": "disconnect",
+      "entity": "63 Squares"
+    },
+    {
+      "domain": "8d8.biz",
+      "category": "Email",
+      "source": "disconnect",
+      "entity": "8d8.biz"
+    },
+    {
+      "domain": "abtshield.com",
+      "category": "FingerprintingGeneral",
+      "source": "disconnect",
+      "entity": "Edge NPD"
+    },
+    {
+      "domain": "acblnk.com",
+      "category": "Email",
+      "source": "disconnect",
+      "entity": "Acumbamail"
+    },
+    {
+      "domain": "accelo.com",
+      "category": "EmailAggressive",
+      "source": "disconnect",
+      "entity": "Accelo"
+    },
+    {
+      "domain": "acemlna.com",
+      "category": "EmailAggressive",
+      "source": "disconnect",
+      "entity": "ActiveCampaign"
+    },
+    {
+      "domain": "acemlnb.com",
+      "category": "EmailAggressive",
+      "source": "disconnect",
+      "entity": "ActiveCampaign"
+    },
+    {
+      "domain": "acemlnc.com",
+      "category": "EmailAggressive",
+      "source": "disconnect",
+      "entity": "ActiveCampaign"
+    },
+    {
+      "domain": "acemlnd.com",
+      "category": "EmailAggressive",
+      "source": "disconnect",
+      "entity": "ActiveCampaign"
+    },
+    {
+      "domain": "acmbtrc.com",
+      "category": "Email",
+      "source": "disconnect",
+      "entity": "Acumbamail"
+    },
+    {
+      "domain": "acmtrk.com",
+      "category": "Email",
+      "source": "disconnect",
+      "entity": "Acumbamail"
+    },
+    {
+      "domain": "acsmedia.us",
+      "category": "EmailAggressive",
+      "source": "disconnect",
+      "entity": "JumpDemand"
+    },
+    {
+      "domain": "activedemand.com",
+      "category": "EmailAggressive",
+      "source": "disconnect",
+      "entity": "JumpDemand"
+    },
+    {
+      "domain": "activehosted.com",
+      "category": "EmailAggressive",
+      "source": "disconnect",
+      "entity": "ActiveCampaign"
+    },
+    {
+      "domain": "adbrain.com",
+      "category": "FingerprintingGeneral",
+      "source": "disconnect",
+      "entity": "The Trade Desk"
+    },
+    {
+      "domain": "adbrn.com",
+      "category": "FingerprintingGeneral",
+      "source": "disconnect",
+      "entity": "The Trade Desk"
+    },
+    {
+      "domain": "addthis.com",
+      "category": "Social",
+      "source": "disconnect",
+      "entity": "Oracle"
+    },
+    {
+      "domain": "addthiscdn.com",
+      "category": "Social",
+      "source": "disconnect",
+      "entity": "Oracle"
+    },
+    {
+      "domain": "addthisedge.com",
+      "category": "Social",
+      "source": "disconnect",
+      "entity": "Oracle"
+    },
+    {
+      "domain": "adform.net",
+      "category": "Email",
+      "source": "disconnect",
+      "entity": "Adform"
+    },
+    {
+      "domain": "adjust.com",
+      "category": "FingerprintingGeneral",
+      "source": "disconnect",
+      "entity": "AppLovin"
+    },
+    {
+      "domain": "adless.io",
+      "category": "Cryptomining",
+      "source": "disconnect",
+      "entity": "adless.io"
+    },
+    {
+      "domain": "admd.ink",
+      "category": "FingerprintingGeneral",
+      "source": "disconnect",
+      "entity": "Botman Networks"
+    },
+    {
+      "domain": "admeld.com",
+      "category": "FingerprintingGeneral",
+      "source": "disconnect",
+      "entity": "Google"
+    },
+    {
+      "domain": "admob.com",
+      "category": "FingerprintingGeneral",
+      "source": "disconnect",
+      "entity": "Google"
+    },
+    {
+      "domain": "adobe.com",
+      "category": "Content",
+      "source": "disconnect",
+      "entity": "Adobe"
+    },
+    {
+      "domain": "adroll.com",
+      "category": "Email",
+      "source": "disconnect",
+      "entity": "NextRoll"
+    },
+    {
+      "domain": "adxyield.com",
+      "category": "Anti-fraud",
+      "source": "disconnect",
+      "entity": "HumanSecurity"
+    },
+    {
+      "domain": "adzmath.com",
+      "category": "Anti-fraud",
+      "source": "disconnect",
+      "entity": "HumanSecurity"
+    },
+    {
+      "domain": "affirm.com",
+      "category": "Content",
+      "source": "disconnect",
+      "entity": "Affirm"
+    },
+    {
+      "domain": "afterpay.com",
+      "category": "Content",
+      "source": "disconnect",
+      "entity": "AfterPay"
+    },
+    {
+      "domain": "airnavradar.com",
+      "category": "Content",
+      "source": "disconnect",
+      "entity": "AirNav Radar"
+    },
+    {
+      "domain": "alb.reddit.com",
+      "category": "Social",
+      "source": "disconnect",
+      "entity": "reddit"
+    },
+    {
+      "domain": "aliyuncs.com",
+      "category": "Content",
+      "source": "disconnect",
+      "entity": "AlibabaGroup"
+    },
+    {
+      "domain": "amazon.com",
+      "category": "Content",
+      "source": "disconnect",
+      "entity": "Amazon"
+    },
+    {
+      "domain": "analytics.blue",
+      "category": "Cryptomining",
+      "source": "disconnect",
+      "entity": "888new"
+    },
+    {
+      "domain": "anyclip.com",
+      "category": "Content",
+      "source": "disconnect",
+      "entity": "AnyClip"
+    },
+    {
+      "domain": "aolcdn.com",
+      "category": "Content",
+      "source": "disconnect",
+      "entity": "Yahoo!"
+    },
+    {
+      "domain": "arkoselabs.com",
+      "category": "Anti-fraud",
+      "source": "disconnect",
+      "entity": "ArkoseLabs"
+    },
+    {
+      "domain": "atdmt.com",
+      "category": "Social",
+      "source": "disconnect",
+      "entity": "Meta"
+    },
+    {
+      "domain": "authedmine.com",
+      "category": "Cryptomining",
+      "source": "disconnect",
+      "entity": "AuthedMine"
+    },
+    {
+      "domain": "authedwebmine.cz",
+      "category": "Cryptomining",
+      "source": "disconnect",
+      "entity": "Webmine"
+    },
+    {
+      "domain": "avatars.yahoo.com",
+      "category": "Social",
+      "source": "disconnect",
+      "entity": "Yahoo!"
+    },
+    {
+      "domain": "axept.io",
+      "category": "ConsentManagers",
+      "source": "disconnect",
+      "entity": "Axeptio"
+    },
+    {
+      "domain": "bmst.pw",
+      "category": "Cryptomining",
+      "source": "disconnect",
+      "entity": "bmst.pw"
+    },
+    {
+      "domain": "browseranalytic.com",
+      "category": "Anti-fraud",
+      "source": "disconnect",
+      "entity": "BrowserAnalytic"
+    },
+    {
+      "domain": "buzz.yahoo.com",
+      "category": "Social",
+      "source": "disconnect",
+      "entity": "Yahoo!"
+    },
+    {
+      "domain": "calendar.yahoo.com",
+      "category": "Social",
+      "source": "disconnect",
+      "entity": "Yahoo!"
+    },
+    {
+      "domain": "captcha-delivery.com",
+      "category": "Anti-fraud",
+      "source": "disconnect",
+      "entity": "Datadome"
+    },
+    {
+      "domain": "cashbeet.com",
+      "category": "Cryptomining",
+      "source": "disconnect",
+      "entity": "CashBeet"
+    },
+    {
+      "domain": "causes.com",
+      "category": "Social",
+      "source": "disconnect",
+      "entity": "Causes"
+    },
+    {
+      "domain": "clean.gg",
+      "category": "Anti-fraud",
+      "source": "disconnect",
+      "entity": "HumanSecurity"
+    },
+    {
+      "domain": "cleantalk.org",
+      "category": "Anti-fraud",
+      "source": "disconnect",
+      "entity": "CleanTalk"
+    },
+    {
+      "domain": "client.protechts.net",
+      "category": "Anti-fraud",
+      "source": "disconnect",
+      "entity": "HumanSecurity"
+    },
+    {
+      "domain": "coinpot.co",
+      "category": "Cryptomining",
+      "source": "disconnect",
+      "entity": "CoinPot"
+    },
+    {
+      "domain": "cookiebot.com",
+      "category": "ConsentManagers",
+      "source": "disconnect",
+      "entity": "UserCentrics"
+    },
+    {
+      "domain": "cookiebot.eu",
+      "category": "ConsentManagers",
+      "source": "disconnect",
+      "entity": "UserCentrics"
+    },
+    {
+      "domain": "cookielaw.org",
+      "category": "ConsentManagers",
+      "source": "disconnect",
+      "entity": "OneTrust"
+    },
+    {
+      "domain": "cryptaloot.pro",
+      "category": "Cryptomining",
+      "source": "disconnect",
+      "entity": "CryptoLoot"
+    },
+    {
+      "domain": "crypto-loot.com",
+      "category": "Cryptomining",
+      "source": "disconnect",
+      "entity": "CryptoLoot"
+    },
+    {
+      "domain": "datadome.co",
+      "category": "Anti-fraud",
+      "source": "disconnect",
+      "entity": "Datadome"
+    },
+    {
+      "domain": "onetrust.com",
+      "category": "ConsentManagers",
+      "source": "disconnect",
+      "entity": "OneTrust"
+    },
+    {
+      "domain": "onetrust.io",
+      "category": "ConsentManagers",
+      "source": "disconnect",
+      "entity": "OneTrust"
+    },
+    {
+      "domain": "osano.com",
+      "category": "ConsentManagers",
+      "source": "disconnect",
+      "entity": "Osano"
+    },
+    {
+      "domain": "privacy-center.org",
+      "category": "ConsentManagers",
+      "source": "disconnect",
+      "entity": "Didomi"
+    },
+    {
+      "domain": "privacy-mgmt.com",
+      "category": "ConsentManagers",
+      "source": "disconnect",
+      "entity": "Didomi"
+    }
+  ]
+}

@@ -133,7 +133,22 @@
 - Registered by / date: <成员 / 日期>
 -->
 
-无。
+## Disconnect Tracking Protection
+
+- Source: https://github.com/disconnectme/disconnect-tracking-protection
+- Upstream dataset: `services.json`
+- Snapshot source: TrackerControl Android bundled asset
+- TrackerControl commit: `9504d41b9f6fa1509d784e5503c084d4b428307d`
+- Bundled asset blob SHA: `6fa1d74b3dd74a174fe1a90af5d2b59edd7865dc`
+- Data license: CC BY-NC-SA 4.0
+- Transform script: `scripts/generate-tracker-dataset.py`
+- Generated asset: `app/src/main/assets/tracker-domains-v0.1.json`
+- Fields retained: exact normalized domain, original Disconnect category, source marker, and the source entity when present
+- Attribution: Disconnect Tracking Protection data by Disconnect, Inc.; the bundled source license identifies Disconnect, Inc. and CC BY-NC-SA 4.0
+- Commercial-use restriction: NonCommercial; this data and its derived subset are not licensed for commercial use
+- ShareAlike: the generated reduced dataset remains under CC BY-NC-SA 4.0 and must preserve the same license terms on redistribution
+- Team-original boundary: third-party original is Disconnect tracker/domain classification data; team-original work is snapshot extraction, deterministic trimming, the later `TrackerClassifier`, event correlation, rules, explanations, and UI
+- Registered by / date: 成员 B / 2026-10-04
 
 ---
 
