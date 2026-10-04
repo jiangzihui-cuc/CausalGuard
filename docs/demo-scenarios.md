@@ -34,7 +34,7 @@ Demo App 只能证明“它自己在受控按钮或脚本触发下做了什么�
 | ID | 场景 | 模式 | 核心能力 | fixture | 预期风险 | 演示价值 |
 |---|---|---|---|---|---|---|
 | DEMO-A | 前台地图定位合理访问 | `SANDBOX` | Demo 真值 + 场景匹配 | `e-20260921-0001` | `low` / `necessary` | 建立低风险基线，说明不是所有敏感访问都异常 |
-| DEMO-B | 后台计算器读取剪贴板 | `HYBRID` | Demo 真值 + 关联网络上下文 | `e-20260921-0003`，关联 `e-20260921-0004` | `medium` / `high_risk` | 展示后台敏感行为与证据边界 |
+| DEMO-B | 后台剪贴板访问边界探测 | `SANDBOX` | 真实后台 probe + 平台限制结果 | 离线 synthetic fixture：`e-20260921-0003`、`e-20260921-0004` | 仅 fixture 评测 | 展示 Android 隐私保护与证据边界 |
 | DEMO-C | 计算器后台联网与敏感行为时间相关 | `REAL` | VPN 元数据 + 时间窗关联 | `e-20260921-0004`，关联 `e-20260921-0003` | `high` / `analytics` | 展示网络元数据、tracker 分类和“伴随但不等于外传” |
 | DEMO-D | 权限撤销后后台位置访问 | `HYBRID` | 系统权限事实 + Demo 真值 | `e-20260921-0008`，`e-20260921-0009` | `high` / `high_risk` | 展示先后因果链、权限复查和 unknown 降级口径 |
 
@@ -134,26 +134,28 @@ Demo Map 在前台导航时访问了位置。地图导航场景需要当前位�
 
 ### 6.2 Name
 
-后台计算器读取剪贴板
+后台剪贴板访问边界探测
 
 ### 6.3 Demo purpose
 
-展示后台敏感访问的风险识别，并说明 Demo 真值、网络伴随证据和不可观测边界的区别。
+展示普通后台 App 的剪贴板访问能力边界，并说明平台限制不是 Demo 功能失败。规则层的敏感访问和网络伴随风险另由独立 synthetic fixture 评测。
 
 ### 6.4 Mode
 
-`HYBRID`。剪贴板读取来自 Demo App 沙箱真值；同应用相近时间窗内的网络事件来自 VPN 元数据。
+`SANDBOX`。Demo Calculator 在退到后台后由 `onStop` 真实调用 `ClipboardManager.primaryClip`。目标设备上的平台拒绝、空结果或不可用结果均显示为 `Platform Restricted`；只有平台确实返回内容时才产生脱敏 Demo 事件。
 
 ### 6.5 User steps
 
-1. 复制一段测试验证码或演示文本。
-2. 打开 Demo Calculator 后切到后台。
-3. 触发“后台读取剪贴板”场景。
-4. 返回 CausalGuard 查看告警、证据卡片和解释文案。
+1. 复制一段无隐私测试文本。
+2. 打开 Demo Calculator，点击 `Arm DEMO-B`。
+3. 按 Home 将 App 切到后台；Demo App 在 `onStop` 中真实执行 clipboard probe。
+4. 返回 Demo Calculator，展示 `Platform Restricted` 及其探测结果。
 
 ### 6.6 Ground Truth
 
-Demo Calculator 在后台读取剪贴板，fixture 只记录长度和事件类型，不保存剪贴板原文。若同时展示 `e-20260921-0004`，只能说明同应用在 3 秒后出现后台网络连接，不能证明剪贴板内容被发送。
+目标设备 OPPO PJW110 / Android 16（API 36）的 Runtime Ground Truth 是：后台 probe 确实执行，系统拒绝普通后台应用访问，未获得剪贴板内容，也未生成 `clipboard` PrivacyEvent。应用不读取、保存或展示剪贴板原文。
+
+跨平台的成功分支仍只保存返回内容的长度，并生成 `foregroundState=background`、`source=demo`、`evidenceLevel=E4` 的 canonical Demo 事件。
 
 ### 6.7 Corresponding fixture
 
@@ -161,6 +163,8 @@ Demo Calculator 在后台读取剪贴板，fixture 只记录长度和事件类�
 |---|---|---|---|---|
 | `e-20260921-0003` | `clipboard` | `com.demo.calculator` | `demo` | `E4` |
 | `e-20260921-0004` | `network` | `com.demo.calculator` | `vpn` | `E2` |
+
+以上两条是离线 deterministic rule evaluation 的 synthetic fixture，不是 Android 16 真机 probe 产生的事件。它们用于独立验证 `R-002`、`R-007` 以及“时间相关不等于外传证明”。
 
 ### 6.8 Expected context
 
@@ -180,7 +184,7 @@ Demo Calculator 在后台读取剪贴板，fixture 只记录长度和事件类�
 
 ### 6.10 Expected RiskAssessment
 
-以 `e-20260921-0003` 作为主事件：
+仅在离线 synthetic fixture 评测中，以 `e-20260921-0003` 作为主事件：
 
 | 字段 | 预期值 |
 |---|---|
@@ -193,19 +197,18 @@ Demo Calculator 在后台读取剪贴板，fixture 只记录长度和事件类�
 
 | 链路节点 | 类型 | 内容 |
 |---|---|---|
-| 后台读取剪贴板 | `Sandbox Ground Truth` | Demo App 记录 `clipboard`，长度 8，不保存原文 |
-| 后台状态 | `Observed Fact` | `foregroundState=background` |
-| 相近网络事件 | `Observed Fact` | `e-20260921-0004` 是同包名 VPN 元数据 |
-| 场景不匹配 | `Derived Inference` | 计算器后台读取剪贴板通常不符合使用场景 |
-| 剪贴板内容是否外传 | `Unavailable / Unknown` | 未保存原文，也未读取网络请求体 |
+| 后台 clipboard probe | `Runtime Ground Truth` | `onStop` 中真实执行；目标设备被平台拒绝 |
+| 平台结果 | `Observed Fact` | `Platform Restricted`，未获得内容，不生成 PrivacyEvent |
+| 离线剪贴板 fixture | `Synthetic Evaluation Input` | 仅用于规则层回归，不是真机事件 |
+| 剪贴板内容是否外传 | `Unavailable / Unknown` | 不保存原文，也未读取网络请求体 |
 
 ### 6.12 User explanation
 
-Demo Calculator 在后台读取了剪贴板。计算器通常不需要在后台读取剪贴板，并且 3 秒后存在同应用网络事件；R-007 将最终风险提升为 high，但当前不能确认剪贴板内容被发送。
+真机演示展示的是平台能力边界：Demo Calculator 退到后台后真实尝试访问剪贴板，Android 16 系统直接拒绝。我们不会为了演示效果伪造成功读取，也不会生成虚假的隐私事件。离线 synthetic fixture 中的同应用网络时间相关只用于规则评测，不能证明内容被发送。
 
 ### 6.13 Recommended action
 
-`limit_background_network`：建议检查并限制该应用的后台网络访问，并结合后台活动继续复查。
+真机 `Platform Restricted` 不生成处置建议或风险事件；离线 fixture 命中规则时，`limit_background_network` 仍只是规则层建议，不表示已经执行。
 
 ### 6.14 Expected recheck
 
@@ -213,11 +216,11 @@ Demo Calculator 在后台读取了剪贴板。计算器通常不需要在后台�
 
 ### 6.15 Failure/degradation path
 
-如果 VPN 未授权或网络事件缺失，仍可展示后台剪贴板 Demo 真值和 `R-002` 风险；`R-007` 相关说明不得出现。如果剪贴板触发失败，不展示虚构事件。
+平台拒绝、`null` 或空结果是预期的 `Platform Restricted` 降级：显示 probe 已执行、访问被系统限制、未生成 PrivacyEvent、未读取或保存原文。其他非预期异常才显示 `Failure`。离线 fixture 与 Runtime probe 分开展示，不能用 fixture 代替真机事实。
 
 ### 6.16 Competition demo wording
 
-“这个样例展示了系统的核心边界：我们能证明 Demo Calculator 后台读取了剪贴板，也能看到相近网络元数据，但我们不会断言内容已经外传。”
+“这个场景专门展示系统能力边界：Demo Calculator 退到后台后真实尝试访问剪贴板，Android 16 系统直接拒绝。我们不伪造成功读取，也不生成虚假的隐私事件；规则层的高风险案例使用独立 synthetic fixture 做可复现评测。”
 
 ## 7. DEMO-C
 

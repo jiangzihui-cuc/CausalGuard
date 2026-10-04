@@ -40,7 +40,7 @@ fun DemoScreen(
             if (isMap) {
                 "DEMO-A：前台地图定位。只验证 Demo App 自己调用位置 API，不保存坐标。"
             } else {
-                "DEMO-B：后台剪贴板探测。必须先 Arm，再将 App 切到后台；平台拒绝时记录 Failure。"
+                "DEMO-B：后台剪贴板访问边界探测。Arm 后切到后台，Demo App 会在 onStop 中真实尝试访问；现代 Android 可能直接阻止该访问。"
             },
         )
 
@@ -72,6 +72,7 @@ private fun stateDescription(state: DemoRunState): String = when (state) {
     DemoRunState.Ready -> "Ready：可以开始受控演示。"
     is DemoRunState.Armed -> "Armed：等待进入后台。"
     is DemoRunState.Success -> "Success：已记录脱敏 Ground Truth。"
+    is DemoRunState.PlatformRestricted -> "Platform Restricted：探测已执行，但 Android 平台拒绝了访问。"
     is DemoRunState.Failure -> "Failure：未生成 PrivacyEvent。"
 }
 
@@ -81,6 +82,9 @@ private fun resultDescription(state: DemoRunState): String = when (state) {
     is DemoRunState.Success -> {
         val event: PrivacyEvent = state.record.event
         "${state.record.summary}\nEvent ID: ${event.eventId}\nType: ${event.eventType.wire}, source: ${event.source.wire}, demo: ${event.isDemo}"
+    }
+    is DemoRunState.PlatformRestricted -> {
+        "${state.record.reason}\nProbe 已执行；未生成 PrivacyEvent；未读取或保存剪贴板原文。\nScenario: ${state.record.scenarioId}"
     }
     is DemoRunState.Failure -> "${state.record.reason}\nScenario: ${state.record.scenarioId}"
 }

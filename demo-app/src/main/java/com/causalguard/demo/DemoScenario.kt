@@ -19,6 +19,8 @@ sealed interface DemoRunState {
 
     data class Success(val record: DemoSuccessRecord) : DemoRunState
 
+    data class PlatformRestricted(val record: DemoPlatformRestrictedRecord) : DemoRunState
+
     data class Failure(val record: DemoFailureRecord) : DemoRunState
 }
 
@@ -28,6 +30,13 @@ data class DemoSuccessRecord(
     val packageName: String,
     val summary: String,
     val event: PrivacyEvent,
+)
+
+data class DemoPlatformRestrictedRecord(
+    val scenarioId: String,
+    val timestamp: Long,
+    val packageName: String,
+    val reason: String,
 )
 
 data class DemoFailureRecord(
@@ -97,7 +106,11 @@ class DemoScenarioController(
         return try {
             val length = readClipboardLength()
             if (length == null || length <= 0) {
-                fail(DemoB, timestamp, "Android platform restricted background clipboard access.")
+                restrict(
+                    DemoB,
+                    timestamp,
+                    "Android 平台限制了普通后台应用的剪贴板访问；未生成 PrivacyEvent。",
+                )
             } else {
                 val event = privacyEvent(
                     scenarioId = DemoB,
@@ -108,8 +121,14 @@ class DemoScenarioController(
                 )
                 succeed(DemoB, timestamp, "Demo Calculator 后台剪贴板读取已记录；仅保存长度 $length。", event)
             }
+        } catch (_: SecurityException) {
+            restrict(
+                DemoB,
+                timestamp,
+                "Android 平台拒绝了后台剪贴板访问；未生成 PrivacyEvent。",
+            )
         } catch (throwable: Throwable) {
-            fail(DemoB, timestamp, "Android platform restricted background clipboard access.")
+            fail(DemoB, timestamp, "Clipboard probe failed: ${throwable.javaClass.simpleName}.")
         }
     }
 
@@ -152,6 +171,17 @@ class DemoScenarioController(
     ): DemoRunState {
         state = DemoRunState.Failure(
             DemoFailureRecord(scenarioId, timestamp, packageName, reason),
+        )
+        return state
+    }
+
+    private fun restrict(
+        scenarioId: String,
+        timestamp: Long,
+        reason: String,
+    ): DemoRunState {
+        state = DemoRunState.PlatformRestricted(
+            DemoPlatformRestrictedRecord(scenarioId, timestamp, packageName, reason),
         )
         return state
     }

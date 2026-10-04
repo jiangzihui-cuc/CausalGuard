@@ -56,21 +56,71 @@ class DemoScenarioControllerTest {
     fun clipboardProbeCannotSucceedWhileForeground() {
         val controller = controller("com.demo.calculator")
         controller.armClipboard()
+        var clipboardCalled = false
 
-        val state = controller.probeClipboard(true) { 8 }
+        val state = controller.probeClipboard(true) {
+            clipboardCalled = true
+            8
+        }
 
         assertTrue(state is DemoRunState.Failure)
+        assertFalse(clipboardCalled)
     }
 
     @Test
-    fun deniedBackgroundClipboardProducesFailureWithoutEvent() {
+    fun nullBackgroundClipboardProducesPlatformRestrictedWithoutEvent() {
         val controller = controller("com.demo.calculator")
         controller.armClipboard()
 
         val state = controller.probeClipboard(false) { null }
 
+        val restricted = state as DemoRunState.PlatformRestricted
+        assertEquals(DemoB, restricted.record.scenarioId)
+        assertEquals("com.demo.calculator", restricted.record.packageName)
+        assertTrue(restricted.record.reason.contains("未生成 PrivacyEvent"))
+    }
+
+    @Test
+    fun emptyBackgroundClipboardProducesPlatformRestricted() {
+        val controller = controller("com.demo.calculator")
+        controller.armClipboard()
+
+        assertTrue(controller.probeClipboard(false) { 0 } is DemoRunState.PlatformRestricted)
+    }
+
+    @Test
+    fun securityExceptionFromBackgroundClipboardIsPlatformRestricted() {
+        val controller = controller("com.demo.calculator")
+        controller.armClipboard()
+
+        val state = controller.probeClipboard(false) { throw SecurityException("not in focus") }
+
+        assertTrue(state is DemoRunState.PlatformRestricted)
+    }
+
+    @Test
+    fun unexpectedClipboardExceptionRemainsFailure() {
+        val controller = controller("com.demo.calculator")
+        controller.armClipboard()
+
+        val state = controller.probeClipboard(false) { throw IllegalStateException("broken probe") }
+
         val failure = state as DemoRunState.Failure
-        assertTrue(failure.record.reason.contains("restricted"))
+        assertTrue(failure.record.reason.contains("IllegalStateException"))
+    }
+
+    @Test
+    fun unarmedClipboardProbeFailsWithoutCallingClipboard() {
+        val controller = controller("com.demo.calculator")
+        var clipboardCalled = false
+
+        val state = controller.probeClipboard(false) {
+            clipboardCalled = true
+            8
+        }
+
+        assertTrue(state is DemoRunState.Failure)
+        assertFalse(clipboardCalled)
     }
 
     @Test
@@ -88,6 +138,28 @@ class DemoScenarioControllerTest {
         assertTrue(success.record.event.isDemo)
         assertTrue(success.record.event.evidenceSummary.orEmpty().contains("长度 8"))
         assertFalse(success.record.event.evidenceSummary.orEmpty().contains("secret"))
+    }
+
+    @Test
+    fun platformRestrictedResetsToReady() {
+        val controller = controller("com.demo.calculator")
+        controller.armClipboard()
+        controller.probeClipboard(false) { null }
+
+        controller.reset()
+
+        assertEquals(DemoRunState.Ready, controller.state)
+    }
+
+    @Test
+    fun successResetsToReady() {
+        val controller = controller("com.demo.calculator")
+        controller.armClipboard()
+        controller.probeClipboard(false) { 8 }
+
+        controller.reset()
+
+        assertEquals(DemoRunState.Ready, controller.state)
     }
 
     private fun controller(packageName: String): DemoScenarioController =
