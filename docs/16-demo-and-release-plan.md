@@ -30,9 +30,9 @@
 
 步骤：
 
-1. Android 16 上运行 DEMO-B，展示后台剪贴板 probe 的 Platform Restricted 边界；
-2. Demo Calculator 进入后台执行 DEMO-C 最小 TCP probe；由 CausalGuard VPN 链路独立报告是否观察到元数据；
-3. Demo Weather 记录授权基线、用户撤权并执行 DEMO-D revoked-location probe；
+1. DEMO-B：Android 16 后台剪贴板 probe，展示 `Platform Restricted`；
+2. DEMO-C：Demo Calculator 在后台执行最小网络 connection attempt，由 CausalGuard VPN 链路独立报告 Observed Fact；
+3. DEMO-D：Demo Weather 记录授权基线、用户撤权并执行 revoked-location probe，展示 PJW110 / Android 16 上的实际平台限制/失败结果；
 4. 哨兵显示时间、App、行为、前后台状态和证据来源；
 5. 高风险敏感访问与网络时间相关使用 deterministic synthetic fixture 展示，不把 synthetic 事件写成 Android 16 Runtime 事实；
 6. AI 将结构化证据解释为普通用户能理解的一段话，不新增事实；
@@ -41,6 +41,8 @@
 9. 查看事件证据卡片与（P1）每日摘要/PDF 报告。
 
 Runtime DEMO-C/D 不伪造 `PrivacyEvent`；真实 VPN/system API 事件仍由主 App 的观测链路产生。Synthetic evaluation fixture 与 Runtime Ground Truth 分开展示。
+
+最终验收口径：DEMO-C 的真机事实是 VPN 观察到 `com.demo.calculator → example.com:443` 的 TCP connection attempt，即使应用层最终为 `ConnectException`；这不表示 `Socket.connect` 成功，也不表示 tracker 命中或敏感数据外传。DEMO-D 的真机事实是撤权后 probe 得到 `Failure(IllegalStateException)`，不包装成成功读取位置。高风险规则故事使用独立、可重复的 synthetic fixture。
 
 ### 3.1 B3-5 DEMO-B 边界演示
 

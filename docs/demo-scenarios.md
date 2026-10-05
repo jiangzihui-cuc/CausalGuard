@@ -249,11 +249,11 @@ Runtime Ground Truth 是 Demo Calculator 自己执行的后台 TCP probe；如�
 
 ### 7.6 Ground Truth
 
-Demo Calculator 在后台执行了一次到 `example.com:443` 的 TCP probe。Demo App 只记录 probe 成功或失败；若 VPN 观察到连接，协议、端口、UID、包名和 domainHint 由 CausalGuard 链路独立提供。Runtime C 不声称 tracker 命中、analytics、R-005、R-007 或 clipboard correlation。
+Runtime Ground Truth 是 Demo Calculator 在后台真实执行了一次到 `example.com:443` 的 TCP connection attempt。Observed Fact 是 CausalGuard VPN 观察到 `com.demo.calculator → example.com:443` 的 `TCP` 连接和 `domainHint=example.com`；Demo App 的 `Socket.connect` 最终返回 `ConnectException`。连接尝试被 VPN 观察到不等于应用层连接成功，更不等于 tracker 命中、analytics、隐私泄露或敏感数据外传。
 
-### 7.6.1 First device observed fact
+### 7.6.1 Final device observed fact
 
-在 PJW110 / Android 16（API 36）首轮真机验证中，后台 Socket probe 确实执行；CausalGuard VPN 观测到 `com.demo.calculator → example.com:443` 的 TCP 连接尝试。应用层最终为 `ConnectException`，ColorOS 后台日志显示 `App bg(IMMEDIATELY)` 导致连接被重置。连接尝试已被观测不等于 `connect` API 最终成功；本次无 payload，也不要求 tracker 命中。该结果是本设备本次运行的 Observed Fact，不推广为所有 ColorOS/Android 行为。
+在 PJW110 / Android 16（API 36）两轮真机验证中，后台 Socket probe 确实执行；CausalGuard VPN 观测到 `com.demo.calculator → example.com:443` 的 TCP 连接尝试和 `domainHint=example.com`。应用层最终为 `ConnectException`，ColorOS 后台限制导致 socket 被关闭。连接尝试已被观测不等于 `Socket.connect` 最终成功；本次无 payload，也不要求 tracker 命中。该结果是本设备本次运行的 Observed Fact，不推广为所有 ColorOS/Android 行为。
 
 ### 7.7 Synthetic evaluation input（不是 Runtime 输出）
 
@@ -262,7 +262,7 @@ Demo Calculator 在后台执行了一次到 `example.com:443` 的 TCP probe。De
 | `e-20260921-0004` | `network` | `com.demo.calculator` | `vpn` | `E2` |
 | `e-20260921-0003` | `clipboard` | `com.demo.calculator` | `demo` | `E4` |
 
-以上仅用于规则层 deterministic evaluation，不能被写成 Runtime DEMO-C 已产生的事件，也不能替代真实 VPN 观察结果。
+`e-20260921-0003`/`e-20260921-0004` 仅用于规则层 deterministic evaluation，具体服务于 `R-003`、`R-005`、`R-007`；它们不是 `example.com` 真机事件，不能被写成 Runtime DEMO-C 已产生的事件，也不能替代真实 VPN 观察结果。
 
 ### 7.8 Synthetic expected context（仅离线评测）
 
@@ -335,7 +335,7 @@ Runtime DEMO-C 不生成风险处置建议。离线 synthetic fixture 的规则�
 
 ### 8.3 Demo purpose
 
-展示权限基线、用户撤权和受控 location API probe 的真实平台结果；权限被拒绝是有效的 Platform Restricted 结果，不伪造权限绕过。
+展示权限基线、用户撤权和受控 location API probe 的真实平台结果；平台限制或异常都按实际证据表达，不伪造权限绕过或成功定位。
 
 ### 8.4 Mode
 
@@ -351,7 +351,22 @@ Runtime DEMO-D 是明确状态机：`Ready → GrantedBaselineRecorded → Revok
 
 ### 8.6 Ground Truth
 
-Runtime 只记录真实权限检查、撤权确认和 location API probe 状态。若 `SecurityException`、当前权限 denied 或平台明确拒绝，结果为 `PlatformRestricted`；若 API 请求未立即被拒绝但没有可靠位置回调，只记录 `RequestAccepted` 语义，不能声称获得了位置数据。
+PJW110 / Android 16（API 36）第二轮真机的 Runtime Ground Truth 为：
+
+1. 用户授予 location permission。
+2. Demo Weather 真实记录 `GrantedBaselineRecorded`。
+3. 打开系统 `ACTION_APPLICATION_DETAILS_SETTINGS`。
+4. ColorOS 销毁 `DemoActivity`。
+5. 用户在系统设置撤销 location permission。
+6. 返回 App 后，`SharedPreferences` 恢复“曾经 granted”的 baseline 历史事实。
+7. App 通过 `checkSelfPermission()` 实时确认当前 permission 已 revoked。
+8. 状态进入 `RevokedConfirmed`。
+9. 用户 Arm DEMO-D。
+10. 用户按 Home，Activity 进入后台。
+11. revoked-location probe 执行。
+12. 真机最终结果为 `Failure(IllegalStateException)`：撤权后 `LocationManager.getProviders(true)` 返回空，随后当前实现的 no-provider 分支触发 `error("No enabled location provider")`。
+
+本次实际结果不是 `PlatformRestricted`，因为没有走 `SecurityException` 分支；也不是成功读取位置、权限绕过或获得坐标。Runtime 不生成 `PrivacyEvent`，不保存或展示 latitude、longitude、accuracy 或 trajectory。
 
 ### 8.6.1 Activity recreation boundary
 
@@ -366,6 +381,8 @@ DEMO-D 仅持久化“曾经记录过 granted baseline”这一最小事实及�
 | `e-20260921-0006` | `network` | `unknown` | `vpn` | `E5` |
 
 这些事件继续用于规则评测；Runtime DEMO-D 不构造 `source=system_api` 的 permission event，也不构造成功 location event。
+
+`e-20260921-0008`/`e-20260921-0009` 继续作为 synthetic deterministic evaluation input，用于 `R-002`、`R-009`；synthetic 的“permission revoked → location event”不是 Android 16 真机事实。真实 DEMO-D 展示的是平台能力边界。
 
 ### 8.8 Expected context
 
@@ -403,14 +420,14 @@ unknown 降级样例 `e-20260921-0006` 的预期为 `riskLevel=low`、`confidenc
 | 链路节点 | 类型 | 内容 |
 |---|---|---|
 | 权限基线与撤销确认 | `Runtime Ground Truth` | Demo Weather 真实检查 granted → revoked |
-| 撤权后 location probe | `Platform Boundary` | API 被拒绝、请求接受或发生回调，均不保存位置内容 |
+| 撤权后 location probe | `Platform Boundary` | PJW110 实际为 `Failure(IllegalStateException)`；不保存位置内容 |
 | synthetic 权限/位置事件 | `Synthetic Evaluation Input` | `e-20260921-0008`/`0009` 仅用于规则回归 |
 | 权限绕过与数据外传 | `Unavailable / Unknown` | 不能声称真实系统权限被绕过，不能确认位置数据被发送 |
 | 无法归属网络 | `Unavailable / Unknown` | `e-20260921-0006` 保持 unknown，不推荐确定性处置 |
 
 ### 8.12 User explanation
 
-Demo Weather 先记录授权基线，再由用户撤销位置权限，随后真实尝试调用 location API。Android 拒绝访问时显示 Platform Restricted；即使请求未立即抛错，也不能据此声称获得了位置数据。Runtime 不生成 location PrivacyEvent。
+Demo Weather 先记录授权基线，再由用户撤销位置权限；ColorOS 销毁 Activity 后，App 恢复 baseline 并重新读取当前权限，随后真实调用 location API。PJW110 / Android 16 本次因 `getProviders(true)` 返回空而得到 `Failure(IllegalStateException)`，不是 `PlatformRestricted`，也不是成功定位。Runtime 不生成 location PrivacyEvent，不保存或展示坐标、accuracy 或轨迹。
 
 ### 8.13 Recommended action
 
@@ -422,11 +439,11 @@ Runtime DEMO-D 不生成处置建议。Synthetic fixture 的 `review_permission`
 
 ### 8.15 Failure/degradation path
 
-如果 Runtime 没有记录 granted baseline 或无法确认 revoked，不允许 Arm DEMO-D，也不执行后台 probe。若平台结果是 Failure，保留异常类型；若结果是 PlatformRestricted，不生成 PrivacyEvent。Synthetic fixture 缺少 `e-20260921-0008` 时不应用 `R-009`，其中 `packageName=unknown`、`uid=-1` 或 `evidenceLevel=E5` 继续走 unknown 降级。
+如果 Runtime 没有记录 granted baseline 或无法确认 revoked，不允许 Arm DEMO-D，也不执行后台 probe。PJW110 本次保留 `Failure(IllegalStateException)` 及其 no-enabled-provider 根因，不改写成 `PlatformRestricted`，也不生成 PrivacyEvent。后续可将 no-enabled-provider 单独映射为更细的 platform-unavailable presentation，但不影响 B4-5 验收。Synthetic fixture 缺少 `e-20260921-0008` 时不应用 `R-009`，其中 `packageName=unknown`、`uid=-1` 或 `evidenceLevel=E5` 继续走 unknown 降级。
 
 ### 8.16 Competition demo wording
 
-“Demo Weather 先记录已授权基线，再由用户撤销权限并真实调用 location API。平台拒绝时展示 Platform Restricted；我们不伪造成功定位，也不把 synthetic evaluation 事件写成 Android 16 Runtime 事实。”
+“Demo Weather 先记录已授权基线，再由用户撤销权限并真实调用 location API。PJW110 / Android 16 本次展示 `Failure(IllegalStateException)` 的平台边界；我们不伪造成功定位，也不把 synthetic evaluation 事件写成 Android 16 Runtime 事实。”
 
 ## 9. 评测与验收
 
