@@ -122,13 +122,15 @@
 | B4-2 | `TrackerClassifier` 和域名归一化 | 成员 B | 成员 A | 已完成 |
 | B4-3 | 无权限/无域名/无法归属/VPN 停止/真实沙箱标签 | 成员 B | - | 已完成 |
 | B4-4 | 使用 A 的真实 fixture 校准规则 | 成员 B | 成员 A | 未开始 |
-| B4-5 | Demo App 场景 C/D | 成员 B | - | 未开始 |
+| B4-5 | Demo App 场景 C/D | 成员 B | - | 已完成 |
 
 > B4-1 进展（成员 B，2026-10-04）：固定 TrackerControl `9504d41b` 中的 Disconnect bundled snapshot，生成 100 条 deterministic offline tracker/domain 数据，许可证与 provenance 已登记。
 
 > B4-2 进展（成员 B，2026-10-05）：完成离线 tracker asset loader、严格域名归一化和基于 DNS label boundary 的 exact/parent/longest-match 分类，未改 canonical contract 或风险规则。
 
 > B4-3 进展（成员 B，2026-10-05）：完成真实/演示/Fixture/未知来源标签与事件级观测降级；无域名、无法归属、Usage Access 未授权和监测暂停均保持诚实表达，未改变风险结论或采集生命周期。
+
+> B4-5 最终验收（成员 B，2026-10-05）：在 PJW110 / Android 16（API 36）完成两轮真机验证。DEMO-C 中 Demo Calculator 在后台执行最小 TCP probe，CausalGuard VPN 真实观察到 `com.demo.calculator → example.com:443`、`TCP`、`domainHint=example.com`；应用层最终为 `ConnectException`，ColorOS 后台限制导致 socket 被关闭。因此“VPN 已观察到连接尝试”和“`Socket.connect` 最终成功”是两个不同事实；本次不发送 payload，也不要求 tracker 命中。DEMO-D 中真实记录 granted baseline；往返 `ACTION_APPLICATION_DETAILS_SETTINGS` 时 ColorOS 销毁 Activity，baseline 通过最小 `SharedPreferences` session 恢复，当前 permission 仍由 `checkSelfPermission()` 实时读取并成功确认 revoked；`Armed → Home` 后真实执行 revoked-location probe，最终为 `Failure(IllegalStateException)`，原因是撤权后 `getProviders(true)` 返回空，现有 no-provider 分支触发 `error("No enabled location provider")`。这不是权限绕过，不生成 `PrivacyEvent`，不保存或展示坐标、accuracy 或轨迹；Reset 会清除 baseline session。B4-5 真机验收 PASS。
 
 阶段门：至少一种真实网络事件进入 Room；至少一个 App 获得使用上下文；无域名/UID 时诚实降级；真实 Provider 替换 Fake 后规则和 UI 无需重写。
 
