@@ -112,6 +112,9 @@
 | wgbridge-rs（TrackerControl 内） | 随底座 commit | GPL-3.0-only | WireGuard 桥接库 |
 | gotatun | 0.8.1 | MPL-2.0 | WireGuard 协议实现（Rust） |
 | tokio / base64 / hex / ipnetwork / getrandom / libc / log / jni / android_logger | 见 `wgbridge-rs/Cargo.lock` | MIT / Apache-2.0（各 crate 为准） | Rust 运行时依赖 |
+| Retrofit | 3.0.0 | Apache-2.0 | 在线 AI 增强网络层（可选，非 P0） |
+| Retrofit converter-kotlinx-serialization | 3.0.0 | Apache-2.0 | Retrofit + kotlinx.serialization 桥接 |
+| OkHttp | 4.12.0 | Apache-2.0 | Retrofit 底层 HTTP 客户端；安全配置（TLS/超时/无 Body 日志） |
 
 - TrackerControl 内部集成的 tracker/域名数据管线随底座引入，其数据来源与许可证以底座对应 commit 内的说明为准（另见 `docs/20-open-source-reuse-guide.md` 第 7 节）。
 - 数据依赖若要单独精简或替换，按 `docs/20` 第 7.3 节单独登记数据集。
