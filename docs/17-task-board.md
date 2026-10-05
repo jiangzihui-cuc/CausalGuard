@@ -160,7 +160,7 @@
 
 | 编号 | 任务 | 状态 |
 |---|---|---|
-| A5-1 | 实现真实 `MitigationExecutor` | 完成（底座补丁已实现并应用，待真机验证） |
+| A5-1 | 实现真实 `MitigationExecutor` | 完成（底座补丁已实现并应用，2026-10-05 真机验证通过） |
 | A5-2 | P0 只保证域名阻断，App 级阻断视稳定性进入 P1 | 完成 |
 | A5-3 | 系统设置跳转 | 完成 |
 | A5-4 | 处置记录和观察窗口持久化 | 完成 |
@@ -189,7 +189,7 @@
 > - **A5-5**：`RoomNetworkObservationRepository` 基于 `network_event` 按 App/域名/时间窗聚合连接数与阻断数。
 > - **A5-6**：`NetworkObservation.presence` 区分 `NO_REQUEST`/`ALL_BLOCKED`/`SOME_BLOCKED`/`ALLOWED`。
 >
-> 已接入 `AppContainer`/`AppDependencies`（`networkObservationRepository`、`mitigationExecutor`）。**底座侧接收器补丁已完成**：`third_party/patches/a5-1-domain-block-receiver.patch` 新增 `eu.faircode.netguard.CausalGuardDomainBlockReceiver`（跨进程 ordered broadcast 处理 `ACTION_BLOCK_DOMAIN`，写 `mapCausalGuardBlocked` 并 `RESULT_OK` 回执）+ `ServiceSinkhole.isDomainBlocked` 仅按 CausalGuard 下发域名做 DNS 层抑制 + `AndroidManifest.xml` 注册导出 receiver；已纳入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用）并登记 `THIRD_PARTY_NOTICES.md`。两个补丁均 `git apply --check` 通过并已应用到固定 commit `9504d41b` 的 submodule。**遗留（仅剩真机验证）**：需在 A 本机构建 fdroid debug 底座、侧载演示机后验证 `BLOCK_DOMAIN` 端到端回执与 DNS 层实际抑制；验证前真机阻断仍走 `UNAVAILABLE` 诚实降级。
+> 已接入 `AppContainer`/`AppDependencies`（`networkObservationRepository`、`mitigationExecutor`）。**底座侧接收器补丁已完成并真机验证（2026-10-05）**：`third_party/patches/a5-1-domain-block-receiver.patch` 新增 `eu.faircode.netguard.CausalGuardDomainBlockReceiver`（跨进程 ordered broadcast 处理 `ACTION_BLOCK_DOMAIN`，写 `mapCausalGuardBlocked` 并 `RESULT_OK` 回执）+ `ServiceSinkhole.isDomainBlocked` 仅按 CausalGuard 下发域名做 DNS 层抑制 + `AndroidManifest.xml` 注册导出 receiver；已纳入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用）并登记 `THIRD_PARTY_NOTICES.md`。两补丁 `git apply --check` 通过并应用到固定 commit `9504d41b` 的 submodule，构建 fdroid debug 底座并侧载 PJW110/Android 16 验证：`BLOCK_DOMAIN` 有效域名回执 `result=-1`（`RESULT_OK`，日志 `confirmed`）、缺域名回执 `result=0`（`RESULT_CANCELED`，日志 `missing domain, cancel`）；`:app` 单测 81 项通过。详见 `docs/spike-results.md` §3 A5-1。
 
 ## 阶段 6：AI 解释、评测与可用性（10/4-10/5）
 
