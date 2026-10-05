@@ -45,7 +45,8 @@ class UnavailableDomainBlockController : DomainBlockController {
  * 任何“假定成功”的处理——收到 `RESULT_OK` 才是 [DomainBlockOutcome.CONFIRMED]，
  * 超时或非 OK 全部降级为 [DomainBlockOutcome.UNAVAILABLE]。
  *
- * 底座侧接收器属 A5-1 的 GPL 补丁，尚未实现前真机将走超时降级（符合诚实原则）。
+ * 底座侧接收器属 A5-1 的 GPL 补丁（`third_party/patches/a5-1-domain-block-receiver.patch`），
+ * 未接线/未安装/超时时走降级为 [DomainBlockOutcome.UNAVAILABLE]（符合诚实原则）。
  */
 class TrackerControlDomainBlockController(
     context: Context,
