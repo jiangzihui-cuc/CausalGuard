@@ -18,6 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.analysis.EventAnalysisResult
+import com.causalguard.analysis.ObservationStatusResolver
+import com.causalguard.ui.attributionDisplayLabel
+import com.causalguard.ui.domainDisplayLabel
 import com.causalguard.ui.provenanceLabel
 import com.causalguard.ui.timeline.FactLine
 import com.causalguard.ui.timeline.formatTimestamp
@@ -72,17 +75,21 @@ private fun EventFacts(analysis: EventAnalysisResult) {
     FactLine("Confidence", event.confidence.wire)
 
     event.network?.let { network ->
+        val observationStatus = ObservationStatusResolver.forEvent(event)
         Spacer(modifier = Modifier.height(12.dp))
         Text("Network", style = MaterialTheme.typography.titleMedium)
         FactLine("Protocol", network.protocol.wire)
         FactLine("Remote IP", network.remoteIp)
         FactLine("Remote port", network.remotePort?.toString())
-        FactLine("Domain hint", network.domainHint)
+        FactLine("Domain hint", event.domainDisplayLabel())
         FactLine("UID", network.uid.toString())
-        FactLine("Package", network.packageName)
+        FactLine("Package", event.attributionDisplayLabel())
         FactLine("Bytes in", network.bytesIn.toString())
         FactLine("Bytes out", network.bytesOut.toString())
         FactLine("Blocked", network.blocked.toString())
+        observationStatus.issues.forEach { issue ->
+            Text(issue.label, style = MaterialTheme.typography.bodyMedium)
+        }
     }
 
     event.usage?.let { usage ->
