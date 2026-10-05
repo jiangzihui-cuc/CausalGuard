@@ -30,15 +30,17 @@
 
 步骤：
 
-1. 用户复制一段测试验证码（演示数据）；
-2. 计算器 Demo App 进入后台并触发后台读取剪贴板/位置 + 网络请求的受控事件；
-3. 哨兵弹出告警，显示时间、App、行为、前后台状态；
-4. 系统判断与计算器场景不匹配，显示风险分、置信度、证据来源；
-5. 展开隐私因果链：后台状态 → 读取剪贴板/位置 → 网络请求 → 可能影响 → 建议；
+1. Android 16 上运行 DEMO-B，展示后台剪贴板 probe 的 Platform Restricted 边界；
+2. Demo Calculator 进入后台执行 DEMO-C 最小 TCP probe；由 CausalGuard VPN 链路独立报告是否观察到元数据；
+3. Demo Weather 记录授权基线、用户撤权并执行 DEMO-D revoked-location probe；
+4. 哨兵显示时间、App、行为、前后台状态和证据来源；
+5. 高风险敏感访问与网络时间相关使用 deterministic synthetic fixture 展示，不把 synthetic 事件写成 Android 16 Runtime 事实；
 6. AI 将结构化证据解释为普通用户能理解的一段话，不新增事实；
 7. 用户执行建议：阻断域名/App 或跳转系统设置限制后台活动；
 8. 系统进入复查模式，展示处置前后行为数量变化；
 9. 查看事件证据卡片与（P1）每日摘要/PDF 报告。
+
+Runtime DEMO-C/D 不伪造 `PrivacyEvent`；真实 VPN/system API 事件仍由主 App 的观测链路产生。Synthetic evaluation fixture 与 Runtime Ground Truth 分开展示。
 
 ### 3.1 B3-5 DEMO-B 边界演示
 

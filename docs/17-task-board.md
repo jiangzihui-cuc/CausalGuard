@@ -122,13 +122,15 @@
 | B4-2 | `TrackerClassifier` 和域名归一化 | 成员 B | 成员 A | 已完成 |
 | B4-3 | 无权限/无域名/无法归属/VPN 停止/真实沙箱标签 | 成员 B | - | 已完成 |
 | B4-4 | 使用 A 的真实 fixture 校准规则 | 成员 B | 成员 A | 未开始 |
-| B4-5 | Demo App 场景 C/D | 成员 B | - | 未开始 |
+| B4-5 | Demo App 场景 C/D | 成员 B | - | 待验证 |
 
 > B4-1 进展（成员 B，2026-10-04）：固定 TrackerControl `9504d41b` 中的 Disconnect bundled snapshot，生成 100 条 deterministic offline tracker/domain 数据，许可证与 provenance 已登记。
 
 > B4-2 进展（成员 B，2026-10-05）：完成离线 tracker asset loader、严格域名归一化和基于 DNS label boundary 的 exact/parent/longest-match 分类，未改 canonical contract 或风险规则。
 
 > B4-3 进展（成员 B，2026-10-05）：完成真实/演示/Fixture/未知来源标签与事件级观测降级；无域名、无法归属、Usage Access 未授权和监测暂停均保持诚实表达，未改变风险结论或采集生命周期。
+
+> B4-5 进展（成员 B，2026-10-05）：完成 Demo Calculator DEMO-C 后台最小 TCP probe、Demo Weather DEMO-D 撤权后位置访问边界探测、Reset、weather flavor 与 synthetic/runtime 语义拆分；待真机验证。
 
 阶段门：至少一种真实网络事件进入 Room；至少一个 App 获得使用上下文；无域名/UID 时诚实降级；真实 Provider 替换 Fake 后规则和 UI 无需重写。
 
