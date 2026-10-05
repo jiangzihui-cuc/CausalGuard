@@ -75,7 +75,7 @@ class TrackerControlDomainBlockController(
                 try {
                     appContext.sendOrderedBroadcast(
                         intent,
-                        null,
+                        TrackerControlBroadcast.BLOCK_DOMAIN_PERMISSION,
                         resultReceiver,
                         null,
                         Activity.RESULT_CANCELED,

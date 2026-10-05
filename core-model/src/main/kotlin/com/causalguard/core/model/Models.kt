@@ -158,6 +158,8 @@ data class MitigationRecord(
     val executedAt: Long = 0L,
     val ruleVersion: String? = null,
     val preSnapshot: String? = null,
+    /** 执行结果状态（wire 值见 MitigationStatus）；`unknown` 表示尚未落执行结论。 */
+    val executionStatus: String = "unknown",
     val postResult: String = "unknown",
     val observationEnd: Long? = null,
     val reviewNotes: String? = null,

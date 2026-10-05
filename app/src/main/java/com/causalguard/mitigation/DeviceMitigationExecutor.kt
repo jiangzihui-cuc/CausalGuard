@@ -20,10 +20,12 @@ import com.causalguard.core.model.NetworkObservationRepository
  * - `BLOCK_APP`：P0 明确 `UNSUPPORTED`（待 P1）；
  * - `NONE`：无动作。
  *
- * 持久化（A5-4）：对 `BLOCK_DOMAIN`/`OPEN_SETTINGS` 记录 `MitigationRecord`，
- * 写入处置前窗口快照与 `observationEnd`（观察窗口结束），`postResult` 初始 `unknown`，
- * 由 B 的 `RecheckComparator` 复查后通过
- * [MitigationRepository.updateOutcome] 回填。`NONE`/`BLOCK_APP` 不落库。
+ * 持久化（A5-4，PR #18 review 修正）：**先执行动作、再落库**，并显式持久化
+ * [MitigationRecord.executionStatus]。`preSnapshot` 仍在动作前采集（处置前窗口快照），
+ * 但 `executionStatus` 记录真实结论——`EXECUTED`/`FAILED`/`UNAVAILABLE` 严格区分，
+ * 绝不把失败/不可用伪装成已执行。`UNSUPPORTED`/`NONE` 不落库（无动作发生）。
+ * `postResult` 初始 `unknown`，由 B 的 `RecheckComparator` 复查后通过
+ * [MitigationRepository.updateOutcome] 回填。
  *
  * 诚实原则：`UNAVAILABLE`/`UNSUPPORTED`/`FAILED` 一律如实上报，绝不改写为成功。
  */
@@ -56,11 +58,14 @@ class DeviceMitigationExecutor(
         val now = clock()
         val windowMs = request.observationWindowMs.coerceAtLeast(0L)
         val observationEnd = now + windowMs
-        val recordId = persist(request, now, target = request.target, snapshotDomain = null, observationEnd, windowMs)
+        // 处置前快照必须在动作前采集。
+        val preSnapshot = capturePreSnapshot(request, now, snapshotDomain = null, windowMs)
         return try {
             appSettingsLauncher.open(request.packageName)
+            val status = MitigationStatus.EXECUTED
+            val recordId = persist(request, now, target = request.target, preSnapshot, observationEnd, status)
             MitigationExecution(
-                status = MitigationStatus.EXECUTED,
+                status = status,
                 action = request.action,
                 packageName = request.packageName,
                 target = request.target,
@@ -69,8 +74,10 @@ class DeviceMitigationExecutor(
                 observationEnd = observationEnd,
             )
         } catch (throwable: Throwable) {
+            val status = MitigationStatus.FAILED
+            val recordId = persist(request, now, target = request.target, preSnapshot, observationEnd, status)
             MitigationExecution(
-                status = MitigationStatus.FAILED,
+                status = status,
                 action = request.action,
                 packageName = request.packageName,
                 target = request.target,
@@ -87,12 +94,14 @@ class DeviceMitigationExecutor(
         val now = clock()
         val windowMs = request.observationWindowMs.coerceAtLeast(0L)
         val observationEnd = now + windowMs
-        val recordId = persist(request, now, target = domain, snapshotDomain = domain, observationEnd, windowMs)
+        // 处置前快照必须在动作前采集。
+        val preSnapshot = capturePreSnapshot(request, now, snapshotDomain = domain, windowMs)
         val status = when (domainBlockController.blockDomain(request.packageName, domain)) {
             DomainBlockOutcome.CONFIRMED -> MitigationStatus.EXECUTED
             DomainBlockOutcome.FAILED -> MitigationStatus.FAILED
             DomainBlockOutcome.UNAVAILABLE -> MitigationStatus.UNAVAILABLE
         }
+        val recordId = persist(request, now, target = domain, preSnapshot, observationEnd, status)
         val message = when (status) {
             MitigationStatus.EXECUTED -> "底座已确认阻断域名 $domain"
             MitigationStatus.FAILED -> "域名阻断执行失败: $domain"
@@ -109,32 +118,40 @@ class DeviceMitigationExecutor(
         )
     }
 
-    private suspend fun persist(
+    private suspend fun capturePreSnapshot(
         request: MitigationRequest,
         now: Long,
-        target: String?,
         snapshotDomain: String?,
-        observationEnd: Long,
         windowMs: Long,
-    ): Long {
+    ): String {
         val pre = observationRepository.observeWindow(
             packageName = request.packageName,
             domain = snapshotDomain,
             start = now - windowMs,
             end = now,
         )
-        return mitigationRepository.record(
-            MitigationRecord(
-                packageName = request.packageName,
-                recommendationId = request.recommendationId,
-                action = request.action.wire,
-                target = target,
-                executedAt = now,
-                ruleVersion = request.ruleVersion,
-                preSnapshot = ContractJson.instance.encodeToString(NetworkObservation.serializer(), pre),
-                postResult = "unknown",
-                observationEnd = observationEnd,
-            ),
-        )
+        return ContractJson.instance.encodeToString(NetworkObservation.serializer(), pre)
     }
+
+    private suspend fun persist(
+        request: MitigationRequest,
+        now: Long,
+        target: String?,
+        preSnapshot: String,
+        observationEnd: Long,
+        status: MitigationStatus,
+    ): Long = mitigationRepository.record(
+        MitigationRecord(
+            packageName = request.packageName,
+            recommendationId = request.recommendationId,
+            action = request.action.wire,
+            target = target,
+            executedAt = now,
+            ruleVersion = request.ruleVersion,
+            preSnapshot = preSnapshot,
+            executionStatus = status.wire,
+            postResult = "unknown",
+            observationEnd = observationEnd,
+        ),
+    )
 }

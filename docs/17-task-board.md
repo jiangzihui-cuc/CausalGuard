@@ -160,12 +160,12 @@
 
 | 编号 | 任务 | 状态 |
 |---|---|---|
-| A5-1 | 实现真实 `MitigationExecutor` | 完成（底座补丁已实现并应用，2026-10-05 真机验证通过） |
-| A5-2 | P0 只保证域名阻断，App 级阻断视稳定性进入 P1 | 完成 |
-| A5-3 | 系统设置跳转 | 完成 |
-| A5-4 | 处置记录和观察窗口持久化 | 完成 |
-| A5-5 | 按 App/域名/时间窗提供前后聚合查询 | 完成 |
-| A5-6 | 区分“没有请求”和“有请求但已阻断” | 完成 |
+| A5-1 | 实现真实 `MitigationExecutor` | 已完成（底座补丁已实现并应用，2026-10-05 真机验证通过） |
+| A5-2 | P0 只保证域名阻断，App 级阻断视稳定性进入 P1 | 已完成 |
+| A5-3 | 系统设置跳转 | 已完成 |
+| A5-4 | 处置记录和观察窗口持久化 | 已完成 |
+| A5-5 | 按 App/域名/时间窗提供前后聚合查询 | 已完成 |
+| A5-6 | 区分“没有请求”和“有请求但已阻断” | 已完成 |
 
 ### 成员 B：原创分析层
 
@@ -189,7 +189,7 @@
 > - **A5-5**：`RoomNetworkObservationRepository` 基于 `network_event` 按 App/域名/时间窗聚合连接数与阻断数。
 > - **A5-6**：`NetworkObservation.presence` 区分 `NO_REQUEST`/`ALL_BLOCKED`/`SOME_BLOCKED`/`ALLOWED`。
 >
-> 已接入 `AppContainer`/`AppDependencies`（`networkObservationRepository`、`mitigationExecutor`）。**底座侧接收器补丁已完成并真机验证（2026-10-05）**：`third_party/patches/a5-1-domain-block-receiver.patch` 新增 `eu.faircode.netguard.CausalGuardDomainBlockReceiver`（跨进程 ordered broadcast 处理 `ACTION_BLOCK_DOMAIN`，写 `mapCausalGuardBlocked` 并 `RESULT_OK` 回执）+ `ServiceSinkhole.isDomainBlocked` 仅按 CausalGuard 下发域名做 DNS 层抑制 + `AndroidManifest.xml` 注册导出 receiver；已纳入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用）并登记 `THIRD_PARTY_NOTICES.md`。两补丁 `git apply --check` 通过并应用到固定 commit `9504d41b` 的 submodule，构建 fdroid debug 底座并侧载 PJW110/Android 16 验证：`BLOCK_DOMAIN` 有效域名回执 `result=-1`（`RESULT_OK`，日志 `confirmed`）、缺域名回执 `result=0`（`RESULT_CANCELED`，日志 `missing domain, cancel`）；`:app` 单测 81 项通过。详见 `docs/spike-results.md` §3 A5-1。
+> 已接入 `AppContainer`/`AppDependencies`（`networkObservationRepository`、`mitigationExecutor`）。**底座侧接收器补丁已完成并真机验证（2026-10-05）**：`third_party/patches/a5-1-domain-block-receiver.patch` 新增 `eu.faircode.netguard.CausalGuardDomainBlockReceiver`（跨进程 ordered broadcast 处理 `ACTION_BLOCK_DOMAIN`，写 `mapCausalGuardBlocked` 并 `RESULT_OK` 回执）+ `ServiceSinkhole.isDomainBlocked` 仅按 CausalGuard 下发域名做 DNS 层抑制 + `AndroidManifest.xml` 注册导出 receiver，并以 **signature 权限**（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）保护接收器、receiver 内再按调用方 UID 反查包名仅接受 `com.causalguard`，App 侧 manifest `uses-permission` + `sendOrderedBroadcast(..., permission, ...)` 双端受约束；已纳入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用）并登记 `THIRD_PARTY_NOTICES.md`。两补丁 `git apply --check` 通过并应用到固定 commit `9504d41b` 的 submodule。**持久化语义修正（A5-4）**：`MitigationRecord` 新增 `executionStatus`（executed/unavailable/unsupported/failed/unknown，DB 升 v3 `MIGRATION_2_3`），执行器先执行动作再落库，失败/不可用显式标为非 executed，绝不伪装成已执行。真机 PJW110/Android 16 验证：`BLOCK_DOMAIN` 有效域名回执 `result=-1`（`RESULT_OK`，日志 `confirmed`）、缺域名回执 `result=0`（`RESULT_CANCELED`，日志 `missing domain, cancel`）；`:app` 单测通过。详见 `docs/spike-results.md` §3 A5-1。
 
 ## 阶段 6：AI 解释、评测与可用性（10/4-10/5）
 

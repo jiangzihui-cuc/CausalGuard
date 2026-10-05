@@ -44,18 +44,18 @@ enum class MitigationAction(val wire: String) {
  *
  * `UNAVAILABLE`/`UNSUPPORTED`/`FAILED` 都是诚实降级，不得改写为成功。
  */
-enum class MitigationStatus {
+enum class MitigationStatus(val wire: String) {
     /** 动作已实际发起并确认：系统设置已打开 / 底座确认阻断。 */
-    EXECUTED,
+    EXECUTED("executed"),
 
     /** 依赖能力当前不可用（未装底座、未授权、无法确认），未执行。 */
-    UNAVAILABLE,
+    UNAVAILABLE("unavailable"),
 
     /** 契约不支持（如 P0 不做 App 级阻断、缺少可阻断目标）。 */
-    UNSUPPORTED,
+    UNSUPPORTED("unsupported"),
 
     /** 已尝试但执行失败。 */
-    FAILED,
+    FAILED("failed");
 }
 
 /** 一次处置请求（由 B 的 Recommendation 翻译而来）。 */

@@ -33,6 +33,15 @@ object TrackerControlBroadcast {
      */
     const val ACTION_BLOCK_DOMAIN = "com.causalguard.intent.BLOCK_DOMAIN"
 
+    /**
+     * A5-1 控制通道的 signature 权限（底座 manifest 定义，
+     * `net.kollnig.missioncontrol.fdroid.test.permission.CAUSALGUARD_BLOCK_DOMAIN`）。
+     * App 侧已在 manifest `uses-permission` 声明；发送 ordered broadcast 时须带该权限，
+     * 使系统仅投递给同签名底座，杜绝第三方伪造。
+     */
+    const val BLOCK_DOMAIN_PERMISSION =
+        "$TRACKERCONTROL_PACKAGE.permission.CAUSALGUARD_BLOCK_DOMAIN"
+
     const val EXTRA_TIME = "time"
     const val EXTRA_PROTOCOL = "protocol"
     const val EXTRA_SADDR = "saddr"

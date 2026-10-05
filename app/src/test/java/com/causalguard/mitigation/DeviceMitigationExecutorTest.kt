@@ -122,6 +122,7 @@ class DeviceMitigationExecutorTest {
         val record = requireNotNull(result.recordId).let { id -> mitigation.records.single { it.id == id } }
         assertEquals("block_domain", record.action)
         assertEquals("tracker.example.test", record.target)
+        assertEquals("executed", record.executionStatus)
         assertEquals("unknown", record.postResult)
         assertEquals(now, record.executedAt)
         assertEquals(now + windowMs, record.observationEnd)
@@ -148,13 +149,15 @@ class DeviceMitigationExecutorTest {
         assertEquals(MitigationStatus.UNAVAILABLE, result.status)
         assertNotNull(result.recordId)
         assertEquals(1, mitigation.records.size)
+        assertEquals("unavailable", mitigation.records.single().executionStatus)
         assertEquals("unknown", mitigation.records.single().postResult)
     }
 
     @Test
     fun failedDomainBlockMapsToFailed() = runTest {
+        val mitigation = FakeMitigationRepository()
         val domain = FakeDomainBlockController(DomainBlockOutcome.FAILED)
-        val result = executor(domain = domain).execute(
+        val result = executor(mitigation = mitigation, domain = domain).execute(
             MitigationRequest(
                 packageName = "com.demo.app",
                 action = MitigationAction.BLOCK_DOMAIN,
@@ -162,6 +165,8 @@ class DeviceMitigationExecutorTest {
             ),
         )
         assertEquals(MitigationStatus.FAILED, result.status)
+        assertEquals(1, mitigation.records.size)
+        assertEquals("failed", mitigation.records.single().executionStatus)
     }
 
     @Test
@@ -215,6 +220,7 @@ class DeviceMitigationExecutorTest {
         assertEquals(MitigationStatus.EXECUTED, result.status)
         assertEquals(listOf("com.demo.app"), launcher.opened)
         assertEquals("open_settings", mitigation.records.single().action)
+        assertEquals("executed", mitigation.records.single().executionStatus)
     }
 
     @Test
@@ -228,6 +234,7 @@ class DeviceMitigationExecutorTest {
 
         assertEquals(MitigationStatus.FAILED, result.status)
         assertEquals(1, mitigation.records.size)
+        assertEquals("failed", mitigation.records.single().executionStatus)
     }
 
     @Test

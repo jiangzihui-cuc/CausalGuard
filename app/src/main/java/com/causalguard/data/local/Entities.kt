@@ -174,6 +174,8 @@ data class MitigationRecordEntity(
     val executedAt: Long,
     val ruleVersion: String? = null,
     val preSnapshot: String? = null,
+    /** A5-4 修正：执行结果状态（executed/unavailable/unsupported/failed/unknown），不伪装已执行。 */
+    @ColumnInfo(defaultValue = "unknown") val executionStatus: String = "unknown",
     @ColumnInfo(defaultValue = "unknown") val postResult: String = "unknown",
     val observationEnd: Long? = null,
     val reviewNotes: String? = null,
