@@ -23,7 +23,7 @@ object Migrations {
      * v2 → v3：MitigationRecord 补 `executionStatus`，区分“已执行”与“失败/不可用”，
      * 避免把失败持久化成已执行（PR #18 review 修正）。
      */
-    private val MIGRATION_2_3 = object : Migration(2, 3) {
+    val MIGRATION_2_3 = object : Migration(2, 3) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE mitigation_record ADD COLUMN executionStatus TEXT NOT NULL DEFAULT 'unknown'")
         }

@@ -286,7 +286,7 @@
 - 实现（见 `third_party/patches/a5-1-domain-block-receiver.patch`，与 A4-3 一并由 `scripts/apply-trackercontrol-hook.sh` 应用）：
   - 底座新增 `eu.faircode.netguard.CausalGuardDomainBlockReceiver`（跨进程 ordered broadcast，处理 `com.causalguard.intent.BLOCK_DOMAIN`）；成功写 `ServiceSinkhole.mapCausalGuardBlocked` 后回 `Activity.RESULT_OK`，缺域名/写入失败保持默认 `RESULT_CANCELED`。
   - `ServiceSinkhole.isDomainBlocked` 仅对 `mapCausalGuardBlocked` 中的域名返回 `true`，native `is_domain_blocked` → Java `isDomainBlocked` 路径在 DNS 响应解析时抑制答案。
-  - `AndroidManifest.xml` 注册导出 receiver。
+  - `AndroidManifest.xml` 注册导出 receiver，并以 signature 权限（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）保护接收器作为控制通道的唯一安全边界；不做基于 `Binder.getCallingUid()` 的 sender 二次校验。
 - 操作流程：用 `gradle` 以固定 commit `9504d41b` 的 submodule + 两补丁构建 fdroid debug 底座并侧载；CausalGuard `:app` 构建 debug 侧载；`adb shell am broadcast -a com.causalguard.intent.BLOCK_DOMAIN --es domain example.com -p net.kollnig.missioncontrol.fdroid.test` 模拟 App 下发。
 - 结果：
 
@@ -297,9 +297,9 @@
 | 缺域名降级 | `Broadcast completed: result=0`（`RESULT_CANCELED`），日志 `CausalGuard block domain: missing domain, cancel` |
 | 底座版本 | `2026.08.05-fdroid-test`（commit `9504d41b` + A4-3/A5-1 补丁），`tun0` 正常 |
 | App 侧 | `com.causalguard` 0.1.0 侧载，`DomainBlockController` 契约（`ACTION_BLOCK_DOMAIN`/`EXTRA_DOMAIN="domain"`/`RESULT_OK`）与底座一致 |
-| 单测 | `:app:testDebugUnitTest` 81 项通过（含 `DeviceMitigationExecutorTest` 9 项、`RoomNetworkObservationRepositoryTest` 3 项） |
+| 单测 | `:app:testDebugUnitTest` 106 项通过（含 `DeviceMitigationExecutorTest` 9 项、`RoomNetworkObservationRepositoryTest` 3 项、`MigrationTest` 1 项：v2→v3 迁移保留 `mitigation_record` 且 `executionStatus` 默认 `unknown`） |
 
-- 结论：满足 A5-1 阶段门——`BLOCK_DOMAIN` 端到端回执语义在真机生效（`RESULT_OK`/`RESULT_CANCELED` 诚实回执），DNS 层抑制路径（`isDomainBlocked` → `mapCausalGuardBlocked`）已接线；未接线/未构建时 App 侧按 `UNAVAILABLE` 降级，绝不谎报。
+- 结论：满足 A5-1 阶段门——`BLOCK_DOMAIN` 端到端回执语义在真机生效（`RESULT_OK`/`RESULT_CANCELED` 诚实回执），DNS 层抑制路径（`isDomainBlocked` → `mapCausalGuardBlocked`）已接线；未接线/未构建时 App 侧按 `UNAVAILABLE` 降级，绝不谎报。控制通道安全边界以 signature 权限（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）为准，不做基于 `Binder.getCallingUid()` 的 sender 二次校验。
 - 遗留：真实 App 场景下「阻断后 DNS 不再解析」的用户可见效果（Chrome 等已缓存域名的重载）依赖浏览器自身 DNS 缓存策略，属预期；深度 Doze/后台限制下阻断集的进程存活见 A4-5 遗留。
 
 ---

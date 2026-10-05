@@ -6,7 +6,7 @@
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
 > 依据：[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)。阶段内任务按 A（平台/网络/系统/发布）与 B（产品/规则/证据/UI/评测）两条并行链拆分；每人每天最多保留“今日必须完成 1 项 + 完成后再做 1 项 + 阻塞替代 1 项”。
 >
-> **看板同步说明（回填，2026-10-03）**：按仓库实际状态校正阶段 0~3 的 B 侧条目——`B1-4`、`B1-6` 实际已完成；`B2-1`~`B2-5`、`T2-4`、`T2-5`、`B3-5`、`B3-6` 已有部分产出但未达验收，改为「进行中」；`B3-5` 代码位于未合并分支 `feature/b-t3-demo-app`（`fa6939e`）。A 侧阶段 0~3 无缺口。
+> **看板同步说明（回填）**：按仓库实际状态校正阶段 0~3 的 B 侧条目——`B1-4`、`B1-6` 实际已完成；`B2-1`~`B2-5`、`T2-4`、`T2-5` 已有部分产出但未达验收，改为「进行中」；`B3-1`~`B3-7` 已完成（`B3-6` 经 PR #19、`B3-5` 经 PR #20 均已合并入 `main`）。A 侧阶段 0~3 无缺口。
 
 ## 阶段 0：项目启动与范围冻结（9/20）
 
@@ -189,7 +189,7 @@
 > - **A5-5**：`RoomNetworkObservationRepository` 基于 `network_event` 按 App/域名/时间窗聚合连接数与阻断数。
 > - **A5-6**：`NetworkObservation.presence` 区分 `NO_REQUEST`/`ALL_BLOCKED`/`SOME_BLOCKED`/`ALLOWED`。
 >
-> 已接入 `AppContainer`/`AppDependencies`（`networkObservationRepository`、`mitigationExecutor`）。**底座侧接收器补丁已完成并真机验证（2026-10-05）**：`third_party/patches/a5-1-domain-block-receiver.patch` 新增 `eu.faircode.netguard.CausalGuardDomainBlockReceiver`（跨进程 ordered broadcast 处理 `ACTION_BLOCK_DOMAIN`，写 `mapCausalGuardBlocked` 并 `RESULT_OK` 回执）+ `ServiceSinkhole.isDomainBlocked` 仅按 CausalGuard 下发域名做 DNS 层抑制 + `AndroidManifest.xml` 注册导出 receiver，并以 **signature 权限**（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）保护接收器、receiver 内再按调用方 UID 反查包名仅接受 `com.causalguard`，App 侧 manifest `uses-permission` + `sendOrderedBroadcast(..., permission, ...)` 双端受约束；已纳入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用）并登记 `THIRD_PARTY_NOTICES.md`。两补丁 `git apply --check` 通过并应用到固定 commit `9504d41b` 的 submodule。**持久化语义修正（A5-4）**：`MitigationRecord` 新增 `executionStatus`（executed/unavailable/unsupported/failed/unknown，DB 升 v3 `MIGRATION_2_3`），执行器先执行动作再落库，失败/不可用显式标为非 executed，绝不伪装成已执行。真机 PJW110/Android 16 验证：`BLOCK_DOMAIN` 有效域名回执 `result=-1`（`RESULT_OK`，日志 `confirmed`）、缺域名回执 `result=0`（`RESULT_CANCELED`，日志 `missing domain, cancel`）；`:app` 单测通过。详见 `docs/spike-results.md` §3 A5-1。
+> 已接入 `AppContainer`/`AppDependencies`（`networkObservationRepository`、`mitigationExecutor`）。**底座侧接收器补丁已完成并真机验证（2026-10-05）**：`third_party/patches/a5-1-domain-block-receiver.patch` 新增 `eu.faircode.netguard.CausalGuardDomainBlockReceiver`（跨进程 ordered broadcast 处理 `ACTION_BLOCK_DOMAIN`，写 `mapCausalGuardBlocked` 并 `RESULT_OK` 回执）+ `ServiceSinkhole.isDomainBlocked` 仅按 CausalGuard 下发域名做 DNS 层抑制 + `AndroidManifest.xml` 注册导出 receiver，并以 **signature 权限**（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）保护接收器——这是控制通道的唯一安全边界（签名权限本身已足以约束投递方，不再用 `Binder.getCallingUid()` 做二次 sender 校验），App 侧 manifest `uses-permission` + `sendOrderedBroadcast(..., permission, ...)` 双端受约束；已纳入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用）并登记 `THIRD_PARTY_NOTICES.md`。两补丁 `git apply --check` 通过并应用到固定 commit `9504d41b` 的 submodule。**持久化语义修正（A5-4）**：`MitigationRecord` 新增 `executionStatus`（executed/unavailable/unsupported/failed/unknown，DB 升 v3 `MIGRATION_2_3`），执行器先执行动作再落库，失败/不可用显式标为非 executed，绝不伪装成已执行。真机 PJW110/Android 16 验证：`BLOCK_DOMAIN` 有效域名回执 `result=-1`（`RESULT_OK`，日志 `confirmed`）、缺域名回执 `result=0`（`RESULT_CANCELED`，日志 `missing domain, cancel`）；`:app` 单测通过。详见 `docs/spike-results.md` §3 A5-1。
 
 ## 阶段 6：AI 解释、评测与可用性（10/4-10/5）
 

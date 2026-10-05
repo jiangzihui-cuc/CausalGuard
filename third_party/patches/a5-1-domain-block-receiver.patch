@@ -38,10 +38,10 @@ index 57b779f..6693c41 100644
              android:authorities="${applicationId}.provider"
 diff --git a/app/src/main/java/eu/faircode/netguard/CausalGuardDomainBlockReceiver.java b/app/src/main/java/eu/faircode/netguard/CausalGuardDomainBlockReceiver.java
 new file mode 100644
-index 0000000..caeeab9
+index 0000000..a23a645
 --- /dev/null
 +++ b/app/src/main/java/eu/faircode/netguard/CausalGuardDomainBlockReceiver.java
-@@ -0,0 +1,110 @@
+@@ -0,0 +1,77 @@
 +/*
 + * CausalGuard team modification (A5-1), added on top of TrackerControl/NetGuard.
 + *
@@ -73,13 +73,14 @@ index 0000000..caeeab9
 + *
 + * 诚实回执语义：
 + * - 只有成功把非空域名写入阻断集后，才以 `Activity.RESULT_OK` 回复；
-+ * - 域名缺失/非法、写入失败、或调用方非 CausalGuard，一律保持默认 `Activity.RESULT_CANCELED`，
++ * - 域名缺失/非法、写入失败，一律保持默认 `Activity.RESULT_CANCELED`，
 + *   使 CausalGuard 业务侧据此诚实降级为 `UNAVAILABLE`，绝不谎报已阻断。
 + *
 + * 安全边界（A5-1 加固）：
 + * - manifest 侧以 signature 权限（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）
-+ *   保护本接收器，只有与底座同签名的 App 能投递；
-+ * - 此处再对调用方 UID 的包名做二次校验，仅接受 `com.causalguard`，双保险防伪造。
++ *   保护本接收器，只有与底座同签名的 App 能投递；这是控制通道的唯一安全边界。
++ * - 不做基于 `Binder.getCallingUid()` 的 sender 二次校验——广播接收器的调用 UID
++ *   并非可靠的最初 sender 身份来源，签名权限本身已足以约束投递方。
 + *
 + * 设计约束（与 A4-3 补丁一致）：
 + * - 不 import 任何 com.causalguard 类型，保持底座自成一体、可回滚；
@@ -93,18 +94,10 @@ index 0000000..caeeab9
 +    /** 阻断目标域名（`TrackerControlBroadcast.EXTRA_DOMAIN`）。 */
 +    public static final String EXTRA_DOMAIN = "domain";
 +
-+    /** 唯一合法调用方（CausalGuard App 的 applicationId）。 */
-+    public static final String CAUSALGUARD_PACKAGE = "com.causalguard";
-+
 +    private static final String TAG = "TrackerControl.VPN";
 +
 +    @Override
 +    public void onReceive(Context context, Intent intent) {
-+        if (!CAUSALGUARD_PACKAGE.equals(getSenderPackage(context))) {
-+            Log.w(TAG, "CausalGuard block domain: unauthorized sender, cancel");
-+            return;
-+        }
-+
 +        String domain = (intent == null ? null : intent.getStringExtra(EXTRA_DOMAIN));
 +        if (domain == null) {
 +            Log.w(TAG, "CausalGuard block domain: missing domain, cancel");
@@ -123,32 +116,6 @@ index 0000000..caeeab9
 +            setResultCode(Activity.RESULT_OK);
 +        } catch (Throwable ex) {
 +            Log.e(TAG, "CausalGuard block domain failed: " + ex);
-+        }
-+    }
-+
-+    /**
-+     * 用调用者 UID 反查包名，仅当包含 {@link #CAUSALGUARD_PACKAGE} 时接受。
-+     * 共享 UID 的多包情形也仅在包含 com.causalguard 时接受；拿不到包名则拒绝。
-+     */
-+    private String getSenderPackage(Context context) {
-+        try {
-+            android.content.pm.PackageManager pm = context.getPackageManager();
-+            int uid = android.os.Binder.getCallingUid();
-+            if (uid < 0) {
-+                return null;
-+            }
-+            String[] pkgs = pm.getPackagesForUid(uid);
-+            if (pkgs != null) {
-+                for (String p : pkgs) {
-+                    if (CAUSALGUARD_PACKAGE.equals(p)) {
-+                        return p;
-+                    }
-+                }
-+            }
-+            return null;
-+        } catch (Throwable ex) {
-+            Log.e(TAG, "CausalGuard block domain: sender check failed: " + ex);
-+            return null;
 +        }
 +    }
 +}

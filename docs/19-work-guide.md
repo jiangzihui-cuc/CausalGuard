@@ -56,7 +56,7 @@
 | A5-5 | `RoomNetworkObservationRepository` | `app/.../data/` | 按 App/域名/时间窗聚合 | 已完成 |
 | A5-6 | `NetworkObservation.presence` | `core-model`/`:app` | `NO_REQUEST`/`ALL_BLOCKED`/`SOME_BLOCKED`/`ALLOWED` | 已完成 |
 
-> A5 底座侧 `ACTION_BLOCK_DOMAIN` 接收器以 GPL 补丁交付：`third_party/patches/a5-1-domain-block-receiver.patch`（`CausalGuardDomainBlockReceiver` + `mapCausalGuardBlocked` + `isDomainBlocked` DNS 抑制 + manifest 注册），已并入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用/`--revert`）并登记 `THIRD_PARTY_NOTICES.md`。真机（PJW110/Android 16）验证：有效域名回执 `RESULT_OK`、缺域名回执 `RESULT_CANCELED`，`:app` 单测 81 项通过。详见 [spike-results](spike-results.md) §3 A5-1。
+> A5 底座侧 `ACTION_BLOCK_DOMAIN` 接收器以 GPL 补丁交付：`third_party/patches/a5-1-domain-block-receiver.patch`（`CausalGuardDomainBlockReceiver` + `mapCausalGuardBlocked` + `isDomainBlocked` DNS 抑制 + manifest 注册，并以 signature 权限 `permission.CAUSALGUARD_BLOCK_DOMAIN` 作为控制通道唯一安全边界，不做 `Binder.getCallingUid()` 二次 sender 校验），已并入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用/`--revert`）并登记 `THIRD_PARTY_NOTICES.md`。真机（PJW110/Android 16）验证：有效域名回执 `RESULT_OK`、缺域名回执 `RESULT_CANCELED`，`:app` 单测 106 项通过（含 v2→v3 `MIGRATION_2_3` 迁移回归测试）。详见 [spike-results](spike-results.md) §3 A5-1。
 >
 > **下一步（阶段 6，10/4-10/5）**：A6-1 Retrofit/OkHttp 安全配置、A6-2 密钥环境注入、A6-3 长时间 VPN/网络切换/服务回收真机稳定性、A6-4 修复 P0 缺陷（见 [17 任务看板](17-task-board.md) 阶段 6）。
 
