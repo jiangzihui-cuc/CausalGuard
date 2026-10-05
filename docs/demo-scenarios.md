@@ -251,6 +251,10 @@ Runtime Ground Truth 是 Demo Calculator 自己执行的后台 TCP probe；如�
 
 Demo Calculator 在后台执行了一次到 `example.com:443` 的 TCP probe。Demo App 只记录 probe 成功或失败；若 VPN 观察到连接，协议、端口、UID、包名和 domainHint 由 CausalGuard 链路独立提供。Runtime C 不声称 tracker 命中、analytics、R-005、R-007 或 clipboard correlation。
 
+### 7.6.1 First device observed fact
+
+在 PJW110 / Android 16（API 36）首轮真机验证中，后台 Socket probe 确实执行；CausalGuard VPN 观测到 `com.demo.calculator → example.com:443` 的 TCP 连接尝试。应用层最终为 `ConnectException`，ColorOS 后台日志显示 `App bg(IMMEDIATELY)` 导致连接被重置。连接尝试已被观测不等于 `connect` API 最终成功；本次无 payload，也不要求 tracker 命中。该结果是本设备本次运行的 Observed Fact，不推广为所有 ColorOS/Android 行为。
+
 ### 7.7 Synthetic evaluation input（不是 Runtime 输出）
 
 | eventId | eventType | packageName / appId | source | evidenceLevel |
@@ -348,6 +352,10 @@ Runtime DEMO-D 是明确状态机：`Ready → GrantedBaselineRecorded → Revok
 ### 8.6 Ground Truth
 
 Runtime 只记录真实权限检查、撤权确认和 location API probe 状态。若 `SecurityException`、当前权限 denied 或平台明确拒绝，结果为 `PlatformRestricted`；若 API 请求未立即被拒绝但没有可靠位置回调，只记录 `RequestAccepted` 语义，不能声称获得了位置数据。
+
+### 8.6.1 Activity recreation boundary
+
+DEMO-D 仅持久化“曾经记录过 granted baseline”这一最小事实及其记录时间；Activity 重建后仍须重新读取当前系统权限，再确认是否已撤权。Reset 会清除该 session，不能自动恢复 `RevokedConfirmed` 或 `Armed`。
 
 ### 8.7 Synthetic evaluation input（不是 Runtime 输出）
 

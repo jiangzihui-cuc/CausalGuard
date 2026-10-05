@@ -307,6 +307,39 @@ class DemoScenarioControllerTest {
     }
 
     @Test
+    fun restoredLocationBaselineReturnsGrantedBaselineRecorded() {
+        val controller = controller("com.demo.weather")
+
+        val state = controller.restoreLocationPermissionBaseline(1_789_920_000_123L)
+
+        assertEquals(
+            DemoRunState.GrantedBaselineRecorded(DemoD, 1_789_920_000_123L),
+            state,
+        )
+    }
+
+    @Test
+    fun restoredBaselineAndDeniedPermissionConfirmsRevoked() {
+        val controller = controller("com.demo.weather")
+        controller.restoreLocationPermissionBaseline(1_789_920_000_123L)
+
+        val state = controller.confirmLocationPermissionRevoked(false)
+
+        assertTrue(state is DemoRunState.RevokedConfirmed)
+    }
+
+    @Test
+    fun restoredBaselineAndGrantedPermissionCannotConfirmRevoked() {
+        val controller = controller("com.demo.weather")
+        controller.restoreLocationPermissionBaseline(1_789_920_000_123L)
+
+        val state = controller.confirmLocationPermissionRevoked(true)
+
+        assertFalse(state is DemoRunState.RevokedConfirmed)
+        assertTrue(state is DemoRunState.Failure)
+    }
+
+    @Test
     fun locationCannotBeConfirmedRevokedWhileStillGranted() {
         val controller = controller("com.demo.weather")
         controller.recordLocationPermissionBaseline(true)
@@ -385,6 +418,27 @@ class DemoScenarioControllerTest {
         controller.reset()
 
         assertEquals(DemoRunState.Ready, controller.state)
+    }
+
+    @Test
+    fun resetAfterRestoredBaselineReturnsReady() {
+        val controller = controller("com.demo.weather")
+        controller.restoreLocationPermissionBaseline(1_789_920_000_123L)
+
+        controller.reset()
+
+        assertEquals(DemoRunState.Ready, controller.state)
+    }
+
+    @Test
+    fun resetPreventsOldBaselineFromArmingDemoD() {
+        val controller = controller("com.demo.weather")
+        controller.restoreLocationPermissionBaseline(1_789_920_000_123L)
+        controller.reset()
+
+        val state = controller.armRevokedLocation()
+
+        assertTrue(state is DemoRunState.Failure)
     }
 
     private fun armedRevokedLocationController(): DemoScenarioController {

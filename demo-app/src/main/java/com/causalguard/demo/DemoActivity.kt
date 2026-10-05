@@ -23,15 +23,23 @@ import java.util.concurrent.Executors
 class DemoActivity : ComponentActivity() {
     private val packageNameForScenario: String
         get() = BuildConfig.APPLICATION_ID
+    private val isWeatherScenario: Boolean
+        get() = packageNameForScenario == "com.demo.weather"
 
     private lateinit var controller: DemoScenarioController
     private var demoState by mutableStateOf<DemoRunState>(DemoRunState.Ready)
     private var isResumed = false
     private val networkProbeExecutor = Executors.newSingleThreadExecutor()
+    private val demoDSessionStore by lazy { DemoDSessionStore(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         controller = DemoScenarioController(packageNameForScenario)
+        if (isWeatherScenario) {
+            demoDSessionStore.loadBaseline()?.let { baseline ->
+                demoState = controller.restoreLocationPermissionBaseline(baseline.recordedAt)
+            }
+        }
         setContent {
             DemoScreen(
                 flavor = BuildConfig.FLAVOR,
@@ -45,7 +53,7 @@ class DemoActivity : ComponentActivity() {
                     demoState = controller.armNetworkProbe()
                 },
                 onRecordLocationBaseline = {
-                    demoState = controller.recordLocationPermissionBaseline(hasLocationPermission())
+                    recordLocationPermissionBaseline()
                 },
                 onRequestLocationPermission = ::requestLocationPermission,
                 onOpenLocationSettings = ::openLocationSettings,
@@ -57,6 +65,9 @@ class DemoActivity : ComponentActivity() {
                 },
                 onReset = {
                     controller.reset()
+                    if (isWeatherScenario) {
+                        demoDSessionStore.clear()
+                    }
                     demoState = controller.state
                 },
             )
@@ -125,6 +136,14 @@ class DemoActivity : ComponentActivity() {
                 ),
                 LocationPermissionRequestCode,
             )
+        }
+    }
+
+    private fun recordLocationPermissionBaseline() {
+        val state = controller.recordLocationPermissionBaseline(hasLocationPermission())
+        demoState = state
+        if (state is DemoRunState.GrantedBaselineRecorded && isWeatherScenario) {
+            demoDSessionStore.saveBaseline(state.recordedAt)
         }
     }
 

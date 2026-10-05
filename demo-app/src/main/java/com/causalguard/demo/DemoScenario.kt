@@ -194,6 +194,12 @@ class DemoScenarioController(
         return state
     }
 
+    fun restoreLocationPermissionBaseline(recordedAt: Long): DemoRunState {
+        if (recordedAt <= 0L) return state
+        state = DemoRunState.GrantedBaselineRecorded(DemoD, recordedAt)
+        return state
+    }
+
     fun confirmLocationPermissionRevoked(permissionGranted: Boolean): DemoRunState {
         val timestamp = now()
         if (state !is DemoRunState.GrantedBaselineRecorded) {

@@ -130,7 +130,7 @@
 
 > B4-3 进展（成员 B，2026-10-05）：完成真实/演示/Fixture/未知来源标签与事件级观测降级；无域名、无法归属、Usage Access 未授权和监测暂停均保持诚实表达，未改变风险结论或采集生命周期。
 
-> B4-5 进展（成员 B，2026-10-05）：完成 Demo Calculator DEMO-C 后台最小 TCP probe、Demo Weather DEMO-D 撤权后位置访问边界探测、Reset、weather flavor 与 synthetic/runtime 语义拆分；待真机验证。
+> B4-5 进展（成员 B，2026-10-05）：完成 Demo Calculator DEMO-C 后台最小 TCP probe、Demo Weather DEMO-D 撤权后位置访问边界探测、Reset、weather flavor 与 synthetic/runtime 语义拆分；PJW110/Android 16 首轮真机发现系统设置往返时 Activity 被 ColorOS 销毁，已增加最小 baseline session 恢复，待复验。
 
 阶段门：至少一种真实网络事件进入 Room；至少一个 App 获得使用上下文；无域名/UID 时诚实降级；真实 Provider 替换 Fake 后规则和 UI 无需重写。
 
