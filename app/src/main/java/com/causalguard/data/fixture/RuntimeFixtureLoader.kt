@@ -12,9 +12,9 @@ import kotlinx.serialization.builtins.ListSerializer
 
 object RuntimeFixtureLoader {
     const val ASSET_NAME: String = "privacy-events-v0.1.json"
-    const val RULE_ASSET_NAME: String = "risk-rules-v0.1.json"
+    const val RULE_ASSET_NAME: String = "risk-rules-v0.2.json"
     const val RULE_INPUT_CONTEXT_ASSET_NAME: String = "rule-input-context-v0.1.json"
-    const val EXPLANATION_TEMPLATES_ASSET_NAME: String = "explanation-templates-v0.1.json"
+    const val EXPLANATION_TEMPLATES_ASSET_NAME: String = "explanation-templates-v0.2.json"
 
     fun loadPrivacyEvents(context: Context): List<PrivacyEvent> {
         val json = readAsset(context, ASSET_NAME)
@@ -25,7 +25,7 @@ object RuntimeFixtureLoader {
     }
 
     fun loadRules(context: Context): RuleAssetLoadResult =
-        RuleAssetLoader().loadFromString(readAsset(context, RULE_ASSET_NAME))
+        RuleAssetLoader("risk-rules-v0.2", "rules-v0.2").loadFromString(readAsset(context, RULE_ASSET_NAME))
 
     fun loadRuleInputContext(context: Context): RuleInputContextAsset =
         ContractJson.instance.decodeFromString(

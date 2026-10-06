@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "real-network-oracle-a4-v0.1",
+  "fixtureId": "real-network-events-a4-v0.1",
+  "oracleKind": "fact-layer-observation",
+  "trackerAsset": "app/src/main/assets/tracker-domains-v0.1.json",
+  "ruleInputConstruction": "RuleInput(event=event) only; no synthetic context",
+  "entries": [
+    { "eventId": "a4r-0001", "provenance": "live_observed", "domainStatus": "unavailable", "attributionStatus": "attributed", "blocked": false, "trackerClassification": "unavailable" },
+    { "eventId": "a4r-0002", "provenance": "live_observed", "domainStatus": "unavailable", "attributionStatus": "unavailable", "blocked": false, "trackerClassification": "unavailable" },
+    { "eventId": "a4r-0003", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0004", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0005", "provenance": "live_observed", "domainStatus": "unavailable", "attributionStatus": "unavailable", "blocked": false, "trackerClassification": "unavailable" },
+    { "eventId": "a4r-0006", "provenance": "live_observed", "domainStatus": "unavailable", "attributionStatus": "attributed", "blocked": false, "trackerClassification": "unavailable" },
+    { "eventId": "a4r-0007", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0008", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0009", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "unavailable", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0010", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "unavailable", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0011", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "unavailable", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0012", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0013", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0014", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0015", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": true, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0016", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": true, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0017", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": false, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0018", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": true, "trackerClassification": "unmatched" },
+    { "eventId": "a4r-0019", "provenance": "live_observed", "domainStatus": "unavailable", "attributionStatus": "unavailable", "blocked": true, "trackerClassification": "unavailable" },
+    { "eventId": "a4r-0020", "provenance": "live_observed", "domainStatus": "visible", "attributionStatus": "attributed", "blocked": true, "trackerClassification": "unmatched" }
+  ]
+}

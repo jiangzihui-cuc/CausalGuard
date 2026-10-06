@@ -22,9 +22,18 @@ class EventAnalysisServiceTest {
         val results = service.analyzeAll()
 
         assertEquals(10, results.size)
-        assertEquals("rules-v0.1", service.ruleVersion)
+        assertEquals("rules-v0.2", service.ruleVersion)
         assertEquals(10, results.map { it.event.eventId }.toSet().size)
         assertTrue(results.all { it.event.eventId.startsWith("e-") })
+    }
+
+    @Test
+    fun v01RuleAssetRemainsAvailableForHistoricalRegression() {
+        val rules = RuleAssetLoader().loadFromPath(
+            repoFile("docs/fixtures/risk-rules-v0.1.json").toPath(),
+        ) as RuleAssetLoadResult.Success
+
+        assertEquals("rules-v0.1", rules.schema.ruleVersion)
     }
 
     @Test
@@ -36,15 +45,15 @@ class EventAnalysisServiceTest {
     }
 
     private fun fixtureAnalysisService(): FixtureEventAnalysisService {
-        val rules = RuleAssetLoader().loadFromPath(
-            repoFile("docs/fixtures/risk-rules-v0.1.json").toPath(),
+        val rules = RuleAssetLoader("risk-rules-v0.2", "rules-v0.2").loadFromPath(
+            repoFile("docs/fixtures/risk-rules-v0.2.json").toPath(),
         ) as RuleAssetLoadResult.Success
         val context = ContractJson.instance.decodeFromString(
             RuleInputContextAsset.serializer(),
             repoFile("docs/fixtures/rule-input-context-v0.1.json").readText(),
         )
         val templates = ContractJson.instance.decodeFromString<ExplanationTemplateAsset>(
-            repoFile("docs/fixtures/explanation-templates-v0.1.json").readText(),
+            repoFile("docs/fixtures/explanation-templates-v0.2.json").readText(),
         )
         return FixtureEventAnalysisService(
             repository = FakePrivacyEventRepository(fixtureEvents()),
