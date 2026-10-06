@@ -10,6 +10,7 @@ import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RuleAssetLoaderTest {
@@ -61,6 +62,41 @@ class RuleAssetLoaderTest {
         assertEquals(listOf("R-006", "R-005"), unused.matchedRules)
         assertEquals(listOf("R-002", "R-009"), location.matchedRules)
     }
+    @Test
+    fun `loads v0_2 calibration asset and removes uid gate from R-008`() {
+        val result = assertIs<RuleAssetLoadResult.Success>(
+            RuleAssetLoader("risk-rules-v0.2", "rules-v0.2").loadFromPath(
+                Path.of("..", "docs", "fixtures", "risk-rules-v0.2.json")
+            )
+        )
+        assertEquals("risk-rules-v0.2", result.schema.name)
+        assertEquals("rules-v0.2", result.schema.ruleVersion)
+        assertEquals("rules-v0.1", loadFixture().schema.ruleVersion)
+        assertEquals(-1, loadFixture().rules.single { it.id == "R-008" }.condition.uid)
+        assertNull(result.rules.single { it.id == "R-008" }.condition.uid)
+
+        val evaluator = RuleEvaluator(result.rules)
+        val uidZero = FixtureEvents.unknownNetwork.copy(
+            network = FixtureEvents.unknownNetwork.network!!.copy(uid = 0)
+        )
+        val uidZeroResult = evaluator.evaluate(RuleInput(event = uidZero, ruleVersion = result.schema.ruleVersion))
+        assertTrue("R-008" in uidZeroResult.assessment.matchedRules)
+        assertEquals(RiskLevel.LOW, uidZeroResult.assessment.riskLevel)
+        assertEquals(RiskCategory.UNKNOWN, uidZeroResult.assessment.category)
+        assertEquals(ScenarioMatch.UNKNOWN, uidZeroResult.assessment.scenarioMatch)
+        assertEquals(Confidence.LOW, uidZeroResult.assessment.confidence)
+        assertEquals("none", uidZeroResult.recommendationDecision.action)
+        assertTrue(uidZeroResult.degradation.shouldShowUnknownDegradation)
+
+        val knownPackage = FixtureEvents.calculatorNetwork.copy(
+            network = FixtureEvents.calculatorNetwork.network!!.copy(uid = -1)
+        )
+        val knownPackageResult = evaluator.evaluate(
+            RuleInput(event = knownPackage, ruleVersion = result.schema.ruleVersion)
+        )
+        assertTrue("R-008" !in knownPackageResult.assessment.matchedRules)
+    }
+
     @Test
     fun missingPathReturnsReadFailure() {
         val missingFile = File.createTempFile("missing-risk-rules-", ".json")

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "0.1",
+  "fixtureId": "real-network-events-a4-v0.1",
+  "fixtureFile": "real-network-events-a4-v0.1.json",
+  "kind": "real-observed-input",
+  "purpose": "B4-4 rule calibration input. Real observed connection metadata from an A4-3 real-device run. NOT synthetic ground truth; NOT an oracle. Contains NO expected riskLevel / matchedRules / category verdicts.",
+  "source": "PJW110 real-device A4-3 run (re-run)",
+  "device": "PJW110",
+  "deviceModel": "OPPO PJW110 (OP5A2BL1)",
+  "android": "Android 16 / API 36",
+  "captureDate": "2026-10-05",
+  "originalEventCount": 3374,
+  "selectedEventCount": 20,
+  "originalCounts": {
+    "network_event": 3374,
+    "privacy_event": 3374,
+    "attributed_package_known": 2550,
+    "package_unknown": 824,
+    "uid_ge_0": 2610,
+    "uid_0_package_unknown": 60,
+    "uid_minus_1": 764,
+    "has_domainHint": 2231,
+    "distinct_domains": 258,
+    "distinct_packages": 16,
+    "blocked": 875
+  },
+  "selectionMethod": "Representative sample drawn from the real Room DB (causalguard.db) pulled from the device via run-as after the 2026-10-05 A4-3 re-run. Rows were selected by targeted SQL queries to cover, with real observed values: (a) attributed (uid>=0) with domainHint, (b) attributed without domainHint, (c) uid=-1/packageName=unknown with domainHint (TCP), (d) uid=-1/packageName=unknown without domainHint (ICMP + TCP), and (e) blocked=true (TCP tracker blocks from com.jingdong.app.mall / com.shark.jizhang / com.netease.cloudmusic, plus a UDP:53 DNS block). Selection collapses duplicate repeat connections (same tuple) to avoid over-weighting; package mix roughly follows the observed distribution (idlefish/weibo/pinduoduo/xhs/emmx/wechat/taobao dominant, plus unknown degradations).",
+  "redactedFields": {
+    "remoteIp": "Field redaction. Real observed IPs replaced by IANA documentation ranges preserving address family only: IPv4 -> 203.0.113.0/24, IPv6 -> 2001:db8::/32, with a deterministic per-address counter. These are NOT the real target IPs; only IPv4-vs-IPv6 family is faithful.",
+    "timestamp": "See timestampTransformation.",
+    "eventId": "Synthetic stable identifiers (a4r-XXXX) assigned in chronological order; the real Room eventIds (which embed raw ip:port) are not exported.",
+    "appName": "Omitted (null in source).",
+    "uid": "Kept as-is for attributed rows (real per-app Linux UIDs), 0 for the system DNS-block row, -1 for unattributed. uid is required for attribution calibration; it is not a device identifier.",
+    "excluded_entirely": [
+      "device identifiers (IMEI/ANDROID_ID/serial/phone number)",
+      "user accounts",
+      "request bodies / payloads",
+      "URL path & query strings",
+      "cookies / tokens / auth headers",
+      "real privacy content",
+      "raw logcat full logs"
+    ]
+  },
+  "timestampTransformation": {
+    "note": "Every selected row carries its real capture timestamp from the Room DB.",
+    "realEpochMsRange": "1791194582719 .. 1791194834588 (251869 ms span)",
+    "originalDbEpochMsRange": "1791194582719 .. 1791194862581 (279862 ms span, the full 3374-row A4-3 run)",
+    "transformation": "Uniform shift (de-identification of wall-clock): subtract the earliest selected timestamp 1791194582719 so the first event maps to 0. Real ordering and real inter-event intervals are preserved exactly (0 .. 251869 ms); the span is unchanged by the uniform shift.",
+    "orderingPreserved": true,
+    "intervalPreserved": true
+  },
+  "packageNamePolicy": "Public Android package names kept where the base attributed them (e.g. com.taobao.idlefish, com.sina.weibo, com.xunmeng.pinduoduo, com.xingin.xhs, com.microsoft.emmx, com.tencent.mm, com.taobao.taobao, com.jingdong.app.mall, com.shark.jizhang, com.netease.cloudmusic). Unattributed connections honestly kept as packageName=unknown with uid=-1. Attribution follows B4-3 semantics: packageName=unknown means not attributable to a specific App, regardless of uid; thus a4r-0019 (uid=0, a system DNS-block row) is NOT counted as attributed-to-App even though its uid >= 0.",
+  "domainHintPolicy": "Only domains actually observed in this capture are retained; nothing guessed. Empty domainHint means the connection had no DNS hint at capture time (including the blocked UDP:53 DNS row and the uid=-1 ICMP/TCP rows).",
+  "blockedPolicy": "blocked=true samples come from the real run with the base block list enabled: TCP tracker domains (pangolin/ctobsnssdk/baidustatic/umeng for com.shark.jizhang, api.m.jd.com for com.jingdong.app.mall, interface3.music.163.com for com.netease.cloudmusic) and a UDP:53 DNS block (unknown, no domainHint).",
+  "oracleDisclosure": "This fixture provides REAL OBSERVED INPUT only. It intentionally contains no expected riskLevel, no matchedRules, and no category verdicts. The oracle for B4-4 must be authored independently by member B; the current rule-engine output must NOT be treated as ground truth.",
+  "provenance": {
+    "evidenceSource": "Room DB (causalguard.db + wal + shm) pulled 2026-10-05 from device via `adb shell run-as com.causalguard cat databases/causalguard.db` after the A4-3 re-run (both com.causalguard and net.kollnig.missioncontrol.fdroid.test reinstalled; base VPN enabled with block list).",
+    "reinstallApks": [
+      "~/a4-3-apks/trackercontrol-fdroidDebug-PATCHED.apk (net.kollnig.missioncontrol.fdroid.test, versionCode 2026080501)",
+      "~/a4-3-apks/causalguard-debug.apk (com.causalguard, v0.1.0)"
+    ],
+    "sourceCommit": "319eda2",
+    "sourceBranch": "feature/a-t5-mitigation-executor",
+    "trackerControlSubmoduleCommit": "9504d41b9f6fa1509d784e5503c084d4b428307d",
+    "docsRefs": [
+      "docs/spike-results.md (A4-3 section)",
+      "docs/17-task-board.md (A4-3/A4-4 rows)",
+      "docs/trackercontrol-adapter-boundary.md (section 9)"
+    ]
+  },
+  "statement": "Entries are selected/redacted from real observed events, not synthetic ground truth."
+}
