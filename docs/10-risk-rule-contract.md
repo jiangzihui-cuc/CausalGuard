@@ -81,7 +81,7 @@ v0.1 冻结以下字段来源，避免规则层、存储层和解释层各自推
 |---|---|
 | `id` | 确定性当前评估 ID，格式为 `r-${eventId}`。v0.1 中一个 `PrivacyEvent` 只维护一个当前 `RiskAssessment` 身份，不保存同一事件的多 `ruleVersion` assessment history。 |
 | `createdAt` | 规则引擎固定输出 `0L`，含义为 `UNASSIGNED_AT_DETERMINISTIC_EVALUATION_BOUNDARY`。它不是实际发生时间，也不得由规则引擎读取 wall clock 或用事件时间冒充。 |
-| `evidenceIds` | `PrivacyEvent.eventId` 字符串引用列表；v0.1 至少包含主事件 ID。它不等价于 Room `EvidenceLink.id`，完整 related/prior evidence 物化属于后续 evidence-chain 集成。 |
+| `evidenceIds` | `PrivacyEvent.eventId` 字符串引用列表；主事件始终第一个，effective rule 实际使用的 related/prior supporting event 会被去重并确定性加入。它不等价于 Room `EvidenceLink.id`。 |
 | `ruleVersion` | 写入实际 evaluator 使用的已验证规则资产版本，即验证后的规则集合版本。不得把不受支持的 `RuleInput.ruleVersion` 原样写入评估结果。 |
 
 规则版本来源与输入兼容：
@@ -90,6 +90,18 @@ v0.1 冻结以下字段来源，避免规则层、存储层和解释层各自推
 - evaluator version 来自验证后的同版本规则集合，不再独立声明另一个可漂移版本；
 - `RuleInput.ruleVersion` 必须匹配 evaluator version；
 - 若输入版本不匹配，规则引擎不得执行规则匹配，也不得抛出阻断上层流程的异常；必须返回 `riskScore=0`、`riskLevel=low`、`category=unknown`、`scenarioMatch=unknown`、`confidence=low`、`matchedRules=[]`、`recommendation.action=none`、`degradation.shouldShowUnknownDegradation=true` 的确定性安全降级结果，并在 `RiskAssessment.ruleVersion` 中记录实际 evaluator version。
+
+### 2.2 EvidenceLink 与证据链
+
+`RiskAssessment.evidenceIds` 始终引用 `PrivacyEvent.eventId`，不是 `EvidenceLink.id`。规则引擎只物化 effective matched rule 实际使用的 supporting event；输入中未支持有效规则的 related/prior event 不得被批量加入。主事件 ID 永远排在第一位，supporting ID 去重并按确定性顺序输出。
+
+`EvidenceLink.relation` 在本版的语义为：
+
+- `temporal`：事件之间的时间/先后关联，属于 E3 Derived Inference，不证明因果、敏感内容传输或数据泄露；
+- `rule`：规则基于事件事实产生的派生关系，属于 E3 Derived Inference，不是 System Fact 或 Observed Fact；
+- `app`：既有契约保留，本版 builder 不强制生成。
+
+no-match、version mismatch 和没有可用 witness 时不制造关联；unknown degradation 只允许 effective unknown rules 的 rule link 存在，不保留被抑制的高风险 rule link。B5-2 只构建结果，不自动持久化 EvidenceLink。
 
 ## 3. 风险评分公式（初版）
 
@@ -288,7 +300,7 @@ interface RiskRuleEngine {
 - 规则只读事件，不修改原始事件；
 - 同 `ruleVersion` 且同输入必须输出稳定结果；
 - 规则异常不得阻断事件入库与页面展示，失败时返回最低置信度结果；
-- 任何规则命中都必须能展开到 `evidenceIds`。
+- 任何规则命中都必须能展开到主事件及其实际支持事件的 `evidenceIds`；相关 EvidenceLink 的时间和规则推断必须保留解释边界。
 
 ## 7. 规则版本管理
 

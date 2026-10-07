@@ -1,6 +1,7 @@
 package com.causalguard.rules
 
 import com.causalguard.core.model.Confidence
+import com.causalguard.core.model.EvidenceLink
 import com.causalguard.core.model.RiskAssessment as CoreRiskAssessment
 import com.causalguard.core.model.EventType
 import com.causalguard.core.model.EvidenceLevel
@@ -52,7 +53,8 @@ data class EvaluationDegradation(
 data class RuleEvaluationResult(
     val assessment: CoreRiskAssessment,
     val recommendationDecision: RecommendationDecision,
-    val degradation: EvaluationDegradation
+    val degradation: EvaluationDegradation,
+    val evidenceLinks: List<EvidenceLink> = emptyList(),
 )
 
 data class RiskRule(

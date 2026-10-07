@@ -66,7 +66,10 @@ class RuleEvaluationResultTest {
         assertEquals(RiskLevel.HIGH, result.assessment.riskLevel)
         assertEquals("r-e-20260921-0003", result.assessment.id)
         assertEquals("rules-v0.1", result.assessment.ruleVersion)
-        assertEquals(listOf("e-20260921-0003"), result.assessment.evidenceIds)
+        assertEquals(
+            listOf("e-20260921-0003", "e-20260921-0004"),
+            result.assessment.evidenceIds,
+        )
         assertEquals(0L, result.assessment.createdAt)
         assertEquals(RiskCategory.HIGH_RISK, result.assessment.category)
         assertEquals("limit_background_network", result.recommendationDecision.action)
