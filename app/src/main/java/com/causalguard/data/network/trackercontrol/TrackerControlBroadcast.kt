@@ -36,8 +36,10 @@ object TrackerControlBroadcast {
     /**
      * A5-1 控制通道的 signature 权限（底座 manifest 定义，
      * `net.kollnig.missioncontrol.fdroid.test.permission.CAUSALGUARD_BLOCK_DOMAIN`）。
-     * App 侧已在 manifest `uses-permission` 声明；发送 ordered broadcast 时须带该权限，
-     * 使系统仅投递给同签名底座，杜绝第三方伪造。
+     * App 侧已在 manifest `uses-permission` 声明并因同签被授予。安全边界由底座接收器的
+     * manifest `android:permission`（signature 级）强制——只投递给同签名 sender。
+     * 注意：发送时**不**把该权限作为 `receiverPermission` 参数传入（见
+     * `TrackerControlDomainBlockController`，部分设备会误拒授权 sender）。
      */
     const val BLOCK_DOMAIN_PERMISSION =
         "$TRACKERCONTROL_PACKAGE.permission.CAUSALGUARD_BLOCK_DOMAIN"

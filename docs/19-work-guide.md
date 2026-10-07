@@ -11,14 +11,14 @@
 
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
-当前阶段：阶段 0~3 已完成并合入 main；阶段 4 A 侧（A4-1~A4-5）已完成、B 侧 B4-1/2/3/5 已完成、B4-4 未开始；阶段 5 执行层（A5-1~A5-6）已完成并真机验证，B 侧分析层（B5-1~B5-7）未开始
+当前阶段：阶段 0~3 已完成并合入 main；阶段 4 A 侧（A4-1~A4-5）已完成、B 侧 B4-1~B4-5 已完成（B4-4 real fixture 校准已由 PR #26 合入 main，运行时采用 rules-v0.2）；阶段 5 执行层（A5-1~A5-6）已完成并真机验证，B 侧分析层（B5-1~B5-7）未开始
 成员 A：阶段 5 A5-1~A5-6 已完成，A5-1 底座域名阻断补丁已真机验证（PJW110/Android 16，RESULT_OK/RESULT_CANCELED 诚实回执）；当前等待 PR #18 合入，下一步 A6-1~A6-4
-成员 B：B4-1/2/3/5 已完成、B4-4（用 A 的真实 fixture 校准规则）未开始；B5-1~B5-7 未开始；不依赖真实 VPN，优先推进 B4-4 与场景知识库/证据链/因果链/Recommendation/RecheckComparator
+成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-7 未开始；不依赖真实 VPN，优先推进场景知识库/证据链/因果链/Recommendation/RecheckComparator
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
 
-**一句话**：阶段 0~3 与阶段 4（A 侧全部、B 侧 B4-1/2/3/5）已完成并合入 main，B4-4 未开始；阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询）已就绪并真机验证，**成员 A 现在推进阶段 6（A6-1 网络客户端安全配置、A6-3 真机稳定性）并跟进 PR #18 合入，成员 B 并行做 B4-4 规则校准与 B5 原创分析层（场景知识库、证据链、因果链、Recommendation、RecheckComparator）**。
+**一句话**：阶段 0~3 与阶段 4（A 侧全部、B 侧 B4-1~B4-5）已完成并合入 main；阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询）已就绪并真机验证，**成员 A 现在推进阶段 6（A6-1 网络客户端安全配置、A6-3 真机稳定性）并跟进 PR #18 合入，成员 B 并行推进 B5 原创分析层（场景知识库、证据链、因果链、Recommendation、RecheckComparator）**。
 
 开源路线已定（详见 [20 开源复用建议](20-open-source-reuse-guide.md) 第 13 节）：优先走 **方案 A：TrackerControl / NetGuard（GPL-3.0）** 作为网络底座；接受 GPL 路线并明确开源与原创边界。MIT 备选路线仅在阶段 1 构建链持续失败时启用。
 
@@ -56,13 +56,13 @@
 | A5-5 | `RoomNetworkObservationRepository` | `app/.../data/` | 按 App/域名/时间窗聚合 | 已完成 |
 | A5-6 | `NetworkObservation.presence` | `core-model`/`:app` | `NO_REQUEST`/`ALL_BLOCKED`/`SOME_BLOCKED`/`ALLOWED` | 已完成 |
 
-> A5 底座侧 `ACTION_BLOCK_DOMAIN` 接收器以 GPL 补丁交付：`third_party/patches/a5-1-domain-block-receiver.patch`（`CausalGuardDomainBlockReceiver` + `mapCausalGuardBlocked` + `isDomainBlocked` DNS 抑制 + manifest 注册，并以 signature 权限 `permission.CAUSALGUARD_BLOCK_DOMAIN` 作为控制通道唯一安全边界，不做 `Binder.getCallingUid()` 二次 sender 校验），已并入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用/`--revert`）并登记 `THIRD_PARTY_NOTICES.md`。真机（PJW110/Android 16）验证：有效域名回执 `RESULT_OK`、缺域名回执 `RESULT_CANCELED`，`:app` 单测 106 项通过（含 v2→v3 `MIGRATION_2_3` 迁移回归测试）。详见 [spike-results](spike-results.md) §3 A5-1。
+> A5 底座侧 `ACTION_BLOCK_DOMAIN` 接收器以 GPL 补丁交付：`third_party/patches/a5-1-domain-block-receiver.patch`（`CausalGuardDomainBlockReceiver` + `mapCausalGuardBlocked` + `isDomainBlocked` DNS 抑制 + manifest 注册，并以 signature 权限 `permission.CAUSALGUARD_BLOCK_DOMAIN` 作为控制通道唯一安全边界，不做 `Binder.getCallingUid()` 二次 sender 校验），已并入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用/`--revert`）并登记 `THIRD_PARTY_NOTICES.md`。真机（PJW110/Android 16）验证：两 APK 同签、授权 CausalGuard sender 回执 `RESULT_OK`、未授权 `adb shell` sender 被拒，`:app` 单测 112 项通过（含 v2→v3 `MIGRATION_2_3` 迁移回归测试）。详见 [spike-results](spike-results.md) §3 A5-1。
 >
 > **下一步（阶段 6，10/4-10/5）**：A6-1 Retrofit/OkHttp 安全配置、A6-2 密钥环境注入、A6-3 长时间 VPN/网络切换/服务回收真机稳定性、A6-4 修复 P0 缺陷（见 [17 任务看板](17-task-board.md) 阶段 6）。
 
-### 成员 B（产品与智能分析主责）——B4-1/2/3/5 已完成，现在做 B4-4 与阶段 5 原创分析层（B5-1~B5-7）
+### 成员 B（产品与智能分析主责）——B4-1~B4-5 已完成，现在做阶段 5 原创分析层（B5-1~B5-7）
 
-**阶段 4 B 侧（B4）**：B4-1（离线 tracker 数据集）、B4-2（`TrackerClassifier` 与域名归一化）、B4-3（真实/演示/未知来源标签与观测降级）、B4-5（Demo App 场景 C/D）已完成并合入 `main`；**B4-4（用 A 的真实 fixture 校准规则）未开始**，见 [17 任务看板](17-task-board.md) 阶段 4。
+**阶段 4 B 侧（B4）**：B4-1（离线 tracker 数据集）、B4-2（`TrackerClassifier` 与域名归一化）、B4-3（真实/演示/未知来源标签与观测降级）、B4-5（Demo App 场景 C/D）已完成并合入 `main`；**B4-4（用 A 的真实 fixture 校准规则）已完成**（PR #26，2026-10-06）：20 条 PJW110 / Android 16 真机真实输入配套独立 fact oracle，tracker coverage diagnosis 为 mixed，运行时采用 `rules-v0.2` 完成 R-008 attribution calibration（`rules-v0.1` frozen baseline 保留）。见 [17 任务看板](17-task-board.md) 阶段 4。
 
 **阶段 5 原创分析层（B5-1~B5-7）**：全部未开始。
 

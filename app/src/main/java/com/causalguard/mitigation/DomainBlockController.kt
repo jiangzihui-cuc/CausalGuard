@@ -73,9 +73,15 @@ class TrackerControlDomainBlockController(
                     }
                 }
                 try {
+                    // 安全边界（A5-1）：底座接收器的 manifest `android:permission`
+                    // （signature 级 CAUSALGUARD_BLOCK_DOMAIN）即控制通道的唯一安全边界，
+                    // 本 App 已在 manifest `uses-permission` 声明并因同签被授予。
+                    // 这里不传 `receiverPermission` 参数——实测在 PJW110/Android 16 上
+                    // 传该参数会误拒持有该签名权限的授权 sender（sender 校验路径差异），
+                    // 而接收器侧 signature 权限本身已足以约束投递方（授权/未授权已真机验证）。
                     appContext.sendOrderedBroadcast(
                         intent,
-                        TrackerControlBroadcast.BLOCK_DOMAIN_PERMISSION,
+                        null,
                         resultReceiver,
                         null,
                         Activity.RESULT_CANCELED,
