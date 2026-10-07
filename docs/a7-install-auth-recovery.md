@@ -19,15 +19,21 @@
 | Demo App APK | `com.demo.map` / `com.demo.calculator` / `com.demo.weather` | `demo-app` 模块，见下方构建命令 |
 | 文档 | 本文件、[A7 RC 记录](a7-release-candidate.md)、[A7 许可证报告](a7-license-report.md) | 本仓库 |
 
-构建 Demo App（可选，逐场景）：
+构建 Demo App（可选，逐场景）。release 产物的 `*-release-unsigned.apk` **未签名、不能直接安装**，需用与主 App 相同的 keystore 签名；快速演示也可直接用已用调试签名的 `*-debug.apk`：
 
 ```bash
-./gradlew :demo-app:assembleMapRelease     # com.demo.map
-./gradlew :demo-app:assembleCalculatorRelease  # com.demo.calculator
-./gradlew :demo-app:assembleWeatherRelease     # com.demo.weather
+# 方式一：构建 release 后用 RC keystore 签名
+./gradlew :demo-app:assembleMapRelease :demo-app:assembleCalculatorRelease :demo-app:assembleWeatherRelease
+"$ANDROID_HOME/build-tools/37.0.0/apksigner" sign \
+  --ks "$KEYSTORE_FILE" --ks-key-alias "$KEY_ALIAS" \
+  --ks-pass "pass:$KEYSTORE_PASSWORD" --key-pass "pass:$KEY_PASSWORD" \
+  --out <flavor>-signed.apk demo-app/build/outputs/apk/<flavor>/release/demo-app-<flavor>-release-unsigned.apk
+
+# 方式二：直接构建可安装的 debug 变体
+./gradlew :demo-app:assembleMapDebug :demo-app:assembleCalculatorDebug :demo-app:assembleWeatherDebug
 ```
 
-> 真机验证时曾使用 debug 变体；RC 演示建议使用对应的 release 变体，并统一签名与版本（见 [A7 RC 记录](a7-release-candidate.md)）。
+> 真机验证时曾使用 debug 变体；RC 演示建议统一签名与版本（见 [A7 RC 记录](a7-release-candidate.md)）。
 
 ---
 
@@ -59,13 +65,13 @@ adb install -r ~/a4-3-apks/trackercontrol-fdroidDebug-PATCHED.apk
 # 2) 主 App RC
 adb install -r ~/causalguard-release/0.2.0-rc1/causalguard-0.2.0-rc1.apk
 
-# 3) Demo App（按演示需要安装对应场景）
-adb install -r demo-app/build/outputs/apk/map/release/demo-app-map-release-unsigned.apk
-adb install -r demo-app/build/outputs/apk/calculator/release/demo-app-calculator-release-unsigned.apk
-adb install -r demo-app/build/outputs/apk/weather/release/demo-app-weather-release-unsigned.apk
+# 3) Demo App（按演示需要安装对应场景；debug 变体已签名，release 变体需先签名）
+adb install -r demo-app/build/outputs/apk/map/debug/demo-app-map-debug.apk
+adb install -r demo-app/build/outputs/apk/calculator/debug/demo-app-calculator-debug.apk
+adb install -r demo-app/build/outputs/apk/weather/debug/demo-app-weather-debug.apk
 ```
 
-> 底座与主 App 必须**同签名**，否则 A5-1 signature 权限控制通道不生效（见 [A7 RC 记录](a7-release-candidate.md) 与 `docs/spike-results.md` §3 A5-1）。底座 debug 签名与 RC release 签名不同，现场做域名阻断演示时需使用与底座同签名的 CausalGuard 构建（两个 APK 用同一 keystore 签名）。
+> **签名一致性（关键）**：A5-1 域名阻断控制通道以 signature 权限为唯一安全边界，要求**底座与主 App 同签名**。现场做域名阻断演示时，需用同一个 release keystore 重新签名底座（`apksigner sign` 重签 fdroid debug 底座，或按第 6 节以该 keystore 构建），主 App 也使用该 keystore（`scripts/build-release-rc.sh`）。若两者签名不同，阻断请求回执为 `RESULT_CANCELED`（诚实降级，不静默失败）。仅演示采集/解释/其余处置时可各自使用默认签名。
 
 ---
 

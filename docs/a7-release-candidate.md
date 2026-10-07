@@ -59,7 +59,7 @@
 | 应用 | `com.causalguard` |
 | versionName / versionCode | `0.2.0-rc1` / `2` |
 | 构建类型 | `release`（`minifyEnabled false`；RC 阶段不启用混淆，避免引入非阻断风险） |
-| 源码构建 commit | `c603d26be0f657d8267434dae13c0ceea180f026`（tag `causalguard-v0.2.0-rc1` 指向记录本表的发布提交，其父提交即源码构建 commit） |
+| 源码构建 commit | `c603d26be0f657d8267434dae13c0ceea180f026`（APK 生成于该 commit；tag `causalguard-v0.2.0-rc1` 指向记录本表的发布提交） |
 | 构建命令 | `scripts/build-release-rc.sh`（内部执行 `:app:assembleRelease` → `zipalign` → `apksigner sign`） |
 | APK 文件名 | `causalguard-0.2.0-rc1.apk` |
 | APK SHA-256 | `f1df27fb1d5a17a9432a1a417f23cb604dd8e283980c9474499e8c0e9778f3d7` |
