@@ -1,0 +1,41 @@
+{
+  "schema": {
+    "name": "scene-knowledge-v0.1",
+    "purpose": "Deterministic scene consistency knowledge for B5-1.",
+    "contract": "../b5-1-scene-knowledge.md"
+  },
+  "scenes": [
+    {
+      "id": "SCENE-MAP-001",
+      "sceneType": "map",
+      "eventType": "location",
+      "foregroundStates": ["foreground"],
+      "result": "match",
+      "reason": "A map/navigation scene can reasonably use location while it is in the foreground."
+    },
+    {
+      "id": "SCENE-MAP-002",
+      "sceneType": "map",
+      "eventType": "network",
+      "foregroundStates": ["foreground"],
+      "result": "match",
+      "reason": "A map/navigation scene can reasonably use foreground network connections for map data."
+    },
+    {
+      "id": "SCENE-CALC-001",
+      "sceneType": "calculator",
+      "eventType": "clipboard",
+      "foregroundStates": ["background"],
+      "result": "mismatch",
+      "reason": "A calculator scene has no established need for background clipboard access."
+    },
+    {
+      "id": "SCENE-CALC-002",
+      "sceneType": "calculator",
+      "eventType": "network",
+      "foregroundStates": ["background"],
+      "result": "mismatch",
+      "reason": "A calculator scene has no established need for background network activity."
+    }
+  ]
+}

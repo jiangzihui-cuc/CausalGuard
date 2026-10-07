@@ -32,6 +32,7 @@ class RuntimeFixtureAssetTest {
     fun runtimeRuleContextAndTemplatesMatchDocsCanonicalAssets() {
         assertDocsAssetMatchesRuntime("risk-rules-v0.1.json")
         assertDocsAssetMatchesRuntime("risk-rules-v0.2.json")
+        assertDocsAssetMatchesRuntime("scene-knowledge-v0.1.json")
         assertDocsAssetMatchesRuntime("rule-input-context-v0.1.json")
         assertDocsAssetMatchesRuntime("explanation-templates-v0.1.json")
         assertDocsAssetMatchesRuntime("explanation-templates-v0.2.json")

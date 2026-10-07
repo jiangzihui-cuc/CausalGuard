@@ -171,7 +171,7 @@
 
 | 编号 | 任务 | 状态 |
 |---|---|---|
-| B5-1 | 场景知识库和场景一致性 | 未开始 |
+| B5-1 | 场景知识库和场景一致性 | 已完成 |
 | B5-2 | `EvidenceLink` 与证据链构建器 | 未开始 |
 | B5-3 | 因果链节点和事实/推断等级 | 未开始 |
 | B5-4 | Recommendation 选择 | 未开始 |
@@ -180,6 +180,8 @@
 | B5-7 | 至少 8 条处置前后评测样例 | 未开始 |
 
 集成契约：`B：Recommendation → A：MitigationExecutor → A：MitigationRecord + 新事件 → B：RecheckResult + 页面`。
+
+> B5-1 进展（成员 B，2026-10-07）：建立 `scene-knowledge-v0.1` 与确定性 `SceneConsistencyEvaluator`；无明确知识时 `UNKNOWN`，不从包名/domain/tracker/risk 反推场景；与 frozen `e-20260921-0001`～`e-20260921-0004` scenario context 一致。
 
 > **阶段 5 执行层进展（A 回填，2026-10-03）**：A5-1~A5-6 代码完成，`:app` 单测 81 项通过（新增 `DeviceMitigationExecutorTest` 9 项、`RoomNetworkObservationRepositoryTest` 3 项）。契约新增 `core-model/.../MitigationApi.kt`（`MitigationAction`/`MitigationStatus`/`MitigationRequest`/`MitigationExecution`/`MitigationExecutor`/`NetworkObservation`/`NetworkRequestPresence`/`NetworkObservationRepository`）。实现：
 > - **A5-1**：`mitigation/DeviceMitigationExecutor` 按 action 分派；`DomainBlockController` 经 ordered broadcast（`TrackerControlBroadcast.ACTION_BLOCK_DOMAIN`）请求底座阻断，仅 `RESULT_OK` 回执为 `CONFIRMED`，超时/未接线一律 `UNAVAILABLE`，绝不谎报。
