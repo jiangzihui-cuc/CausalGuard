@@ -212,17 +212,19 @@
 
 | 编号 | 任务 | 主责 | 协作 | 状态 |
 |---|---|---|---|---|
-| A7-1 | 冻结设备、系统和构建环境 | 成员 A | 成员 B | 未开始 |
-| A7-2 | 生成 RC APK、commit SHA 和 SHA-256 | 成员 A | - | 未开始 |
-| A7-3 | 编写安装、授权、清理和故障恢复步骤 | 成员 A | 成员 B | 未开始 |
-| A7-4 | 生成依赖许可证报告并人工核对 | 成员 A | 成员 B | 未开始 |
-| A7-5 | 准备真实网络数据来源、日志和第三方修改证据 | 成员 A | - | 未开始 |
-| A7-6 | 只修阻断性缺陷 | 成员 A | - | 未开始 |
+| A7-1 | 冻结设备、系统和构建环境 | 成员 A | 成员 B | 已完成（[A7 RC 记录](a7-release-candidate.md) 第 1 节：PJW110/Android 16/API 36；JDK 17.0.13+11、Gradle 9.6.1、AGP 9.4.1、compileSdk 37、底座 submodule `9504d41b`） |
+| A7-2 | 生成 RC APK、commit SHA 和 SHA-256 | 成员 A | - | 已完成（`causalguard-0.2.0-rc1.apk`，SHA-256 `36d15cf5…`，签名证书 SHA-256 `b3ed3f7d…`；见 [A7 RC 记录](a7-release-candidate.md) 第 2 节） |
+| A7-3 | 编写安装、授权、清理和故障恢复步骤 | 成员 A | 成员 B | 已完成（[A7 安装·授权·清理·故障恢复](a7-install-auth-recovery.md)） |
+| A7-4 | 生成依赖许可证报告并人工核对 | 成员 A | 成员 B | 已完成（[A7 依赖许可证报告](a7-license-report.md)；脚本 `scripts/generate-license-report.sh`） |
+| A7-5 | 准备真实网络数据来源、日志和第三方修改证据 | 成员 A | - | 已完成（[A7 RC 记录](a7-release-candidate.md) 第 5 节：底座 commit、两补丁 SHA-256、复现命令） |
+| A7-6 | 只修阻断性缺陷 | 成员 A | - | 已完成（`assembleRelease` 通过；单测 261/0；lint 0 error/4 warning 均非阻断；无需改码） |
 | B7-1 | 完成 Demo App 场景重置流程 | 成员 B | 成员 A | 未开始 |
 | B7-2 | 3 分钟演示脚本和离线回放包 | 成员 B | 成员 A | 未开始 |
 | B7-3 | 录制候选视频、生成核心截图 | 成员 B | - | 未开始 |
 | B7-4 | 产品创新、证据等级、开源/原创边界答辩页 | 成员 B | 成员 A | 未开始 |
 | B7-5 | 独立按 A 的说明安装、授权和运行 RC | 成员 B | - | 未开始 |
+
+> 阶段 7 A 侧进展（成员 A，2026-10-07）：A7-1～A7-6 已完成。冻结设备 PJW110/Android 16/API 36 与构建环境；构建并签名 RC `causalguard-0.2.0-rc1.apk`（SHA-256 `36d15cf5…`）；输出安装/授权/清理/恢复文档与依赖许可证报告（自动收集 + 人工核对）；整理底座 commit、两补丁 SHA-256 与复现命令作为第三方修改证据；回归 `assembleRelease` 通过、单测 261/0、lint 0 error/4 warning（均非阻断），无需修码。详见 [A7 RC 记录](a7-release-candidate.md)。
 
 交叉验收：截图、视频、文档和 APK 来自同一 commit；授权失败、断网、VPN 停止和无法归属均完成演练。
 
