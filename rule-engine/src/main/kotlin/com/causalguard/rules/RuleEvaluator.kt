@@ -13,6 +13,7 @@ class RuleEvaluator(
     rules: List<RiskRule>
 ) : RiskRuleEngine {
     private val ruleVersion: String = requireConsistentRuleVersion(rules)
+    private val evidenceChainBuilder = EvidenceChainBuilder()
     private val sortedRules = rules.sortedWith(
         compareByDescending<RiskRule> { it.priority }.thenBy { it.id }
     )
@@ -49,6 +50,7 @@ class RuleEvaluator(
         } else {
             primary.recommendation
         }
+        val evidenceChain = evidenceChainBuilder.build(input, effectiveMatches)
 
         return RuleEvaluationResult(
             assessment = CoreRiskAssessment(
@@ -61,14 +63,15 @@ class RuleEvaluator(
                 confidence = if (unknownDegradation) Confidence.LOW else primary.output.confidence,
                 category = if (unknownDegradation) RiskCategory.UNKNOWN else primary.output.category,
                 explanationBoundary = explanationBoundary(effectiveMatches),
-                evidenceIds = listOf(event.eventId),
+                evidenceIds = evidenceChain.evidenceIds,
                 matchedRules = effectiveMatches.map { it.id },
                 createdAt = 0L
             ),
             recommendationDecision = recommendation,
             degradation = EvaluationDegradation(
                 shouldShowUnknownDegradation = unknownDegradation
-            )
+            ),
+            evidenceLinks = evidenceChain.links,
         )
     }
 

@@ -44,6 +44,20 @@ class EventAnalysisServiceTest {
         assertEquals(fromAll, service.analyze("e-20260921-0009"))
     }
 
+    @Test
+    fun analyzeIncludesSupportingEvidenceForRelatedAndPriorRules() = runTest {
+        val service = fixtureAnalysisService()
+
+        assertEquals(
+            listOf("e-20260921-0003", "e-20260921-0004"),
+            requireNotNull(service.analyze("e-20260921-0003")).evidence.map { it.eventId },
+        )
+        assertEquals(
+            listOf("e-20260921-0009", "e-20260921-0008"),
+            requireNotNull(service.analyze("e-20260921-0009")).evidence.map { it.eventId },
+        )
+    }
+
     private fun fixtureAnalysisService(): FixtureEventAnalysisService {
         val rules = RuleAssetLoader("risk-rules-v0.2", "rules-v0.2").loadFromPath(
             repoFile("docs/fixtures/risk-rules-v0.2.json").toPath(),

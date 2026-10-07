@@ -77,8 +77,14 @@ class EventDetailViewModelTest {
             assertEquals(values[2], assessment.scenarioMatch.wire)
             assertEquals(values[3], assessment.confidence.wire)
             assertEquals(values.drop(4), assessment.matchedRules)
-            assertEquals(listOf(eventId), result.evidence.map { it.eventId })
-            assertEquals(result.event.evidenceLevel, result.evidence.single().evidenceLevel)
+            val expectedEvidenceIds = when (eventId) {
+                "e-20260921-0003" -> listOf("e-20260921-0003", "e-20260921-0004")
+                "e-20260921-0004" -> listOf("e-20260921-0004", "e-20260921-0003")
+                "e-20260921-0009" -> listOf("e-20260921-0009", "e-20260921-0008")
+                else -> listOf(eventId)
+            }
+            assertEquals(expectedEvidenceIds, result.evidence.map { it.eventId })
+            assertEquals(result.event.evidenceLevel, result.evidence.first().evidenceLevel)
         }
 
         assertEquals(
