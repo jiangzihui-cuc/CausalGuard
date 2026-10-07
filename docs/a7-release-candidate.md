@@ -59,11 +59,12 @@
 | 应用 | `com.causalguard` |
 | versionName / versionCode | `0.2.0-rc1` / `2` |
 | 构建类型 | `release`（`minifyEnabled false`；RC 阶段不启用混淆，避免引入非阻断风险） |
-| 构建 commit | `5b05199d74415e71a8d7669e198b95f915e44b70`（tag `causalguard-v0.2.0-rc1`；确定性构建，tag 提交的应用代码与本 commit 一致） |
+| 源码构建 commit | `c603d26be0f657d8267434dae13c0ceea180f026`（tag `causalguard-v0.2.0-rc1` 指向记录本表的发布提交，其父提交即源码构建 commit） |
 | 构建命令 | `scripts/build-release-rc.sh`（内部执行 `:app:assembleRelease` → `zipalign` → `apksigner sign`） |
 | APK 文件名 | `causalguard-0.2.0-rc1.apk` |
-| APK SHA-256 | `36d15cf5739404528938d4c541e77223e267079cd58bb5f46efc3e995c15d878` |
-| 未签名 APK SHA-256 | `9f237d3cc6082a320dcc5421a56fd084dcbbc219608669eed8e4abbdbd040f1e` |
+| APK SHA-256 | `f1df27fb1d5a17a9432a1a417f23cb604dd8e283980c9474499e8c0e9778f3d7` |
+| 未签名 APK SHA-256 | `6120d53aa2b8a790d1a32621c7ef39695cf0c34dec457a34b416325704f1b376` |
+| 构建内嵌 VCS 信息 | `META-INF/version-control-info.textproto` 记录 `revision=c603d26…`（AGP 默认行为）。因此在**其它 commit 上重建会得到不同 APK 哈希**；复现本 RC 请 checkout 源码构建 commit `c603d26` |
 | 签名方案 | APK Signature Scheme v3（`apksigner 0.9` 对 minSdk 29 仅写 v3；Android 10+ 支持 v3） |
 | 签名证书 DN | `CN=CausalGuard, OU=Privacy Causal Sentinel, O=CausalGuard, L=Beijing, ST=Beijing, C=CN` |
 | 签名证书 SHA-256 | `b3ed3f7d7d80a3c4c6276792f91dd76b968138945928bfe62cfe17f3673554ef` |
