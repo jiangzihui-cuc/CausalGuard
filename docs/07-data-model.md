@@ -153,6 +153,7 @@ v0.1 字段来源约束：
 | `executedAt` | Long | 执行时间 |
 | `ruleVersion` | String | 规则版本 |
 | `preSnapshot` | String (JSON) | 处置前快照 |
+| `executionStatus` | String | 执行结果：executed/unavailable/unsupported/failed/unknown；失败/不可用不伪装成已执行 |
 | `postResult` | String | reduced/no_change/unknown |
 | `observationEnd` | Long? | 观察窗口结束时间 |
 | `reviewNotes` | String? | 复查说明 |

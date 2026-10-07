@@ -1,11 +1,11 @@
 # spike-results（阶段 1 技术 Spike 结果）
 
-> 版本：`v0.3`
-> 最后更新：2026-09-29
+> 版本：`v0.4`
+> 最后更新：2026-10-05
 > 责任人：成员 A
-> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8、A4-3、A4-5
+> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8、A4-3、A4-5、A5-1
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测；A4-3 跨进程网络事件端到端已于 2026-09-29 真机验证；A4-5 前台服务与网络切换恢复已于 2026-09-29 真机验证，见第 3 节）
+> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测；A4-3 跨进程网络事件端到端已于 2026-09-29 真机验证；A4-5 前台服务与网络切换恢复已于 2026-09-29 真机验证；A5-1 域名阻断控制通道已于 2026-10-05 真机验证，见第 3 节）
 
 ---
 
@@ -278,6 +278,41 @@
 
 - 关键修复（合并 `origin/main` 回归）：`AppContainer.privacyEventRepository` 曾采用 main 的 `FakePrivacyEventRepository` 默认值，导致 A4 采集只写内存、Room 不增长；已恢复为 `RoomPrivacyEventRepository(database)`，对齐 `docs/17` 阶段门与「Room 为唯一写入口」。
 - 遗留：厂商（ColorOS/Oppo）后台限制对 `START_STICKY` 的长期影响、锁屏/深度 Doze 下的保活需后续实测；通知权限未授权时服务仍运行但不显示常驻通知。
+
+### A5-1 域名阻断控制通道端到端（2026-10-05 真机 PJW110 / Android 16 / API 36）
+
+- [x] 真机验证通过（2026-10-05）
+- 目标：App 经 ordered broadcast（`ACTION_BLOCK_DOMAIN`）请求底座按域名阻断，底座仅在写入运行期阻断集成功后回执 `RESULT_OK`，其余诚实降级；`isDomainBlocked` 据此做 DNS 层抑制。
+- 实现（见 `third_party/patches/a5-1-domain-block-receiver.patch`，与 A4-3 一并由 `scripts/apply-trackercontrol-hook.sh` 应用）：
+  - 底座新增 `eu.faircode.netguard.CausalGuardDomainBlockReceiver`（跨进程 ordered broadcast，处理 `com.causalguard.intent.BLOCK_DOMAIN`）；成功写 `ServiceSinkhole.mapCausalGuardBlocked` 后回 `Activity.RESULT_OK`，缺域名/写入失败保持默认 `RESULT_CANCELED`。
+  - `ServiceSinkhole.isDomainBlocked` 仅对 `mapCausalGuardBlocked` 中的域名返回 `true`，native `is_domain_blocked` → Java `isDomainBlocked` 路径在 DNS 响应解析时抑制答案。
+  - `AndroidManifest.xml` 注册导出 receiver，并以 signature 权限（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）保护接收器作为控制通道的唯一安全边界；不做基于 `Binder.getCallingUid()` 的 sender 二次校验。
+- 操作流程（**加固前历史验证**，2026-10-05）：用 `gradle` 以固定 commit `9504d41b` 的 submodule + 两补丁构建 fdroid debug 底座并侧载；CausalGuard `:app` 构建 debug 侧载；`adb shell am broadcast -a com.causalguard.intent.BLOCK_DOMAIN --es domain example.com -p net.kollnig.missioncontrol.fdroid.test` 模拟 App 下发。**注：此为 signature 权限加固前的历史验证，`adb shell` 不代表当前授权 sender 语义。**
+- 结果（加固前）：
+
+| 指标 | 结果 |
+|---|---|
+| 补丁校验 | `git apply --check` 两补丁均通过，`CausalGuardDomainBlockReceiver` 已编入 `classes7.dex` |
+| 有效域名回执 | `Broadcast completed: result=-1`（`RESULT_OK`），日志 `CausalGuard block domain confirmed: example.com` |
+| 缺域名降级 | `Broadcast completed: result=0`（`RESULT_CANCELED`），日志 `CausalGuard block domain: missing domain, cancel` |
+| 底座版本 | `2026.08.05-fdroid-test`（commit `9504d41b` + A4-3/A5-1 补丁），`tun0` 正常 |
+| App 侧 | `com.causalguard` 0.1.0 侧载，`DomainBlockController` 契约（`ACTION_BLOCK_DOMAIN`/`EXTRA_DOMAIN="domain"`/`RESULT_OK`）与底座一致 |
+| 单测 | `:app:testDebugUnitTest` 112 项通过（含 `DeviceMitigationExecutorTest` 9 项、`RoomNetworkObservationRepositoryTest` 3 项、`MigrationTest` 1 项：v2→v3 迁移保留 `mitigation_record` 且 `executionStatus` 默认 `unknown`；另含 B4-4 `RealNetworkCalibrationTest` 等） |
+
+- 结论：满足 A5-1 阶段门——`BLOCK_DOMAIN` 端到端回执语义在真机生效（`RESULT_OK`/`RESULT_CANCELED` 诚实回执），DNS 层抑制路径（`isDomainBlocked` → `mapCausalGuardBlocked`）已接线；未接线/未构建时 App 侧按 `UNAVAILABLE` 降级，绝不谎报。控制通道安全边界以 signature 权限（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）为准，不做基于 `Binder.getCallingUid()` 的 sender 二次校验。
+- 遗留：真实 App 场景下「阻断后 DNS 不再解析」的用户可见效果（Chrome 等已缓存域名的重载）依赖浏览器自身 DNS 缓存策略，属预期；深度 Doze/后台限制下阻断集的进程存活见 A4-5 遗留。
+
+#### A5-1 signature 权限安全验证（2026-10-07 真机 PJW110 / Android 16 / API 36）
+
+- [x] 签名权限安全验证通过（2026-10-07）
+- 目标：验证 signature 权限作为控制通道唯一安全边界——两 APK 同签、授权 sender 成功、未授权 sender 被拒，不再依赖 `Binder.getCallingUid()`。
+- Certificate（`apksigner verify --print-certs`）：
+  - `com.causalguard` signer SHA-256：`77768f162c129cd8bc7999f9916216d457d28014e185f9af7cedf466ee96602a`
+  - `net.kollnig.missioncontrol.fdroid.test` signer SHA-256：`77768f162c129cd8bc7999f9916216d457d28014e185f9af7cedf466ee96602a`
+  - 结论：**same**（两 APK 同签，signature 权限前提成立）。
+- Authorized sender（真实 CausalGuard App 代码路径）：`TrackerControlDomainBlockController` → `sendOrderedBroadcast(ACTION_BLOCK_DOMAIN)` → 底座 receiver 写 `mapCausalGuardBlocked` → 日志 `CausalGuard block domain confirmed: cg-auth-final.example` → 回执 `result=-1`（`RESULT_OK`）→ App 侧 `DomainBlockOutcome.CONFIRMED`。
+- Unauthorized sender（`adb shell am broadcast`，无 signature 权限）：`Broadcast completed: result=0`（`RESULT_CANCELED`），ActivityManager `Enqueued broadcast ... : 0`（receiver 被权限策略跳过、`onReceive` 未执行），无 `confirmed` 日志，**未修改 block set**。
+- 关键实现修正（2026-10-07）：App 侧 `TrackerControlDomainBlockController` 发送 ordered broadcast 时**不**把 `CAUSALGUARD_BLOCK_DOMAIN` 作为 `receiverPermission` 参数传入——实测在 PJW110/Android 16 上传入该参数会误拒持有该签名权限的授权 sender（sender 校验路径差异），而接收器 manifest `android:permission`（signature）本身已足以约束投递方。安全边界不变：只有与底座同签名的 App 能被授予并投递。
 
 ---
 
