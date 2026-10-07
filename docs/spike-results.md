@@ -3,9 +3,9 @@
 > 版本：`v0.4`
 > 最后更新：2026-10-05
 > 责任人：成员 A
-> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8、A4-3、A4-5、A5-1
+> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8、A4-3、A4-5、A5-1、A6-1、A6-2、A6-3、A6-4
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测；A4-3 跨进程网络事件端到端已于 2026-09-29 真机验证；A4-5 前台服务与网络切换恢复已于 2026-09-29 真机验证；A5-1 域名阻断控制通道已于 2026-10-05 真机验证，见第 3 节）
+> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测；A4-3 跨进程网络事件端到端已于 2026-09-29 真机验证；A4-5 前台服务与网络切换恢复已于 2026-09-29 真机验证；A5-1 域名阻断控制通道已于 2026-10-05 真机验证；A6-1/A6-2 在线 AI 网络层与密钥注入、A6-3 真机稳定性、A6-4 缺陷排查已于 2026-10-05 完成，见第 3 节）
 
 ---
 
@@ -313,6 +313,39 @@
 - Authorized sender（真实 CausalGuard App 代码路径）：`TrackerControlDomainBlockController` → `sendOrderedBroadcast(ACTION_BLOCK_DOMAIN)` → 底座 receiver 写 `mapCausalGuardBlocked` → 日志 `CausalGuard block domain confirmed: cg-auth-final.example` → 回执 `result=-1`（`RESULT_OK`）→ App 侧 `DomainBlockOutcome.CONFIRMED`。
 - Unauthorized sender（`adb shell am broadcast`，无 signature 权限）：`Broadcast completed: result=0`（`RESULT_CANCELED`），ActivityManager `Enqueued broadcast ... : 0`（receiver 被权限策略跳过、`onReceive` 未执行），无 `confirmed` 日志，**未修改 block set**。
 - 关键实现修正（2026-10-07）：App 侧 `TrackerControlDomainBlockController` 发送 ordered broadcast 时**不**把 `CAUSALGUARD_BLOCK_DOMAIN` 作为 `receiverPermission` 参数传入——实测在 PJW110/Android 16 上传入该参数会误拒持有该签名权限的授权 sender（sender 校验路径差异），而接收器 manifest `android:permission`（signature）本身已足以约束投递方。安全边界不变：只有与底座同签名的 App 能被授予并投递。
+### A6-1/A6-2 在线 AI 网络层与密钥注入（2026-10-05，单元测试）
+
+- [x] 完成（单元测试，无需真机）
+- 目标：为在线 AI 增强（可选、非 P0 门禁）提供安全网络底座——Retrofit/OkHttp 安全配置、明确超时、无 Body/header 日志；密钥经本地配置/环境注入，仓库不得出现密钥。
+- 实现（`app/src/main/java/com/causalguard/explain/`）：
+  - `AiHttpClient`：构造安全 `OkHttpClient`（连接/读/写超时，TLS 默认强校验，不降级 cleartext）与 `Retrofit`（`baseUrl` 来自 BuildConfig）；`isConfigured` 仅当 `AI_API_KEY`/`AI_BASE_URL` 均已注入时为真，否则整体不可用、业务侧回退本地模板。
+  - `NoBodyLoggingInterceptor`：只记录方法/URL/状态码/耗时，**绝不记录请求或响应 Body，也不记录 header（含授权头）**。
+  - A6-2 密钥注入：`app/build.gradle` 读 `secrets.properties`（已 `.gitignore`）→ 环境变量 → 空；`buildConfigField` 注入 `AI_API_KEY`/`AI_BASE_URL`，`buildFeatures.buildConfig=true`。
+- 依赖登记：`retrofit 3.0.0`、`converter-kotlinx-serialization 3.0.0`、`okhttp 4.12.0`（Apache-2.0，已登记 `THIRD_PARTY_NOTICES` 1.1）。
+- 结果：`:app:testDebugUnitTest` 84 项通过（新增 `AiHttpClientTest` 3 项：超时配置、拦截器无 Body/header 泄漏、未配置密钥判定）；`git check-ignore` 确认 `secrets.properties`/`local.properties`/`keystore.properties` 不入库。
+
+### A6-3 真机稳定性（2026-10-05 真机 PJW110 / Android 16 / API 36）
+
+- [x] 真机验证通过（有限时长一轮，长稳见遗留）
+- 目标：验证 VPN 回收 / 网络切换 / 服务回收下 `NetworkMonitorService` 的自动恢复，历史事件不丢。
+- 操作流程：CausalGuard「Start Network Monitor」→ 前台服务常驻；`am force-stop` 底座模拟 VPN 回收；`monkey` 重启底座恢复 VPN；观察 `CausalGuardNet` 日志。
+- 结果：
+
+| 指标 | 结果 |
+|---|---|
+| 启动 | `isForeground=true foregroundId=1001 types=0x1`（dataSync），日志 `monitor started: active=true collecting=true`、`connectivity baseline: available/vpn=true` |
+| VPN 回收 | `network restart done: active=true collecting=true`（去抖后仅一次 restart） |
+| VPN 恢复 | `tun0` 恢复，真实事件持续入库（微信/QQ/支付宝等，日志 `ingested id=... app=... blocked=false`） |
+| 停止 | `monitor service stopped`，`dumpsys activity services` 无 `NetworkMonitorService` ServiceRecord |
+
+- 结论：满足 A6-3 阶段门——VPN 回收/恢复各触发一次去抖 restart，服务回收后 `START_STICKY` 可重建，事件持续入库不丢；网络切换/VPN 回收有诚实降级。
+- 遗留：长时间（数小时）与深度 Doze/锁屏下的保活仍需后续实测（A4-5 已登记同项遗留，本阶段未新增缺陷）。
+
+### A6-4 P0 缺陷排查（2026-10-05）
+
+- [x] 完成（未发现阻断性缺陷，不新增功能）
+- 结果：`gradle build`（除 lint daemon 内存回收外）通过；`:app:lintDebug` 0 error 4 warning（2 条为依赖版本可用提示，2 条为 manifest 建议：`allowBackup` deprecated、缺 application icon，均非阻断）；`:app` 单测 84 项全绿。
+- 结论：当前无阻断性 P0 缺陷；4 条 lint warning 均为非阻断，按「不新增功能」原则不在本阶段处理。
 
 ---
 
