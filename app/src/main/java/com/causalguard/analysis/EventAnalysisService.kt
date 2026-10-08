@@ -7,6 +7,8 @@ import com.causalguard.core.model.RuleInput
 import com.causalguard.data.fixture.ExplanationTemplate
 import com.causalguard.data.fixture.RuleInputContextAsset
 import com.causalguard.rules.EvaluationDegradation
+import com.causalguard.rules.CausalChainResult
+import com.causalguard.rules.RecommendationSelection
 import com.causalguard.rules.RecommendationDecision
 import com.causalguard.rules.RuleAssetLoadResult
 import com.causalguard.rules.RuleEvaluator
@@ -24,6 +26,8 @@ data class EventAnalysisResult(
     val event: PrivacyEvent,
     val assessment: RiskAssessment,
     val recommendation: RecommendationDecision,
+    val causalChain: CausalChainResult,
+    val recommendationSelection: RecommendationSelection,
     val explanation: LocalExplanation,
     val evidence: List<PrivacyEvent>,
     val degradation: EvaluationDegradation,
@@ -88,6 +92,12 @@ class FixtureEventAnalysisService(
             event = event,
             assessment = assessment,
             recommendation = evaluation.recommendationDecision,
+            causalChain = requireNotNull(evaluation.causalChain) {
+                "Rule evaluation did not produce a causal chain for ${event.eventId}"
+            },
+            recommendationSelection = requireNotNull(evaluation.recommendationSelection) {
+                "Rule evaluation did not produce a recommendation selection for ${event.eventId}"
+            },
             explanation = explanation,
             evidence = evidence,
             degradation = evaluation.degradation,

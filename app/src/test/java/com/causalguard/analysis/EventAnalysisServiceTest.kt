@@ -7,6 +7,7 @@ import com.causalguard.data.fixture.RuleInputContextAsset
 import com.causalguard.data.repository.FakePrivacyEventRepository
 import com.causalguard.rules.RuleAssetLoadResult
 import com.causalguard.rules.RuleAssetLoader
+import com.causalguard.rules.CausalChainNodeKind
 import java.io.File
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.ListSerializer
@@ -25,6 +26,37 @@ class EventAnalysisServiceTest {
         assertEquals("rules-v0.2", service.ruleVersion)
         assertEquals(10, results.map { it.event.eventId }.toSet().size)
         assertTrue(results.all { it.event.eventId.startsWith("e-") })
+        assertTrue(results.all { it.causalChain.nodes.isNotEmpty() })
+        assertTrue(results.all { it.recommendationSelection.recommendation.evidenceIds.isNotEmpty() })
+    }
+
+    @Test
+    fun analysisExposesCausalChainAndCanonicalRecommendationFromOneEvaluation() = runTest {
+        val result = requireNotNull(fixtureAnalysisService().analyze("e-20260921-0003"))
+        val kinds = result.causalChain.nodes.map { it.kind }.toSet()
+
+        assertTrue(CausalChainNodeKind.EVENT_EVIDENCE in kinds)
+        assertTrue(CausalChainNodeKind.TEMPORAL_INFERENCE in kinds)
+        assertTrue(CausalChainNodeKind.RULE_INFERENCE in kinds)
+        assertTrue(CausalChainNodeKind.ASSESSMENT in kinds)
+        assertTrue(result.causalChain.edges.all { it.relation == "supports" })
+        assertEquals(
+            result.assessment.evidenceIds,
+            result.recommendationSelection.recommendation.evidenceIds,
+        )
+        assertEquals("block_domain", result.recommendationSelection.mitigationRequest?.action?.wire)
+    }
+
+    @Test
+    fun unknownAndNoMatchAnalysisStillHaveSafeUiInputs() = runTest {
+        val service = fixtureAnalysisService()
+        val unknown = requireNotNull(service.analyze("e-20260921-0006"))
+        val noMatch = requireNotNull(service.analyze("e-20260921-0008"))
+
+        assertTrue(unknown.causalChain.nodes.isNotEmpty())
+        assertTrue(noMatch.causalChain.nodes.isNotEmpty())
+        assertEquals(null, unknown.recommendationSelection.mitigationRequest)
+        assertEquals(null, noMatch.recommendationSelection.mitigationRequest)
     }
 
     @Test
