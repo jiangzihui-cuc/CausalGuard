@@ -1,7 +1,6 @@
 package com.causalguard.rules
 
 import com.causalguard.core.model.Confidence
-import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.RiskCategory
 import com.causalguard.core.model.RiskAssessment as CoreRiskAssessment
 import com.causalguard.core.model.RiskRuleEngine
@@ -14,6 +13,7 @@ class RuleEvaluator(
 ) : RiskRuleEngine {
     private val ruleVersion: String = requireConsistentRuleVersion(rules)
     private val evidenceChainBuilder = EvidenceChainBuilder()
+    private val causalChainBuilder = CausalChainBuilder()
     private val sortedRules = rules.sortedWith(
         compareByDescending<RiskRule> { it.priority }.thenBy { it.id }
     )
@@ -21,12 +21,12 @@ class RuleEvaluator(
     fun evaluate(input: RuleInput): RuleEvaluationResult {
         val event = input.event
         if (input.ruleVersion != ruleVersion) {
-            return versionMismatchEvaluation(event)
+            return versionMismatchEvaluation(input)
         }
 
         val matched = sortedRules.filter { it.matches(input) }
         if (matched.isEmpty()) {
-            return noMatchEvaluation(event)
+            return noMatchEvaluation(input)
         }
 
         val unknownMatches = matched.filter { it.output.category == RiskCategory.UNKNOWN }
@@ -51,27 +51,30 @@ class RuleEvaluator(
             primary.recommendation
         }
         val evidenceChain = evidenceChainBuilder.build(input, effectiveMatches)
+        val degradation = EvaluationDegradation(
+            shouldShowUnknownDegradation = unknownDegradation,
+        )
+        val assessment = CoreRiskAssessment(
+            id = "r-${event.eventId}",
+            eventId = event.eventId,
+            ruleVersion = ruleVersion,
+            riskScore = primary.output.riskLevel.defaultScore,
+            riskLevel = if (unknownDegradation) RiskLevel.LOW else primary.output.riskLevel,
+            scenarioMatch = if (unknownDegradation) ScenarioMatch.UNKNOWN else primary.output.scenarioMatch,
+            confidence = if (unknownDegradation) Confidence.LOW else primary.output.confidence,
+            category = if (unknownDegradation) RiskCategory.UNKNOWN else primary.output.category,
+            explanationBoundary = explanationBoundary(effectiveMatches),
+            evidenceIds = evidenceChain.evidenceIds,
+            matchedRules = effectiveMatches.map { it.id },
+            createdAt = 0L,
+        )
 
         return RuleEvaluationResult(
-            assessment = CoreRiskAssessment(
-                id = "r-${event.eventId}",
-                eventId = event.eventId,
-                ruleVersion = ruleVersion,
-                riskScore = primary.output.riskLevel.defaultScore,
-                riskLevel = if (unknownDegradation) RiskLevel.LOW else primary.output.riskLevel,
-                scenarioMatch = if (unknownDegradation) ScenarioMatch.UNKNOWN else primary.output.scenarioMatch,
-                confidence = if (unknownDegradation) Confidence.LOW else primary.output.confidence,
-                category = if (unknownDegradation) RiskCategory.UNKNOWN else primary.output.category,
-                explanationBoundary = explanationBoundary(effectiveMatches),
-                evidenceIds = evidenceChain.evidenceIds,
-                matchedRules = effectiveMatches.map { it.id },
-                createdAt = 0L
-            ),
+            assessment = assessment,
             recommendationDecision = recommendation,
-            degradation = EvaluationDegradation(
-                shouldShowUnknownDegradation = unknownDegradation
-            ),
+            degradation = degradation,
             evidenceLinks = evidenceChain.links,
+            causalChain = causalChainBuilder.build(input, assessment, evidenceChain.links, degradation),
         )
     }
 
@@ -120,45 +123,55 @@ class RuleEvaluator(
         }
     }
 
-    private fun noMatchEvaluation(event: PrivacyEvent): RuleEvaluationResult =
-        RuleEvaluationResult(
-            assessment = CoreRiskAssessment(
-                id = "r-${event.eventId}",
-                eventId = event.eventId,
-                ruleVersion = ruleVersion,
-                riskScore = 0,
-                riskLevel = RiskLevel.LOW,
-                scenarioMatch = ScenarioMatch.UNKNOWN,
-                confidence = Confidence.LOW,
-                category = RiskCategory.UNKNOWN,
-                explanationBoundary = "未命中风险规则，仅保留事件事实。",
-                evidenceIds = listOf(event.eventId),
-                matchedRules = emptyList(),
-                createdAt = 0L
-            ),
+    private fun noMatchEvaluation(input: RuleInput): RuleEvaluationResult {
+        val event = input.event
+        val assessment = CoreRiskAssessment(
+            id = "r-${event.eventId}",
+            eventId = event.eventId,
+            ruleVersion = ruleVersion,
+            riskScore = 0,
+            riskLevel = RiskLevel.LOW,
+            scenarioMatch = ScenarioMatch.UNKNOWN,
+            confidence = Confidence.LOW,
+            category = RiskCategory.UNKNOWN,
+            explanationBoundary = "未命中风险规则，仅保留事件事实。",
+            evidenceIds = listOf(event.eventId),
+            matchedRules = emptyList(),
+            createdAt = 0L,
+        )
+        val degradation = EvaluationDegradation(shouldShowUnknownDegradation = false)
+        return RuleEvaluationResult(
+            assessment = assessment,
             recommendationDecision = RecommendationDecision("none", "无需处置"),
-            degradation = EvaluationDegradation(shouldShowUnknownDegradation = false)
+            degradation = degradation,
+            causalChain = causalChainBuilder.build(input, assessment, emptyList(), degradation),
         )
+    }
 
-    private fun versionMismatchEvaluation(event: PrivacyEvent): RuleEvaluationResult =
-        RuleEvaluationResult(
-            assessment = CoreRiskAssessment(
-                id = "r-${event.eventId}",
-                eventId = event.eventId,
-                ruleVersion = ruleVersion,
-                riskScore = 0,
-                riskLevel = RiskLevel.LOW,
-                scenarioMatch = ScenarioMatch.UNKNOWN,
-                confidence = Confidence.LOW,
-                category = RiskCategory.UNKNOWN,
-                explanationBoundary = "输入规则版本与当前规则资产版本不一致，未执行风险判定。",
-                evidenceIds = listOf(event.eventId),
-                matchedRules = emptyList(),
-                createdAt = 0L
-            ),
-            recommendationDecision = RecommendationDecision("none", "规则版本不匹配，暂不处置"),
-            degradation = EvaluationDegradation(shouldShowUnknownDegradation = true)
+    private fun versionMismatchEvaluation(input: RuleInput): RuleEvaluationResult {
+        val event = input.event
+        val assessment = CoreRiskAssessment(
+            id = "r-${event.eventId}",
+            eventId = event.eventId,
+            ruleVersion = ruleVersion,
+            riskScore = 0,
+            riskLevel = RiskLevel.LOW,
+            scenarioMatch = ScenarioMatch.UNKNOWN,
+            confidence = Confidence.LOW,
+            category = RiskCategory.UNKNOWN,
+            explanationBoundary = "输入规则版本与当前规则资产版本不一致，未执行风险判定。",
+            evidenceIds = listOf(event.eventId),
+            matchedRules = emptyList(),
+            createdAt = 0L,
         )
+        val degradation = EvaluationDegradation(shouldShowUnknownDegradation = true)
+        return RuleEvaluationResult(
+            assessment = assessment,
+            recommendationDecision = RecommendationDecision("none", "规则版本不匹配，暂不处置"),
+            degradation = degradation,
+            causalChain = causalChainBuilder.build(input, assessment, emptyList(), degradation),
+        )
+    }
 
     private fun requireConsistentRuleVersion(rules: List<RiskRule>): String {
         require(rules.isNotEmpty()) { "RuleEvaluator requires at least one rule" }

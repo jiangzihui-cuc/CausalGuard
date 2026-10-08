@@ -103,6 +103,8 @@ v0.1 冻结以下字段来源，避免规则层、存储层和解释层各自推
 
 no-match、version mismatch 和没有可用 witness 时不制造关联；unknown degradation 只允许 effective unknown rules 的 rule link 存在，不保留被抑制的高风险 rule link。B5-2 只构建结果，不自动持久化 EvidenceLink。
 
+`RuleEvaluationResult` 是 rule-engine 内部 rich metadata 结果，现包含 `evidenceLinks` 和可重建的 `causalChain`。`causalChain` 是由 `RuleInput`、canonical `RiskAssessment`、EvidenceLink 和降级结果确定性生成的 derived view，不是新的事实源；canonical `RiskRuleEngine.assess(input): RiskAssessment` 公共接口和 `RiskAssessment` 字段不变。链上的 event 节点保留原始证据等级，temporal/rule inference 为 E3，unknown/degraded assessment 为 E5，所有边仅表示 `supports`，不表示 `causes`。
+
 ## 3. 风险评分公式（初版）
 
 ```text

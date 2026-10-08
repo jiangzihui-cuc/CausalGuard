@@ -74,6 +74,7 @@ class RuleEvaluationResultTest {
         assertEquals(RiskCategory.HIGH_RISK, result.assessment.category)
         assertEquals("limit_background_network", result.recommendationDecision.action)
         assertFalse(result.degradation.shouldShowUnknownDegradation)
+        assertTrue(result.causalChain != null)
     }
 
     @Test
@@ -111,6 +112,7 @@ class RuleEvaluationResultTest {
         assertEquals("none", result.recommendationDecision.action)
         assertEquals("无法确认，暂不处置", result.recommendationDecision.title)
         assertTrue(result.degradation.shouldShowUnknownDegradation)
+        assertTrue(result.causalChain != null)
     }
 
     @Test
@@ -127,6 +129,7 @@ class RuleEvaluationResultTest {
         assertEquals(emptyList(), result.assessment.matchedRules)
         assertEquals("none", result.recommendationDecision.action)
         assertFalse(result.degradation.shouldShowUnknownDegradation)
+        assertTrue(result.causalChain != null)
     }
 
     @Test
@@ -191,6 +194,7 @@ class RuleEvaluationResultTest {
         )
         assertEquals("none", first.recommendationDecision.action)
         assertTrue(first.degradation.shouldShowUnknownDegradation)
+        assertTrue(first.causalChain != null)
     }
 
     private fun assertCanonicalMatchesAssessment(

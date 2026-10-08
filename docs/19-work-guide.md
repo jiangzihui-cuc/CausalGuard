@@ -11,14 +11,14 @@
 
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
-当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6）已完成并真机验证（PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4）已完成（PR #25 已合入）；阶段 5 B 侧 B5-1~B5-2 已完成，B5-3~B5-7 与 B6 未开始
+当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6）已完成并真机验证（PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4）已完成（PR #25 已合入）；阶段 5 B 侧 B5-1~B5-3 已完成，B5-4~B5-7 与 B6 未开始
 成员 A：A5-1~A5-6 已完成（A5-1 底座域名阻断补丁已真机验证：PJW110/Android 16，RESULT_OK/RESULT_CANCELED 诚实回执），A6-1~A6-4 已完成（在线 AI 安全网络层、密钥注入、真机稳定性、缺陷排查）；下一步 A7-1~A7-6（发布候选）
-成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-2 已完成，B5-3~B5-7 与 B6 未开始；不依赖真实 VPN，下一步推进 B5-3 因果链节点与事实/推断等级
+成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-3 已完成，B5-4~B5-7 与 B6 未开始；不依赖真实 VPN，下一步推进 B5-4 Recommendation 选择
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
 
-**一句话**：阶段 0~4、阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询，PR #18 已合入）、阶段 5 B5-1 场景知识库、B5-2 证据链构建器与阶段 6 A 侧（在线 AI 安全网络层 + 密钥注入 + 真机稳定性 + 缺陷排查，PR #25 已合入）均已完成；**成员 A 推进阶段 7 发布候选（A7-1~A7-6），成员 B 下一步做 B5-3 因果链节点与事实/推断等级**。
+**一句话**：阶段 0~4、阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询，PR #18 已合入）、阶段 5 B5-1 场景知识库、B5-2 证据链构建器、B5-3 解释链 DAG 与阶段 6 A 侧（在线 AI 安全网络层 + 密钥注入 + 真机稳定性 + 缺陷排查，PR #25 已合入）均已完成；**成员 A 推进阶段 7 发布候选（A7-1~A7-6），成员 B 下一步做 B5-4 Recommendation 选择**。
 
 开源路线已定（详见 [20 开源复用建议](20-open-source-reuse-guide.md) 第 13 节）：优先走 **方案 A：TrackerControl / NetGuard（GPL-3.0）** 作为网络底座；接受 GPL 路线并明确开源与原创边界。MIT 备选路线仅在阶段 1 构建链持续失败时启用。
 
@@ -64,13 +64,13 @@
 
 **阶段 4 B 侧（B4）**：B4-1（离线 tracker 数据集）、B4-2（`TrackerClassifier` 与域名归一化）、B4-3（真实/演示/未知来源标签与观测降级）、B4-5（Demo App 场景 C/D）已完成并合入 `main`；**B4-4（用 A 的真实 fixture 校准规则）已完成**（PR #26，2026-10-06）：20 条 PJW110 / Android 16 真机真实输入配套独立 fact oracle，tracker coverage diagnosis 为 mixed，运行时采用 `rules-v0.2` 完成 R-008 attribution calibration（`rules-v0.1` frozen baseline 保留）。见 [17 任务看板](17-task-board.md) 阶段 4。
 
-**阶段 5 原创分析层（B5-1~B5-7）**：B5-1~B5-2 已完成；B5-3~B5-7 未开始。
+**阶段 5 原创分析层（B5-1~B5-7）**：B5-1~B5-3 已完成；B5-4~B5-7 未开始。
 
 | 任务编号 | 做什么 | 改哪里 | 完成标准 |
 |---|---|---|---|
 | B5-1 | 场景知识库和场景一致性 | `:rule-engine` / `docs/` | 已完成：`scene-knowledge-v0.1` 与确定性 evaluator |
 | B5-2 | `EvidenceLink` 与证据链构建器 | `:rule-engine` | 已完成：effective supporting event、E3 temporal/rule link、确定性 evidenceIds |
-| B5-3 | 因果链节点和事实/推断等级 | `:rule-engine` | 节点带证据等级 |
+| B5-3 | 因果链节点和事实/推断等级 | `:rule-engine` | 已完成：deterministic explanation DAG、E1/E2/E4/E5 事实节点、E3 推断节点、unknown E5 assessment |
 | B5-4 | Recommendation 选择 | `:rule-engine` / `:core-model` | 处置建议可被 `MitigationExecutor` 消费 |
 | B5-5 | `RecheckComparator`：减少、无变化、被阻断、无法确认 | `:rule-engine` | 处置前后结果可比较 |
 | B5-6 | 因果链、处置和复查页面 | `app/.../ui/` | 页面可展示因果链与复查结果 |
