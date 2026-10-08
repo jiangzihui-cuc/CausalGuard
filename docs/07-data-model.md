@@ -133,7 +133,7 @@ v0.1 字段来源约束：
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `recommendationId` | String (PK) | UUID |
+| `recommendationId` | String (PK) | UUID；B5-4 使用 deterministic name-based UUID |
 | `riskType` | String | 对应风险类型 |
 | `title` | String | 建议标题 |
 | `reason` | String | 触发原因 |
@@ -142,6 +142,8 @@ v0.1 字段来源约束：
 | `reversible` | Boolean | 是否可逆 |
 | `applicableVersion` | String | 适用系统版本 |
 | `evidenceIds` | String (JSON) | 证据列表 |
+
+B5-4 中，`Recommendation` 是建议/审计 DTO，不代表执行；同一评估事件、规则版本、来源规则、来源 action 与目标域名使用 UTF-8 name-based UUID 生成稳定 `recommendationId`。它与 `MitigationRequest`（可执行请求计划）分开，后者也不代表动作已经执行或生效。
 
 ### 2.8 MitigationRecord
 

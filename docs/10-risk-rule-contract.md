@@ -249,6 +249,16 @@ no-match、version mismatch 和没有可用 witness 时不制造关联；unknown
 
 建议动作只表示“推荐展示什么”，不代表系统已经执行处置。`unknown` 或证据不足时，`recommendation.action` 应为 `none`，除非已有足够证据支持非确定性提示。
 
+### 5.5 B5-4 Recommendation 选择
+
+规则资产的 `RecommendationDecision` 经 B5-4 生成 canonical `Recommendation`，并可生成可选的 `MitigationRequest`。Recommendation 是建议/审计 DTO，MitigationRequest 是执行请求计划；二者都不表示动作已经执行或已经生效。
+
+- unknown/degraded、no-match 和 version mismatch 只生成安全表达的 Recommendation，不生成 executable request；正常 `none` 仍保留规则标题“无需处置”。
+- `review_permission`、`limit_background_activity` 在可靠包名下映射为 `OPEN_SETTINGS`。
+- `limit_background_network` 只在 `assessment.evidenceIds` 中找到可靠 domain evidence 时映射为 `BLOCK_DOMAIN`，不映射 `BLOCK_APP`；缺域名时不 fallback 到 `OPEN_SETTINGS`。
+- domain target 必须来自 `assessment.evidenceIds` 对应的同 App 网络事件，不从 IP、标题、tracker 分类或 AI 推断。
+- selector 使用 deterministic name-based UUID，并保持 `Recommendation.evidenceIds == RiskAssessment.evidenceIds`；本轮不执行、不持久化、不接 UI。
+
 `degradation` 字段：
 
 | 字段 | 必填 | 类型 | 说明 |
