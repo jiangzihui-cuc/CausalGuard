@@ -55,6 +55,7 @@ data class RuleEvaluationResult(
     val recommendationDecision: RecommendationDecision,
     val degradation: EvaluationDegradation,
     val evidenceLinks: List<EvidenceLink> = emptyList(),
+    val causalChain: CausalChainResult? = null,
 )
 
 data class RiskRule(
