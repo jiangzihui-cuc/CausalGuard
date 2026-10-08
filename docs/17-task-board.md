@@ -175,7 +175,7 @@
 | B5-2 | `EvidenceLink` 与证据链构建器 | 已完成 |
 | B5-3 | 因果链节点和事实/推断等级 | 已完成 |
 | B5-4 | Recommendation 选择 | 已完成 |
-| B5-5 | `RecheckComparator`：减少、无变化、被阻断、无法确认 | 未开始 |
+| B5-5 | `RecheckComparator`：减少、无变化、被阻断、无法确认 | 已完成 |
 | B5-6 | 因果链、处置和复查页面 | 未开始 |
 | B5-7 | 至少 8 条处置前后评测样例 | 未开始 |
 
@@ -188,6 +188,8 @@
 > B5-3 进展（成员 B，2026-10-07）：建立 deterministic causal/explanation DAG；事件节点保留 E1/E2/E4/E5，temporal/rule inference 为 E3，unknown assessment 为 E5；`supports` 不表述为 `causes`。
 
 > B5-4 进展（成员 B，2026-10-08）：建立 deterministic `RecommendationSelector`；unknown/degraded 不生成执行请求；权限/后台活动建议映射 `OPEN_SETTINGS`；后台网络仅在 `evidenceIds` 中存在可靠 domain 时映射 `BLOCK_DOMAIN`；P0 不生成 `BLOCK_APP`。
+
+> B5-5 进展（成员 B，2026-10-08）：建立 deterministic `RecheckComparator`；基于等长前后窗口比较 `allowedCount`，区分 `NO_REQUEST` 与 `ALL_BLOCKED`，输出 `reduced/no_change/blocked/unknown`；非 executed、`OPEN_SETTINGS`、坏快照或不可比窗口均诚实降级为 `unknown`。
 
 > **阶段 5 执行层进展（A 回填，2026-10-03）**：A5-1~A5-6 代码完成，`:app` 单测 81 项通过（新增 `DeviceMitigationExecutorTest` 9 项、`RoomNetworkObservationRepositoryTest` 3 项）。契约新增 `core-model/.../MitigationApi.kt`（`MitigationAction`/`MitigationStatus`/`MitigationRequest`/`MitigationExecution`/`MitigationExecutor`/`NetworkObservation`/`NetworkRequestPresence`/`NetworkObservationRepository`）。实现：
 > - **A5-1**：`mitigation/DeviceMitigationExecutor` 按 action 分派；`DomainBlockController` 经 ordered broadcast（`TrackerControlBroadcast.ACTION_BLOCK_DOMAIN`）请求底座阻断，仅 `RESULT_OK` 回执为 `CONFIRMED`，超时/未接线一律 `UNAVAILABLE`，绝不谎报。
