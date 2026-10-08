@@ -14,6 +14,7 @@ class RuleEvaluator(
     private val ruleVersion: String = requireConsistentRuleVersion(rules)
     private val evidenceChainBuilder = EvidenceChainBuilder()
     private val causalChainBuilder = CausalChainBuilder()
+    private val recommendationSelector = RecommendationSelector()
     private val sortedRules = rules.sortedWith(
         compareByDescending<RiskRule> { it.priority }.thenBy { it.id }
     )
@@ -68,6 +69,14 @@ class RuleEvaluator(
             matchedRules = effectiveMatches.map { it.id },
             createdAt = 0L,
         )
+        val recommendationSelection = recommendationSelector.select(
+            input = input,
+            assessment = assessment,
+            decision = recommendation,
+            degradation = degradation,
+            evidenceLinks = evidenceChain.links,
+            sourceRuleId = primary.id,
+        )
 
         return RuleEvaluationResult(
             assessment = assessment,
@@ -75,6 +84,7 @@ class RuleEvaluator(
             degradation = degradation,
             evidenceLinks = evidenceChain.links,
             causalChain = causalChainBuilder.build(input, assessment, evidenceChain.links, degradation),
+            recommendationSelection = recommendationSelection,
         )
     }
 
@@ -140,11 +150,19 @@ class RuleEvaluator(
             createdAt = 0L,
         )
         val degradation = EvaluationDegradation(shouldShowUnknownDegradation = false)
+        val recommendation = RecommendationDecision("none", "无需处置")
+        val recommendationSelection = recommendationSelector.select(
+            input = input,
+            assessment = assessment,
+            decision = recommendation,
+            degradation = degradation,
+        )
         return RuleEvaluationResult(
             assessment = assessment,
-            recommendationDecision = RecommendationDecision("none", "无需处置"),
+            recommendationDecision = recommendation,
             degradation = degradation,
             causalChain = causalChainBuilder.build(input, assessment, emptyList(), degradation),
+            recommendationSelection = recommendationSelection,
         )
     }
 
@@ -165,11 +183,19 @@ class RuleEvaluator(
             createdAt = 0L,
         )
         val degradation = EvaluationDegradation(shouldShowUnknownDegradation = true)
+        val recommendation = RecommendationDecision("none", "规则版本不匹配，暂不处置")
+        val recommendationSelection = recommendationSelector.select(
+            input = input,
+            assessment = assessment,
+            decision = recommendation,
+            degradation = degradation,
+        )
         return RuleEvaluationResult(
             assessment = assessment,
-            recommendationDecision = RecommendationDecision("none", "规则版本不匹配，暂不处置"),
+            recommendationDecision = recommendation,
             degradation = degradation,
             causalChain = causalChainBuilder.build(input, assessment, emptyList(), degradation),
+            recommendationSelection = recommendationSelection,
         )
     }
 
