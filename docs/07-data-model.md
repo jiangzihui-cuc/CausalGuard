@@ -158,7 +158,7 @@ B5-4 中，`Recommendation` 是建议/审计 DTO，不代表执行；同一评�
 | `ruleVersion` | String | 规则版本 |
 | `preSnapshot` | String (JSON) | 处置前快照 |
 | `executionStatus` | String | 执行结果：executed/unavailable/unsupported/failed/unknown；失败/不可用不伪装成已执行 |
-| `postResult` | String | reduced/no_change/unknown |
+| `postResult` | String | reduced/no_change/blocked/unknown；`unknown` 表示 `RecheckOutcome.UNCONFIRMABLE` |
 | `observationEnd` | Long? | 观察窗口结束时间 |
 | `reviewNotes` | String? | 复查说明 |
 
