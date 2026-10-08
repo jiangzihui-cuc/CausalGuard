@@ -55,6 +55,9 @@ class MainActivity : ComponentActivity() {
             CausalGuardApp(
                 privacyEventRepository = appDependencies.privacyEventRepository,
                 eventAnalysisService = appDependencies.eventAnalysisService,
+                mitigationExecutor = appDependencies.mitigationExecutor,
+                mitigationRepository = appDependencies.mitigationRepository,
+                networkObservationRepository = appDependencies.networkObservationRepository,
                 output = outputText,
                 onOpenUsageSettings = {
                     startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
