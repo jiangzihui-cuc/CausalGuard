@@ -1,0 +1,184 @@
+{
+  "schema": {
+    "name": "evaluation-failure-cases-v0.1",
+    "purpose": "Failure and unknown registry derived from deterministic rule evaluation against curated oracles.",
+    "ruleVersions": ["rules-v0.1", "rules-v0.2"]
+  },
+  "summary": {
+    "falsePositive": 0,
+    "falseNegative": 0,
+    "classificationDisagreement": 0,
+    "explicitUnknownBoundary": 8,
+    "contextOnlyUnknown": 6
+  },
+  "cases": [
+    {
+      "caseId": "fixture-e-20260921-0006",
+      "eventId": "e-20260921-0006",
+      "dataset": "historical-frozen",
+      "ruleVersion": "rules-v0.1",
+      "caseType": "unknown_boundary",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "无法归属网络事件是显式 unknown boundary，不应强行归因或生成确定性处置。"
+    },
+    {
+      "caseId": "fixture-e-20260921-0008",
+      "eventId": "e-20260921-0008",
+      "dataset": "historical-frozen",
+      "ruleVersion": "rules-v0.1",
+      "caseType": "context_only_unknown",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "使用上下文不足时保留 unknown；该安全降级不是漏报。"
+    },
+    {
+      "caseId": "fixture-e-20260921-0010",
+      "eventId": "e-20260921-0010",
+      "dataset": "historical-frozen",
+      "ruleVersion": "rules-v0.1",
+      "caseType": "context_only_unknown",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "缺少可确认场景的上下文时保留 unknown；不把未知解释成风险漏报。"
+    },
+    {
+      "caseId": "eval-case-0006",
+      "eventId": "eval-20261001-0006",
+      "dataset": "historical-extension",
+      "ruleVersion": "rules-v0.1",
+      "caseType": "context_only_unknown",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "无域名且无场景匹配的连接不能升级为 tracker 风险。"
+    },
+    {
+      "caseId": "eval-case-0008",
+      "eventId": "eval-20261001-0008",
+      "dataset": "historical-extension",
+      "ruleVersion": "rules-v0.1",
+      "caseType": "unknown_boundary",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "UID、包名和域名均不足以建立可靠归属时保持 unknown。"
+    },
+    {
+      "caseId": "eval-case-0012",
+      "eventId": "eval-20261001-0012",
+      "dataset": "historical-extension",
+      "ruleVersion": "rules-v0.1",
+      "caseType": "context_only_unknown",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "单独的权限状态事实不构成隐私风险规则命中。"
+    },
+    {
+      "caseId": "boundary-case-0002",
+      "eventId": "eval-boundary-20261009-0002",
+      "dataset": "current-boundary",
+      "ruleVersion": "rules-v0.2",
+      "caseType": "unknown_boundary",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "没有匹配场景结果时，前台网络事实不能单独升级为正常匹配或风险规则。"
+    },
+    {
+      "caseId": "boundary-case-0003",
+      "eventId": "eval-boundary-20261009-0003",
+      "dataset": "current-boundary",
+      "ruleVersion": "rules-v0.2",
+      "caseType": "unknown_boundary",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "已知 App 没有域名线索时，不能仅从 IP 推断 tracker 分类。"
+    },
+    {
+      "caseId": "boundary-case-0006",
+      "eventId": "eval-boundary-20261009-0006",
+      "dataset": "current-boundary",
+      "ruleVersion": "rules-v0.2",
+      "caseType": "unknown_boundary",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "相隔 60001 毫秒超出相关窗口，孤立网络事件没有可用规则命中。"
+    },
+    {
+      "caseId": "boundary-case-0007",
+      "eventId": "eval-boundary-20261009-0007",
+      "dataset": "current-boundary",
+      "ruleVersion": "rules-v0.2",
+      "caseType": "unknown_boundary",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "rules-v0.2 中 packageName=unknown 足以表示 unknown attribution，即使 UID 已知。"
+    },
+    {
+      "caseId": "boundary-case-0009-witness",
+      "eventId": "eval-boundary-20261009-0009-witness",
+      "dataset": "current-boundary",
+      "ruleVersion": "rules-v0.2",
+      "caseType": "context_only_unknown",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "同一时间的权限状态事实只是上下文，不单独构成隐私风险事件。"
+    },
+    {
+      "caseId": "boundary-case-0010-witness",
+      "eventId": "eval-boundary-20261009-0010-witness",
+      "dataset": "current-boundary",
+      "ruleVersion": "rules-v0.2",
+      "caseType": "context_only_unknown",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "已授予或未变化的权限状态只是支持性上下文，不独立生成风险规则命中。"
+    },
+    {
+      "caseId": "boundary-case-0011",
+      "eventId": "eval-boundary-20261009-0011",
+      "dataset": "current-boundary",
+      "ruleVersion": "rules-v0.2",
+      "caseType": "unknown_boundary",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "E5 证据不足以形成确定性风险结论。"
+    },
+    {
+      "caseId": "boundary-case-0012",
+      "eventId": "eval-boundary-20261009-0012",
+      "dataset": "current-boundary",
+      "ruleVersion": "rules-v0.2",
+      "caseType": "unknown_boundary",
+      "expectedRiskLevel": "low",
+      "expectedCategory": "unknown",
+      "expectedScenarioMatch": "unknown",
+      "calibrationDecision": "NO_CHANGE",
+      "rationale": "前台地图位置事实在独立场景结果 unknown 时不足以触发 R-001。"
+    }
+  ]
+}

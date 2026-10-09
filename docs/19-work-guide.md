@@ -11,9 +11,9 @@
 
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
-当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6，PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4，PR #25 已合入）、阶段 7 A 侧发布候选（A7-1~A7-6，PR #27 已合入）已完成；阶段 5 B 侧 B5-1~B5-7 已完成，阶段 6 B 侧 B6-1~B6-5 已完成，下一步 B6-6
+当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6，PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4，PR #25 已合入）、阶段 7 A 侧发布候选（A7-1~A7-6，PR #27 已合入）已完成；阶段 5 B 侧 B5-1~B5-7 已完成，阶段 6 B 侧 B6-1~B6-6 已完成
 成员 A：A5-1~A5-6（含 A5-1 底座域名阻断补丁真机验证：PJW110/Android 16，RESULT_OK/RESULT_CANCELED 诚实回执）、A6-1~A6-4（在线 AI 安全网络层、密钥注入、真机稳定性、缺陷排查）已完成；阶段 7 发布候选 A7-1~A7-6 已完成并合入 main（冻结 PJW110/Android 16 环境、构建签名 RC `0.2.0-rc1`、安装/恢复文档、许可证报告、第三方修改证据、阻断性缺陷排查）；下一步 A8-1~A8-5（最终提交准备）
-成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-7 已完成（B5-7 处置前后评测集 12 条）；阶段 6 B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）、B6-4（评测集扩展）与 B6-5（指标统计）已完成，下一步 B6-6；不依赖真实 VPN
+成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-7 已完成（B5-7 处置前后评测集 12 条）；阶段 6 B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）、B6-4（评测集扩展）、B6-5（指标统计）与 B6-6（failure registry、动态分类和校准决策）已完成；不自动开始新的 B 侧开发任务，不依赖真实 VPN
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
@@ -68,7 +68,7 @@
 
 **阶段 4 B 侧（B4）**：B4-1（离线 tracker 数据集）、B4-2（`TrackerClassifier` 与域名归一化）、B4-3（真实/演示/未知来源标签与观测降级）、B4-5（Demo App 场景 C/D）已完成并合入 `main`；**B4-4（用 A 的真实 fixture 校准规则）已完成**（PR #26，2026-10-06）：20 条 PJW110 / Android 16 真机真实输入配套独立 fact oracle，tracker coverage diagnosis 为 mixed，运行时采用 `rules-v0.2` 完成 R-008 attribution calibration（`rules-v0.1` frozen baseline 保留）。见 [17 任务看板](17-task-board.md) 阶段 4。
 
-**阶段 6 AI 解释与评测（B6-1~B6-6）**：B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）已完成。B6-4 已建立 historical `rules-v0.1` 25 cases 与 current `rules-v0.2` boundary 17 cases，共 42 条；B6-5 已按 ruleVersion 报告 deterministic oracle agreement，完成 12 条 synthetic AI guardrail evaluation 与 12 条 synthetic recheck metrics。real AI fact consistency 为 `N/A`，user mitigation duration 为 `N/A`；下一步 B6-6 保存 disagreement、false positive、false negative、unknown 并判断是否需要规则校准。在线 AI 始终可选，关闭后不影响 P0。
+**阶段 6 AI 解释与评测（B6-1~B6-6）**：B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）已完成。B6-4 已建立 historical `rules-v0.1` 25 cases 与 current `rules-v0.2` boundary 17 cases，共 42 条；B6-5 已按 ruleVersion 报告 deterministic oracle agreement，完成 12 条 synthetic AI guardrail evaluation 与 12 条 synthetic recheck metrics。B6-6 已完成 failure registry、动态 failure classification 与 calibration decision 记录，且 `:rule-engine:testDebugUnitTest` 已在正常 WSL BUILD SUCCESSFUL。real AI fact consistency 为 `N/A`，user mitigation duration 为 `N/A`；后续仅在有独立证据时判断是否需要规则校准。在线 AI 始终可选，关闭后不影响 P0。
 
 | 任务编号 | 做什么 | 改哪里 | 完成标准 |
 |---|---|---|---|

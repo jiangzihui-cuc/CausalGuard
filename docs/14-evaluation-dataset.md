@@ -123,8 +123,11 @@ AI 评测不联网、不调用真实模型，使用独立 synthetic candidate/or
 
 ## 6. 失败案例
 
-- 主动保留误报、漏报、无法确认的样例；
-- 每个失败案例记录：期望、实际、可能原因、改进方向；
+- `false_positive` / `false_negative` 只表示相对 curated oracle 的 severity over/under disagreement，不是现实世界统计学意义上的误报率或漏报率；
+- `classification_disagreement` 表示风险等级相同但 category 或 scenarioMatch 不一致；
+- `unknown_boundary` 是显式安全降级边界，`context_only_unknown` 是上下文不足或非风险事实导致的 unknown；两者都不自动算作 false negative；
+- 当前 failure registry 位于 `fixtures/evaluation-failure-cases-v0.1.json`，只引用已有 case/event，不复制隐私事件内容；
+- 每个失败案例记录：期望、实际、可能原因、改进方向；生产规则校准必须有 independent evidence，不能仅为提高 curated 指标而修改规则；
 - 正式文档必须同时报告测试集构成、测试方法和失败案例，不能只展示最好结果。
 
 ## 7. 评测运行与版本
