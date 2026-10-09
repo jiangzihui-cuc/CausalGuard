@@ -1,0 +1,267 @@
+[
+  {
+    "eventId": "eval-boundary-20261009-0001",
+    "appId": "com.eval.boundary.calculator",
+    "appName": "Boundary Calculator",
+    "eventType": "network",
+    "timestamp": 1800000000000,
+    "foregroundState": "background",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Boundary calculator background connection to a non-tracker CDN domain.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.101",
+      "remotePort": 443,
+      "domainHint": "cdn.example.test",
+      "uid": 30001,
+      "packageName": "com.eval.boundary.calculator"
+    }
+  },
+  {
+    "eventId": "eval-boundary-20261009-0002",
+    "appId": "com.eval.boundary.foreground",
+    "appName": "Boundary Foreground App",
+    "eventType": "network",
+    "timestamp": 1800000100000,
+    "foregroundState": "foreground",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Foreground connection with an unknown upstream scenario result.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.102",
+      "remotePort": 443,
+      "domainHint": "updates.example.test",
+      "uid": 30002,
+      "packageName": "com.eval.boundary.foreground"
+    }
+  },
+  {
+    "eventId": "eval-boundary-20261009-0003",
+    "appId": "com.eval.boundary.nodomain",
+    "appName": "Boundary No Domain App",
+    "eventType": "network",
+    "timestamp": 1800000200000,
+    "foregroundState": "background",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Known app connection without a domain attribution.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.103",
+      "remotePort": 443,
+      "domainHint": "",
+      "uid": 30003,
+      "packageName": "com.eval.boundary.nodomain"
+    }
+  },
+  {
+    "eventId": "eval-boundary-20261009-0004",
+    "appId": "com.eval.boundary.r007.59999",
+    "appName": "Boundary R007 59999 App",
+    "eventType": "network",
+    "timestamp": 1800000000000,
+    "foregroundState": "background",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Network event paired with a same-app clipboard event 59999 milliseconds earlier.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.104",
+      "remotePort": 443,
+      "domainHint": "cdn.example.test",
+      "uid": 30004,
+      "packageName": "com.eval.boundary.r007.59999"
+    }
+  },
+  {
+    "eventId": "eval-boundary-20261009-0004-witness",
+    "appId": "com.eval.boundary.r007.59999",
+    "appName": "Boundary R007 59999 App",
+    "eventType": "clipboard",
+    "timestamp": 1799999940001,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic background clipboard access; original content omitted.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-boundary-20261009-0005",
+    "appId": "com.eval.boundary.r007.60000",
+    "appName": "Boundary R007 60000 App",
+    "eventType": "network",
+    "timestamp": 1800000000000,
+    "foregroundState": "background",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Network event paired with a same-app clipboard event exactly 60000 milliseconds earlier.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.105",
+      "remotePort": 443,
+      "domainHint": "cdn.example.test",
+      "uid": 30005,
+      "packageName": "com.eval.boundary.r007.60000"
+    }
+  },
+  {
+    "eventId": "eval-boundary-20261009-0005-witness",
+    "appId": "com.eval.boundary.r007.60000",
+    "appName": "Boundary R007 60000 App",
+    "eventType": "clipboard",
+    "timestamp": 1799999940000,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic background clipboard access; original content omitted.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-boundary-20261009-0006",
+    "appId": "com.eval.boundary.r007.60001",
+    "appName": "Boundary R007 60001 App",
+    "eventType": "network",
+    "timestamp": 1800000000000,
+    "foregroundState": "background",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Network event paired with a same-app clipboard event 60001 milliseconds earlier.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.106",
+      "remotePort": 443,
+      "domainHint": "cdn.example.test",
+      "uid": 30006,
+      "packageName": "com.eval.boundary.r007.60001"
+    }
+  },
+  {
+    "eventId": "eval-boundary-20261009-0006-witness",
+    "appId": "com.eval.boundary.r007.60001",
+    "appName": "Boundary R007 60001 App",
+    "eventType": "clipboard",
+    "timestamp": 1799999939999,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic background clipboard access; original content omitted.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-boundary-20261009-0007",
+    "appId": "unknown",
+    "appName": "Boundary Unknown Attribution",
+    "eventType": "network",
+    "timestamp": 1800000600000,
+    "foregroundState": "unknown",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Unknown package attribution with a known UID and no domain hint.",
+    "network": {
+      "protocol": "UDP",
+      "remoteIp": "198.51.100.107",
+      "remotePort": 443,
+      "domainHint": "",
+      "uid": 30008,
+      "packageName": "unknown"
+    }
+  },
+  {
+    "eventId": "eval-boundary-20261009-0008",
+    "appId": "com.eval.boundary.unused",
+    "appName": "Boundary Unused App",
+    "eventType": "network",
+    "timestamp": 1800000700000,
+    "foregroundState": "unused",
+    "source": "vpn",
+    "evidenceLevel": "E2",
+    "evidenceSummary": "Long-unused app connection to a non-tracker CDN domain.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.108",
+      "remotePort": 443,
+      "domainHint": "updates.example.test",
+      "uid": 30008,
+      "packageName": "com.eval.boundary.unused"
+    }
+  },
+  {
+    "eventId": "eval-boundary-20261009-0009",
+    "appId": "com.eval.boundary.r009.equal",
+    "appName": "Boundary R009 Equal Timestamp App",
+    "eventType": "location",
+    "timestamp": 1800000800000,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic background location access at the same timestamp as a permission state event.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-boundary-20261009-0009-witness",
+    "appId": "com.eval.boundary.r009.equal",
+    "appName": "Boundary R009 Equal Timestamp App",
+    "eventType": "permission",
+    "timestamp": 1800000800000,
+    "foregroundState": "recent",
+    "source": "system_api",
+    "evidenceLevel": "E1",
+    "evidenceSummary": "Location permission state changed to revoked at the same timestamp as the target event."
+  },
+  {
+    "eventId": "eval-boundary-20261009-0010",
+    "appId": "com.eval.boundary.r009.nonrevoked",
+    "appName": "Boundary R009 Non Revoked App",
+    "eventType": "location",
+    "timestamp": 1800001000000,
+    "foregroundState": "background",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Synthetic background location access after a non-revocation permission state.",
+    "isDemo": true
+  },
+  {
+    "eventId": "eval-boundary-20261009-0010-witness",
+    "appId": "com.eval.boundary.r009.nonrevoked",
+    "appName": "Boundary R009 Non Revoked App",
+    "eventType": "permission",
+    "timestamp": 1800000999000,
+    "foregroundState": "recent",
+    "source": "system_api",
+    "evidenceLevel": "E1",
+    "evidenceSummary": "Location permission remains granted; no permission state transition was observed."
+  },
+  {
+    "eventId": "eval-boundary-20261009-0011",
+    "appId": "com.eval.boundary.e5",
+    "appName": "Boundary E5 App",
+    "eventType": "network",
+    "timestamp": 1800001100000,
+    "foregroundState": "background",
+    "source": "vpn",
+    "evidenceLevel": "E5",
+    "evidenceSummary": "Known app and domain metadata are present, but the evidence level is insufficient.",
+    "network": {
+      "protocol": "TCP",
+      "remoteIp": "198.51.100.111",
+      "remotePort": 443,
+      "domainHint": "cdn.example.test",
+      "uid": 30011,
+      "packageName": "com.eval.boundary.e5"
+    }
+  },
+  {
+    "eventId": "eval-boundary-20261009-0012",
+    "appId": "com.eval.boundary.map",
+    "appName": "Boundary Map App",
+    "eventType": "location",
+    "timestamp": 1800001200000,
+    "foregroundState": "foreground",
+    "source": "demo",
+    "evidenceLevel": "E4",
+    "evidenceSummary": "Foreground map location access with an explicitly unknown scenario result.",
+    "isDemo": true
+  }
+]

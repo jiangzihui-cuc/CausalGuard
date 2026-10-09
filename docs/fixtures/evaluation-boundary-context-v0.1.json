@@ -1,0 +1,37 @@
+{
+  "schema": {
+    "name": "evaluation-boundary-context-v0.1",
+    "purpose": "Independent upstream context for B6-4 current-runtime boundary evaluation using rules-v0.2.",
+    "eventFixture": "evaluation-boundary-events-v0.1.json"
+  },
+  "appProfiles": [
+    { "packageName": "com.eval.boundary.calculator", "appName": "Boundary Calculator", "sceneType": "calculator" },
+    { "packageName": "com.eval.boundary.foreground", "appName": "Boundary Foreground App", "sceneType": "flashlight" },
+    { "packageName": "com.eval.boundary.nodomain", "appName": "Boundary No Domain App", "sceneType": "social" },
+    { "packageName": "com.eval.boundary.r007.59999", "appName": "Boundary R007 59999 App", "sceneType": "social" },
+    { "packageName": "com.eval.boundary.r007.60000", "appName": "Boundary R007 60000 App", "sceneType": "social" },
+    { "packageName": "com.eval.boundary.r007.60001", "appName": "Boundary R007 60001 App", "sceneType": "social" },
+    { "packageName": "com.eval.boundary.unused", "appName": "Boundary Unused App", "sceneType": "flashlight" },
+    { "packageName": "com.eval.boundary.r009.equal", "appName": "Boundary R009 Equal Timestamp App", "sceneType": "calculator" },
+    { "packageName": "com.eval.boundary.r009.nonrevoked", "appName": "Boundary R009 Non Revoked App", "sceneType": "calculator" },
+    { "packageName": "com.eval.boundary.e5", "appName": "Boundary E5 App", "sceneType": "social" },
+    { "packageName": "com.eval.boundary.map", "appName": "Boundary Map App", "sceneType": "map" }
+  ],
+  "scenarioMatches": [
+    { "eventId": "eval-boundary-20261009-0001", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0002", "value": "unknown" },
+    { "eventId": "eval-boundary-20261009-0003", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0004", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0004-witness", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0005", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0005-witness", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0006", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0006-witness", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0007", "value": "unknown" },
+    { "eventId": "eval-boundary-20261009-0008", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0009", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0010", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0011", "value": "mismatch" },
+    { "eventId": "eval-boundary-20261009-0012", "value": "unknown" }
+  ]
+}
