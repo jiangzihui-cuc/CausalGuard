@@ -1,6 +1,6 @@
 # B6-5 Evaluation Metrics
 
-> 状态：实现候选，待正常 WSL 完成 `:rule-engine:testDebugUnitTest` 验证。
+> 状态：已验证；`:rule-engine:testDebugUnitTest` 已在正常 WSL 通过。
 > 本文只报告可由固定资产复现的统计，不把 curated regression 包装成真实世界准确率。
 
 ## 1. 数据集与 ground truth
