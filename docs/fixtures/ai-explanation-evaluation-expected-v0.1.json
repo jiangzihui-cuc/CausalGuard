@@ -1,0 +1,21 @@
+{
+  "schema": {
+    "name": "ai-explanation-evaluation-expected-v0.1",
+    "purpose": "Independent oracle for synthetic local AI explanation guardrail dispositions.",
+    "caseFixture": "ai-explanation-evaluation-cases-v0.1.json"
+  },
+  "expectations": [
+    { "caseId": "ai-guardrail-0001", "expectedDisposition": "ACCEPT", "violationType": "none", "rationale": "All factual fields stay within the request boundary." },
+    { "caseId": "ai-guardrail-0002", "expectedDisposition": "ACCEPT", "violationType": "none", "rationale": "The high-risk wording matches the request risk level." },
+    { "caseId": "ai-guardrail-0003", "expectedDisposition": "ACCEPT", "violationType": "none", "rationale": "Omitting a risk label does not invent a fact." },
+    { "caseId": "ai-guardrail-0004", "expectedDisposition": "ACCEPT", "violationType": "none", "rationale": "Permission in a normative action is not a new permission event." },
+    { "caseId": "ai-guardrail-0005", "expectedDisposition": "SANITIZE", "violationType": "forbidden_wording", "rationale": "Forbidden wording is replaced with neutral wording." },
+    { "caseId": "ai-guardrail-0006", "expectedDisposition": "REJECT", "violationType": "extra_number", "rationale": "The candidate introduces the number 99, absent from the request." },
+    { "caseId": "ai-guardrail-0007", "expectedDisposition": "REJECT", "violationType": "foreign_package", "rationale": "The candidate names a package outside the request." },
+    { "caseId": "ai-guardrail-0008", "expectedDisposition": "REJECT", "violationType": "foreign_event_type", "rationale": "Factual text introduces a network event for a clipboard request." },
+    { "caseId": "ai-guardrail-0009", "expectedDisposition": "REJECT", "violationType": "risk_mismatch", "rationale": "The candidate downgrades a high-risk request to low risk." },
+    { "caseId": "ai-guardrail-0010", "expectedDisposition": "REJECT", "violationType": "risk_mismatch", "rationale": "The candidate escalates a low-risk request to high risk." },
+    { "caseId": "ai-guardrail-0011", "expectedDisposition": "REJECT", "violationType": "blank_segment", "rationale": "All five explanation segments are required." },
+    { "caseId": "ai-guardrail-0012", "expectedDisposition": "REJECT", "violationType": "foreign_package_like_token", "rationale": "A package-like token outside the request is not allowed." }
+  ]
+}

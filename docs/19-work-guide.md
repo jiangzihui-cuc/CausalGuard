@@ -11,14 +11,14 @@
 
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
-当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6，PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4，PR #25 已合入）、阶段 7 A 侧发布候选（A7-1~A7-6，PR #27 已合入）已完成；阶段 5 B 侧 B5-1~B5-7 已完成，阶段 6 B 侧 B6-1~B6-4 已完成，下一步 B6-5~B6-6
+当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6，PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4，PR #25 已合入）、阶段 7 A 侧发布候选（A7-1~A7-6，PR #27 已合入）已完成；阶段 5 B 侧 B5-1~B5-7 已完成，阶段 6 B 侧 B6-1~B6-5 已完成，下一步 B6-6
 成员 A：A5-1~A5-6（含 A5-1 底座域名阻断补丁真机验证：PJW110/Android 16，RESULT_OK/RESULT_CANCELED 诚实回执）、A6-1~A6-4（在线 AI 安全网络层、密钥注入、真机稳定性、缺陷排查）已完成；阶段 7 发布候选 A7-1~A7-6 已完成并合入 main（冻结 PJW110/Android 16 环境、构建签名 RC `0.2.0-rc1`、安装/恢复文档、许可证报告、第三方修改证据、阻断性缺陷排查）；下一步 A8-1~A8-5（最终提交准备）
-成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-7 已完成（B5-7 处置前后评测集 12 条）；阶段 6 B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）与 B6-4（评测集扩展）已完成，下一步 B6-5~B6-6；不依赖真实 VPN
+成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-7 已完成（B5-7 处置前后评测集 12 条）；阶段 6 B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）、B6-4（评测集扩展）与 B6-5（指标统计）已完成，下一步 B6-6；不依赖真实 VPN
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
 
-**一句话**：阶段 0~4、阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询，PR #18 已合入）、阶段 5 B5-1~B5-7（场景、证据链、因果链、Recommendation 选择、确定性复查比较、因果链/处置/复查页面、12 条处置前后评测集）、阶段 6 A 侧（在线 AI 安全网络层 + 密钥注入 + 真机稳定性 + 缺陷排查，PR #25 已合入）与阶段 7 发布候选（A7-1~A7-6，PR #27 已合入）均已完成；阶段 6 B 侧 B6-1/B6-2/B6-3/B6-4（本地解释模板与兜底、AI 白名单与本地事实校验、可选在线 Provider 与确定性编排、分版本评测集扩展）已完成；**成员 A 下一步进入阶段 8 最终提交准备（A8-1~A8-5），成员 B 下一步做 B6-5~B6-6（指标统计、失败案例校准）**。
+**一句话**：阶段 0~4、阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询，PR #18 已合入）、阶段 5 B5-1~B5-7（场景、证据链、因果链、Recommendation 选择、确定性复查比较、因果链/处置/复查页面、12 条处置前后评测集）、阶段 6 A 侧（在线 AI 安全网络层 + 密钥注入 + 真机稳定性 + 缺陷排查，PR #25 已合入）与阶段 7 发布候选（A7-1~A7-6，PR #27 已合入）均已完成；阶段 6 B 侧 B6-1/B6-2/B6-3/B6-4/B6-5（本地解释模板与兜底、AI 白名单与本地事实校验、可选在线 Provider 与确定性编排、分版本评测集扩展、指标统计）已完成；**成员 A 下一步进入阶段 8 最终提交准备（A8-1~A8-5），成员 B 下一步做 B6-6（保存 disagreement、false positive、false negative、unknown 并判断是否需要规则校准）**。
 
 开源路线已定（详见 [20 开源复用建议](20-open-source-reuse-guide.md) 第 13 节）：优先走 **方案 A：TrackerControl / NetGuard（GPL-3.0）** 作为网络底座；接受 GPL 路线并明确开源与原创边界。MIT 备选路线仅在阶段 1 构建链持续失败时启用。
 
@@ -68,7 +68,7 @@
 
 **阶段 4 B 侧（B4）**：B4-1（离线 tracker 数据集）、B4-2（`TrackerClassifier` 与域名归一化）、B4-3（真实/演示/未知来源标签与观测降级）、B4-5（Demo App 场景 C/D）已完成并合入 `main`；**B4-4（用 A 的真实 fixture 校准规则）已完成**（PR #26，2026-10-06）：20 条 PJW110 / Android 16 真机真实输入配套独立 fact oracle，tracker coverage diagnosis 为 mixed，运行时采用 `rules-v0.2` 完成 R-008 attribution calibration（`rules-v0.1` frozen baseline 保留）。见 [17 任务看板](17-task-board.md) 阶段 4。
 
-**阶段 6 AI 解释与评测（B6-1~B6-6）**：B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）已完成。B6-4 已建立 historical `rules-v0.1` 25 cases 与 current `rules-v0.2` boundary 17 cases，共 42 条；评测指标不跨 ruleVersion 聚合，留给 B6-5 分版本统计。下一步为 B6-5 统计准确率/召回率/事实一致率/处置耗时、B6-6 留存误报/漏报/unknown 案例并校准规则。在线 AI 始终可选，关闭后不影响 P0。
+**阶段 6 AI 解释与评测（B6-1~B6-6）**：B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）已完成。B6-4 已建立 historical `rules-v0.1` 25 cases 与 current `rules-v0.2` boundary 17 cases，共 42 条；B6-5 已按 ruleVersion 报告 deterministic oracle agreement，完成 12 条 synthetic AI guardrail evaluation 与 12 条 synthetic recheck metrics。real AI fact consistency 为 `N/A`，user mitigation duration 为 `N/A`；下一步 B6-6 保存 disagreement、false positive、false negative、unknown 并判断是否需要规则校准。在线 AI 始终可选，关闭后不影响 P0。
 
 | 任务编号 | 做什么 | 改哪里 | 完成标准 |
 |---|---|---|---|

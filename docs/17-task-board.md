@@ -221,10 +221,12 @@
 | B6-2 | AI 输入白名单、脱敏 DTO、输出 schema 和事实校验 | 成员 B | 成员 A | 已完成 |
 | B6-3 | 可选 `AiExplanationProvider` | 成员 B | 成员 A | 已完成 |
 | B6-4 | 扩充到 30~50 条评测样例 | 成员 B | - | 已完成 |
-| B6-5 | 统计规则准确率/召回率、事实一致率和处置耗时 | 成员 B | - | 未开始 |
+| B6-5 | 统计规则准确率/召回率、事实一致率和处置耗时 | 成员 B | - | 已完成 |
 | B6-6 | 保存误报、漏报和 unknown 案例并校准规则 | 成员 B | 成员 A | 未开始 |
 
 > B6-4 进展（2026-10-09）：原 25 条 `rules-v0.1` historical regression 保持不变，新增 17 条 `rules-v0.2` current-runtime boundary cases，主规则评测资产共 42 条。新增独立 boundary 三件套：`evaluation-boundary-events-v0.1.json`、`evaluation-boundary-context-v0.1.json`、`evaluation-boundary-expected-v0.1.json`；覆盖 R-003 独立正例、R-006 正/负例、R-007 59,999/60,000/60,001 ms、R-008 v0.2 known UID + unknown package、R-009 equal timestamp/non-revoked prior、R-010 E5 完整 attribution 和 explicit scenario unknown。`:rule-engine:testDebugUnitTest` 已通过；不跨 ruleVersion 合并指标，分版本统计留给 B6-5。
+
+> B6-5 进展（2026-10-09）：规则评测按版本报告 deterministic oracle agreement：`rules-v0.1` historical 25 cases 的 category/risk/scenario exact-match 均为 25/25，high-risk severity recall 为 9/9；`rules-v0.2` current boundary 17 cases 的 category/risk/scenario exact-match 均为 17/17，high-risk severity recall 为 6/6，`necessary` support 为 0、recall 为 `N/A`。这些是固定 curated evaluation set 上 RuleEvaluator 与项目定义 oracle 的一致性结果，不是现实 Android 环境泛化准确率。新增 12 条 synthetic AI explanation validation cases，`ACCEPT=4`、`SANITIZE=1`、`REJECT=7`，validator disposition 与 oracle 一致；real AI fact consistency 为 `N/A`，当前没有固定真实模型输出快照或独立人工事实标签。12 条 synthetic recheck cases 的 outcome 为 `reduced=3`、`no_change=2`、`blocked=1`、`unknown=6`，其中 6 条 confirmed case 用于 allowedCount 前后变化，unknown 不进入频率统计。user mitigation duration 为 `N/A`；observation window/recheck wait time 不冒充用户实际操作耗时，后续真人/真机测量 protocol 已记录在 [B6-5 指标文档](b6-5-evaluation-metrics.md)。`:rule-engine:testDebugUnitTest` 已通过。
 
 阶段门：完全断网仍能完成主演示；AI 不达标时关闭在线 Provider，不影响 P0。
 

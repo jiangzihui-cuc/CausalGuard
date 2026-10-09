@@ -1,0 +1,298 @@
+{
+  "schema": {
+    "name": "ai-explanation-evaluation-cases-v0.1",
+    "purpose": "Synthetic offline candidate outputs for local explanation guardrail evaluation.",
+    "requestType": "AiExplanationRequest",
+    "candidateType": "ExplanationText"
+  },
+  "cases": [
+    {
+      "caseId": "ai-guardrail-0001",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "medium",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "Demo Calculator 在后台发生了剪贴板访问行为。",
+        "whyCare": "该行为与 calculator 场景不匹配。",
+        "evidence": "依据：后台读取剪贴板，仅记录长度。",
+        "action": "建议：检查后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0002",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "high",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "Demo Calculator 在后台发生了剪贴板访问行为。",
+        "whyCare": "这是高风险行为。",
+        "evidence": "依据：后台读取剪贴板，仅记录长度。",
+        "action": "建议：检查后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0003",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "high",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "Demo Calculator 在后台发生了剪贴板访问行为。",
+        "whyCare": "该行为需要结合更多证据观察。",
+        "evidence": "依据：后台读取剪贴板，仅记录长度。",
+        "action": "建议：检查后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0004",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "medium",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "Demo Calculator 在后台发生了剪贴板访问行为。",
+        "whyCare": "该行为与 calculator 场景不匹配。",
+        "evidence": "依据：后台读取剪贴板，仅记录长度。",
+        "action": "建议检查权限和后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0005",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "medium",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "该应用窃取了剪贴板信息。",
+        "whyCare": "该行为与 calculator 场景不匹配。",
+        "evidence": "依据：后台读取剪贴板，仅记录长度。",
+        "action": "建议：检查后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0006",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "medium",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "该应用共访问 99 次。",
+        "whyCare": "该行为与 calculator 场景不匹配。",
+        "evidence": "依据：后台读取剪贴板，仅记录长度。",
+        "action": "建议：检查后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0007",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "medium",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "Demo Calculator 在后台发生了剪贴板访问行为。",
+        "whyCare": "该行为与 calculator 场景不匹配。",
+        "evidence": "依据：com.other.app 的活动。",
+        "action": "建议：检查后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0008",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "medium",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "Demo Calculator 在后台发生了剪贴板访问行为。",
+        "whyCare": "该行为与 calculator 场景不匹配。",
+        "evidence": "依据：发生了网络连接。",
+        "action": "建议：检查后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0009",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "high",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "Demo Calculator 在后台发生了剪贴板访问行为。",
+        "whyCare": "这是低风险行为。",
+        "evidence": "依据：后台读取剪贴板，仅记录长度。",
+        "action": "建议：检查后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0010",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "low",
+        "scenarioMatch": "mismatch",
+        "category": "unknown",
+        "matchedRules": [],
+        "evidenceLevel": "E2",
+        "occurrenceCount": 1,
+        "explanationBoundary": "当前证据不足以确认风险。"
+      },
+      "candidate": {
+        "summary": "Demo Calculator 在后台发生了剪贴板访问行为。",
+        "whyCare": "这是高风险行为。",
+        "evidence": "依据：后台读取剪贴板，仅记录长度。",
+        "action": "建议：检查后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0011",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "medium",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "Demo Calculator 在后台发生了剪贴板访问行为。",
+        "whyCare": "该行为与 calculator 场景不匹配。",
+        "evidence": "依据：后台读取剪贴板，仅记录长度。",
+        "action": "建议：检查后台活动。",
+        "caveat": ""
+      }
+    },
+    {
+      "caseId": "ai-guardrail-0012",
+      "request": {
+        "task": "explain_risk",
+        "locale": "zh-CN",
+        "appName": "Demo Calculator",
+        "eventType": "clipboard",
+        "foregroundState": "background",
+        "riskLevel": "medium",
+        "scenarioMatch": "mismatch",
+        "category": "high_risk",
+        "matchedRules": ["R-002"],
+        "evidenceLevel": "E4",
+        "occurrenceCount": 3,
+        "explanationBoundary": "只能说明发生了后台敏感访问，不能据此确认数据泄露。"
+      },
+      "candidate": {
+        "summary": "Demo Calculator 在后台发生了剪贴板访问行为。",
+        "whyCare": "该行为与 calculator 场景不匹配。",
+        "evidence": "依据：analytics.example.test 的活动。",
+        "action": "建议：检查后台活动。",
+        "caveat": "说明：当前证据不足以确认风险。"
+      }
+    }
+  ]
+}
