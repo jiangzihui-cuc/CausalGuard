@@ -248,7 +248,7 @@
 | A7-4 | 生成依赖许可证报告并人工核对 | 成员 A | 成员 B | 已完成（[A7 依赖许可证报告](a7-license-report.md)；脚本 `scripts/generate-license-report.sh`） |
 | A7-5 | 准备真实网络数据来源、日志和第三方修改证据 | 成员 A | - | 已完成（[A7 RC 记录](a7-release-candidate.md) 第 5 节：底座 commit、两补丁 SHA-256、复现命令） |
 | A7-6 | 只修阻断性缺陷 | 成员 A | - | 已完成（`assembleRelease` 通过；单测 261/0；lint 0 error/4 warning 均非阻断；无需改码） |
-| B7-1 | 完成 Demo App 场景重置流程 | 成员 B | 成员 A | 未开始 |
+| B7-1 | 完成 Demo App 场景重置流程 | 成员 B | 成员 A | 已完成 |
 | B7-2 | 3 分钟演示脚本和离线回放包 | 成员 B | 成员 A | 未开始 |
 | B7-3 | 录制候选视频、生成核心截图 | 成员 B | - | 未开始 |
 | B7-4 | 产品创新、证据等级、开源/原创边界答辩页 | 成员 B | 成员 A | 未开始 |
@@ -256,7 +256,7 @@
 
 > 阶段 7 A 侧进展（成员 A，2026-10-07）：A7-1～A7-6 已完成，已推送分支 `release/v0.2.0-rc1` 并发起 **PR #27（待 CI + 成员 B review）**。冻结设备 PJW110/Android 16/API 36 与构建环境；构建并签名 RC `causalguard-0.2.0-rc1.apk`（SHA-256 `f1df27fb…`，源码构建 commit `c603d26`，tag `causalguard-v0.2.0-rc1`）；输出安装/授权/清理/恢复文档与依赖许可证报告（自动收集 + 人工核对）；整理底座 commit、两补丁 SHA-256 与复现命令作为第三方修改证据；回归 `assembleRelease` 通过、单测 261/0、lint 0 error/4 warning（均非阻断），无需修码。详见 [A7 RC 记录](a7-release-candidate.md)。
 >
-> 阶段 7 剩余（B 侧）：B7-1 场景重置、B7-2 演示脚本/离线包、B7-3 视频/截图、B7-4 答辩页、B7-5 独立验 RC。阶段 7→8 交叉验收（同 commit、异常分支演练）待 PR #27 合并与 B 侧完成后进行。
+> 阶段 7 B 侧进展：B7-1 已完成。现有 reset 流程统一返回 `Ready`；DEMO-C reset 会作废 active token，旧异步 completion 不覆盖 `Ready`，重新 Arm 使用新 token；DEMO-D reset 清除 controller baseline，Activity Reset 同时清除 `DemoDSessionStore`。相关 unit tests 已覆盖这些 reset 边界。B7-2～B7-5 仍待材料制作与人工验收。
 
 交叉验收：截图、视频、文档和 APK 来自同一 commit；授权失败、断网、VPN 停止和无法归属均完成演练。
 
@@ -271,9 +271,12 @@
 | A8-5 | 在 `main` 创建最终版本 tag | 成员 A | 成员 B | 未开始 |
 | B8-1 | 正式设计文档 PDF | 成员 B | - | 未开始 |
 | B8-2 | 3 张核心截图和最终 MP4 | 成员 B | - | 未开始 |
-| B8-3 | 第三方与原创边界说明 | 成员 B | 成员 A | 未开始 |
-| B8-4 | 评测结果和失败案例附录 | 成员 B | - | 未开始 |
+| B8-3 | 第三方与原创边界说明 | 成员 B | 成员 A | 已完成 |
+| B8-4 | 评测结果和失败案例附录 | 成员 B | - | 进行中 |
 | B8-5 | 核对所有文案、截图和视频不夸大实际能力 | 成员 B | 成员 A | 未开始 |
+
+
+> 阶段 8 B 侧进展：B8-3 已完成，证据为 [第三方与原创边界说明](b8-3-third-party-original-boundary.md)；该任务不替代 A8-4 的 GPL/submodule 最终核验。B8-4 已具备核心来源：[B6-5 评测指标](b6-5-evaluation-metrics.md)、[B6-6 失败分析](b6-6-failure-analysis.md) 和 [评测失败案例登记](fixtures/evaluation-failure-cases-v0.1.json)，剩余为最终材料汇编，不需要新增评测代码。
 
 最终交叉检查：干净环境按 README 编译源码（B）；按最终脚本完整演示 APK（A）；检查技术陈述与能力边界（A）；检查 APK/文档/视频/截图版本一致（B）；许可证和署名两人各检查一次。任何材料与最终 tag 功能不一致，不能提交。
 
