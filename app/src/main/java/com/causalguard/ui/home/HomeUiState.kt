@@ -8,6 +8,7 @@ sealed interface HomeUiState {
     data object Empty : HomeUiState
     data class Content(
         val runtimeMode: String,
+        val runtimeModeNote: String,
         val eventCount: Int,
         val overallRisk: RiskLevel,
         val recentAlert: EventAnalysisResult?,

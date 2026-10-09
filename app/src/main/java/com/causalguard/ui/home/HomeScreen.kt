@@ -63,7 +63,7 @@ private fun ContentHome(
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("运行模式", style = MaterialTheme.typography.titleMedium)
             Text(state.runtimeMode)
-            Text("当前数据集来自离线 fixture，不代表实时设备监测状态。")
+            Text(state.runtimeModeNote)
         }
     }
 

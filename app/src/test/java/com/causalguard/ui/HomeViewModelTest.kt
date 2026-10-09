@@ -33,7 +33,7 @@ class HomeViewModelTest {
 
         val state = viewModel.uiState.first { it !is HomeUiState.Loading } as HomeUiState.Content
 
-        assertEquals("Fixture / 离线演示分析", state.runtimeMode)
+        assertEquals("真实观测 + 演示数据", state.runtimeMode)
         assertEquals(10, state.eventCount)
         assertEquals("high", state.overallRisk.wire)
         assertEquals("e-20260921-0009", state.recentAlert?.event?.eventId)
