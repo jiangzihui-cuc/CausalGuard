@@ -60,6 +60,7 @@
 | [b5-7-recheck-evaluation](b5-7-recheck-evaluation.md) | 阶段5 B5-7：处置前后评测样例（12 条，recheck 输入/oracle 分离 + 自动回归） | 成员 B |
 | [b6-1-local-explanation](b6-1-local-explanation.md) | 阶段6 B6-1：确定性本地解释模板与离线兜底 | 成员 B |
 | [b6-2-ai-explanation-validation](b6-2-ai-explanation-validation.md) | 阶段6 B6-2：AI 输入白名单、输出 schema 与本地事实校验 | 成员 B |
+| [b6-3-ai-explanation-provider](b6-3-ai-explanation-provider.md) | 阶段6 B6-3：可选 `AiExplanationProvider` 与确定性编排（在线增强、离线兜底） | 成员 B |
 
 ## 阅读顺序
 

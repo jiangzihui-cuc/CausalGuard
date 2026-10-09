@@ -14,13 +14,19 @@ import com.causalguard.rules.RecommendationDecision
 import com.causalguard.rules.RuleAssetLoadResult
 import com.causalguard.rules.RuleEvaluator
 import com.causalguard.rules.SceneConsistencyEvaluator
+import com.causalguard.rules.explain.AiExplanationProvider
 import com.causalguard.rules.explain.ExplanationContext
+import com.causalguard.rules.explain.ExplanationService
 import com.causalguard.rules.explain.ExplanationText
 import com.causalguard.rules.explain.LocalExplanationProvider
 import kotlinx.coroutines.flow.first
 
 interface EventAnalysisService {
     val ruleVersion: String
+
+    /** B6-3：在线 AI 解释增强当前是否可用（已配置且 Provider 就绪）。默认不可用。 */
+    val aiExplanationAvailable: Boolean
+        get() = false
 
     suspend fun analyze(eventId: String): EventAnalysisResult?
 
@@ -49,15 +55,23 @@ class FixtureEventAnalysisService(
      * 不覆盖 context，保持 `null`/`UNKNOWN` 的诚实降级语义。
      */
     private val sceneConsistencyEvaluator: SceneConsistencyEvaluator? = null,
+    /**
+     * B6-3：可选的在线 AI 解释 Provider。未注入或不可用时，解释始终由本地确定性模板生成，
+     * 不影响 P0 断网可用；注入时模型输出仍经本地事实校验，不通过则回退本地模板。
+     */
+    aiExplanationProvider: AiExplanationProvider? = null,
 ) : EventAnalysisService {
     private val ruleAsset = rules as? RuleAssetLoadResult.Success
         ?: error("Unable to load runtime rule asset")
     private val evaluator = RuleEvaluator(ruleAsset.rules)
-    private val localExplanationProvider = LocalExplanationProvider()
+    private val explanationService = ExplanationService(aiProvider = aiExplanationProvider)
     private val templatesByEventId = templates.associateBy { it.eventId }
 
     override val ruleVersion: String
         get() = ruleAsset.schema.ruleVersion
+
+    override val aiExplanationAvailable: Boolean
+        get() = explanationService.isAiAvailable
 
     override suspend fun analyze(eventId: String): EventAnalysisResult? {
         val events = repository.observeAll().first()
@@ -70,7 +84,7 @@ class FixtureEventAnalysisService(
         return events.map { event -> analyzeEvent(event, events) }
     }
 
-    private fun analyzeEvent(
+    private suspend fun analyzeEvent(
         event: PrivacyEvent,
         events: List<PrivacyEvent>,
     ): EventAnalysisResult {
@@ -93,27 +107,26 @@ class FixtureEventAnalysisService(
         )
         val evaluation = evaluator.evaluate(input)
         val assessment = evaluation.assessment
+        val explanationContext = ExplanationContext(
+            appName = event.appName ?: "该应用",
+            packageName = event.appId,
+            eventType = event.eventType,
+            foregroundState = event.foregroundState,
+            riskLevel = assessment.riskLevel,
+            scenarioMatch = assessment.scenarioMatch,
+            category = assessment.category,
+            matchedRules = assessment.matchedRules,
+            evidenceLevel = event.evidenceLevel,
+            occurrenceCount = relatedEvents.count { it.eventType == event.eventType } + 1,
+            explanationBoundary = assessment.explanationBoundary
+                ?: LocalExplanationProvider.DEFAULT_BOUNDARY,
+            scenarioMatchReason = sceneResult?.reason,
+            sceneType = sceneResult?.sceneType ?: appProfile?.sceneType,
+            evidenceSummary = event.evidenceSummary,
+            recommendationTitle = evaluation.recommendationDecision.title,
+        )
         val explanation = templatesByEventId[event.eventId]?.toExplanationText()
-            ?: localExplanationProvider.render(
-                ExplanationContext(
-                    appName = event.appName ?: "该应用",
-                    packageName = event.appId,
-                    eventType = event.eventType,
-                    foregroundState = event.foregroundState,
-                    riskLevel = assessment.riskLevel,
-                    scenarioMatch = assessment.scenarioMatch,
-                    category = assessment.category,
-                    matchedRules = assessment.matchedRules,
-                    evidenceLevel = event.evidenceLevel,
-                    occurrenceCount = relatedEvents.count { it.eventType == event.eventType } + 1,
-                    explanationBoundary = assessment.explanationBoundary
-                        ?: LocalExplanationProvider.DEFAULT_BOUNDARY,
-                    scenarioMatchReason = sceneResult?.reason,
-                    sceneType = sceneResult?.sceneType ?: appProfile?.sceneType,
-                    evidenceSummary = event.evidenceSummary,
-                    recommendationTitle = evaluation.recommendationDecision.title,
-                ),
-            )
+            ?: explanationService.explain(explanationContext).text
         val evidence = assessment.evidenceIds.mapNotNull { evidenceId ->
             events.firstOrNull { it.eventId == evidenceId }
         }

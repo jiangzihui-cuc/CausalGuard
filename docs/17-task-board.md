@@ -219,7 +219,7 @@
 | A6-4 | 修复 P0 缺陷，不新增功能 | 成员 A | - | 完成（无阻断性缺陷） |
 | B6-1 | 本地解释模板和失败兜底 | 成员 B | - | 已完成 |
 | B6-2 | AI 输入白名单、脱敏 DTO、输出 schema 和事实校验 | 成员 B | 成员 A | 已完成 |
-| B6-3 | 可选 `AiExplanationProvider` | 成员 B | 成员 A | 未开始 |
+| B6-3 | 可选 `AiExplanationProvider` | 成员 B | 成员 A | 已完成 |
 | B6-4 | 扩充到 30~50 条评测样例 | 成员 B | - | 未开始 |
 | B6-5 | 统计规则准确率/召回率、事实一致率和处置耗时 | 成员 B | - | 未开始 |
 | B6-6 | 保存误报、漏报和 unknown 案例并校准规则 | 成员 B | 成员 A | 未开始 |
@@ -229,6 +229,8 @@
 > B6-1 进展（成员 B，2026-10-09）：建立纯确定性、离线的 `LocalExplanationProvider`，按 [docs/11](11-ai-explanation-contract.md) §5 五段渲染，场景无法确认时诚实回退 `当前证据不足以确认风险。`；接入 `FixtureEventAnalysisService`（事件专属模板优先、缺失走本地模板），`EventAnalysisResult.explanation` 统一为 `ExplanationText`。断网/未配置/失败均可用。详见 [B6-1](b6-1-local-explanation.md)。
 
 > B6-2 进展（成员 B，2026-10-09）：建立 `AiExplanationRequest.from()` 白名单投影（严格 12 字段，丢弃包名/域名/证据原文等本地字段）与 `ExplanationFactValidator` 本地事实校验（数字/App/事件类型/风险升级 → 丢弃回退；违规措辞 → 中性替换）。回归测试断言白名单无泄漏、各违规类均被拦截。详见 [B6-2](b6-2-ai-explanation-validation.md)。
+
+> B6-3 进展（成员 B，2026-10-09）：建立 `AiExplanationProvider` 契约（纯 Kotlin，只发白名单、返回原始 `ExplanationText`）与确定性编排 `ExplanationService`：始终先渲染本地兜底，未配置/超时/异常 → `UNAVAILABLE`/`FAILED`，输出未过 B6-2 校验 → `REJECTED`，全部回退本地模板，`CancellationException` 原样抛出。App 侧 `RetrofitAiExplanationProvider`（`POST {AI_BASE_URL}/v1/explain`）仅在密钥注入时构造，接入 `FixtureEventAnalysisService`（事件专属模板仍优先）；`SettingsViewModel` 按 `aiExplanationAvailable` 诚实展示“AI 云端解释”是否配置。详见 [B6-3](b6-3-ai-explanation-provider.md)。
 
 ## 阶段 7：发布候选与完整演示（10/6-10/7）
 

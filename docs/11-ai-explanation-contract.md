@@ -4,7 +4,7 @@
 > 最后更新：2026-09-20
 > 责任人：成员 B（协作：成员 A）
 > 目的：让 AI 只做解释层，输出受证据约束，失败时有本地模板兜底。
-> 实现：B6-1 本地模板与兜底 [b6-1-local-explanation](b6-1-local-explanation.md)；B6-2 输入白名单与事实校验 [b6-2-ai-explanation-validation](b6-2-ai-explanation-validation.md)。
+> 实现：B6-1 本地模板与兜底 [b6-1-local-explanation](b6-1-local-explanation.md)；B6-2 输入白名单与事实校验 [b6-2-ai-explanation-validation](b6-2-ai-explanation-validation.md)；B6-3 可选在线 Provider 与编排 [b6-3-ai-explanation-provider](b6-3-ai-explanation-provider.md)。
 
 ## 1. 原则
 

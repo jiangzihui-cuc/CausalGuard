@@ -24,6 +24,24 @@ data class AiExplanationRequest(
     val explanationBoundary: String,
 ) {
     companion object {
+        /**
+         * 发送字段白名单（docs/11 §2）。用于审计与回归测试断言“恰好这 12 个字段离开设备”。
+         */
+        val WHITELIST_FIELDS: List<String> = listOf(
+            "task",
+            "locale",
+            "appName",
+            "eventType",
+            "foregroundState",
+            "riskLevel",
+            "scenarioMatch",
+            "category",
+            "matchedRules",
+            "evidenceLevel",
+            "occurrenceCount",
+            "explanationBoundary",
+        )
+
         /** 从本地 [ExplanationContext] 投影出白名单请求，丢弃所有本地专属字段。 */
         fun from(context: ExplanationContext): AiExplanationRequest = AiExplanationRequest(
             task = "explain_risk",
