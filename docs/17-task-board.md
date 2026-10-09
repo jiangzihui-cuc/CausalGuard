@@ -177,7 +177,7 @@
 | B5-4 | Recommendation 选择 | 已完成 |
 | B5-5 | `RecheckComparator`：减少、无变化、被阻断、无法确认 | 已完成 |
 | B5-6 | 因果链、处置和复查页面 | 已完成 |
-| B5-7 | 至少 8 条处置前后评测样例 | 未开始 |
+| B5-7 | 至少 8 条处置前后评测样例 | 已完成 |
 
 集成契约：`B：Recommendation → A：MitigationExecutor → A：MitigationRecord + 新事件 → B：RecheckResult + 页面`。
 
@@ -192,6 +192,8 @@
 > B5-5 进展（成员 B，2026-10-08）：建立 deterministic `RecheckComparator`；基于等长前后窗口比较 `allowedCount`，区分 `NO_REQUEST` 与 `ALL_BLOCKED`，输出 `reduced/no_change/blocked/unknown`；非 executed、`OPEN_SETTINGS`、坏快照或不可比窗口均诚实降级为 `unknown`。
 
 > B5-6 进展（成员 B，2026-10-08）：Event Detail 已接入因果链、canonical Recommendation、处置与复查状态；`BLOCK_DOMAIN` 执行后基于固定 observation window 复查，`observationEnd` 前禁止查询 post window；`RecheckComparator` 结果可持久化并恢复；`OPEN_SETTINGS` 不伪装为已修改权限，`executed` 与 verified effect 保持分离。完整 app/rule-engine tests、assemble 和 lint 已通过。
+
+> B5-7 进展（成员 B，2026-10-09）：建立处置前后评测集 `fixtures/recheck-cases-v0.1.json`（输入：`MitigationRecord` + 处置前后 `NetworkObservation`）与 `fixtures/recheck-expected-v0.1.json`（oracle：`reduced/no_change/blocked/unknown`），共 12 条，回归入口 `RecheckEvaluationDatasetTest`；输入与 oracle 严格隔离，覆盖四类结论及非 executed、非 `block_domain`、坏快照、不可比窗口等降级边界，`reduced/no_change/blocked/unknown` 四类均有样例且比较确定。详见 [B5-7 处置前后评测样例](b5-7-recheck-evaluation.md)。
 
 > **阶段 5 执行层进展（A 回填，2026-10-03）**：A5-1~A5-6 代码完成，`:app` 单测 81 项通过（新增 `DeviceMitigationExecutorTest` 9 项、`RoomNetworkObservationRepositoryTest` 3 项）。契约新增 `core-model/.../MitigationApi.kt`（`MitigationAction`/`MitigationStatus`/`MitigationRequest`/`MitigationExecution`/`MitigationExecutor`/`NetworkObservation`/`NetworkRequestPresence`/`NetworkObservationRepository`）。实现：
 > - **A5-1**：`mitigation/DeviceMitigationExecutor` 按 action 分派；`DomainBlockController` 经 ordered broadcast（`TrackerControlBroadcast.ACTION_BLOCK_DOMAIN`）请求底座阻断，仅 `RESULT_OK` 回执为 `CONFIRMED`，超时/未接线一律 `UNAVAILABLE`，绝不谎报。
