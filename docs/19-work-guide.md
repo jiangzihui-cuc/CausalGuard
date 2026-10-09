@@ -11,14 +11,14 @@
 
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
-当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6，PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4，PR #25 已合入）、阶段 7 A 侧发布候选（A7-1~A7-6，PR #27 已合入）已完成；阶段 5 B 侧 B5-1~B5-6 已完成，下一步 B5-7，B6 未开始
+当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6，PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4，PR #25 已合入）、阶段 7 A 侧发布候选（A7-1~A7-6，PR #27 已合入）已完成；阶段 5 B 侧 B5-1~B5-7 已完成，下一步 B6
 成员 A：A5-1~A5-6（含 A5-1 底座域名阻断补丁真机验证：PJW110/Android 16，RESULT_OK/RESULT_CANCELED 诚实回执）、A6-1~A6-4（在线 AI 安全网络层、密钥注入、真机稳定性、缺陷排查）已完成；阶段 7 发布候选 A7-1~A7-6 已完成并合入 main（冻结 PJW110/Android 16 环境、构建签名 RC `0.2.0-rc1`、安装/恢复文档、许可证报告、第三方修改证据、阻断性缺陷排查）；下一步 A8-1~A8-5（最终提交准备）
-成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-6 已完成，下一步为 B5-7 至少 8 条处置前后评测样例；不依赖真实 VPN
+成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-7 已完成（B5-7 处置前后评测集 12 条），下一步为 B6 阶段 6（AI 解释、评测与可用性）；不依赖真实 VPN
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
 
-**一句话**：阶段 0~4、阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询，PR #18 已合入）、阶段 5 B5-1~B5-6（场景、证据链、因果链、Recommendation 选择、确定性复查比较、因果链/处置/复查页面）、阶段 6 A 侧（在线 AI 安全网络层 + 密钥注入 + 真机稳定性 + 缺陷排查，PR #25 已合入）与阶段 7 发布候选（A7-1~A7-6，PR #27 已合入）均已完成；**成员 A 下一步进入阶段 8 最终提交准备（A8-1~A8-5），成员 B 下一步做 B5-7 至少 8 条处置前后评测样例**。
+**一句话**：阶段 0~4、阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询，PR #18 已合入）、阶段 5 B5-1~B5-7（场景、证据链、因果链、Recommendation 选择、确定性复查比较、因果链/处置/复查页面、12 条处置前后评测集）、阶段 6 A 侧（在线 AI 安全网络层 + 密钥注入 + 真机稳定性 + 缺陷排查，PR #25 已合入）与阶段 7 发布候选（A7-1~A7-6，PR #27 已合入）均已完成；**成员 A 下一步进入阶段 8 最终提交准备（A8-1~A8-5），成员 B 下一步做阶段 6 B6（AI 解释、评测与可用性）**。
 
 开源路线已定（详见 [20 开源复用建议](20-open-source-reuse-guide.md) 第 13 节）：优先走 **方案 A：TrackerControl / NetGuard（GPL-3.0）** 作为网络底座；接受 GPL 路线并明确开源与原创边界。MIT 备选路线仅在阶段 1 构建链持续失败时启用。
 
@@ -64,11 +64,11 @@
 >
 > **下一步（阶段 8，10/8-10/10）**：A8-1 最终设备回归、A8-2 release APK/源码包/构建说明、A8-3 清理密钥与真实数据、A8-4 核对 GPL 对应源码与 tag、A8-5 创建最终 tag。
 
-### 成员 B（产品与智能分析主责）——B4-1~B4-5 已完成，现在做阶段 5 原创分析层（B5-1~B5-7）
+### 成员 B（产品与智能分析主责）——B5-1~B5-7 已完成，下一步阶段 6（B6-1~B6-6）
 
 **阶段 4 B 侧（B4）**：B4-1（离线 tracker 数据集）、B4-2（`TrackerClassifier` 与域名归一化）、B4-3（真实/演示/未知来源标签与观测降级）、B4-5（Demo App 场景 C/D）已完成并合入 `main`；**B4-4（用 A 的真实 fixture 校准规则）已完成**（PR #26，2026-10-06）：20 条 PJW110 / Android 16 真机真实输入配套独立 fact oracle，tracker coverage diagnosis 为 mixed，运行时采用 `rules-v0.2` 完成 R-008 attribution calibration（`rules-v0.1` frozen baseline 保留）。见 [17 任务看板](17-task-board.md) 阶段 4。
 
-**阶段 5 原创分析层（B5-1~B5-7）**：B5-1~B5-6 已完成；下一步 B5-7 至少 8 条处置前后评测样例。
+**阶段 5 原创分析层（B5-1~B5-7）**：B5-1~B5-7 全部已完成；下一步进入阶段 6 B6-1~B6-6（本地解释模板与兜底、AI 输入白名单与事实校验、可选 `AiExplanationProvider`、扩充评测样例并统计准确率/召回率/事实一致率/处置耗时）。
 
 | 任务编号 | 做什么 | 改哪里 | 完成标准 |
 |---|---|---|---|
@@ -78,7 +78,7 @@
 | B5-4 | Recommendation 选择 | `:rule-engine` / `:core-model` | 已完成：确定性 Recommendation 与可选 MitigationRequest；unknown/degraded 不生成执行请求 |
 | B5-5 | `RecheckComparator`：减少、无变化、被阻断、无法确认 | `:rule-engine` | 已完成：基于等长窗口和 allowedCount 确定性比较；无执行/无基线/不可比时 unknown |
 | B5-6 | 因果链、处置和复查页面 | `app/.../ui/` | 已完成：页面展示因果链、Recommendation、处置状态与窗口结束后的复查结果 |
-| B5-7 | 至少 8 条处置前后评测样例 | `docs/fixtures/` | 自动运行 |
+| B5-7 | 至少 8 条处置前后评测样例 | `docs/fixtures/` | 已完成：`recheck-cases-v0.1`/`recheck-expected-v0.1` 共 12 条 + `RecheckEvaluationDatasetTest` |
 
 > B 始终使用 fixture、Fake Repository 和 Fake Executor，**不等待 A 的真实 VPN**。唯一集成点是 A 导出的真实 NetworkEvent 必须能映射到 B 的 fixture schema；`Recommendation → A：MitigationExecutor` 消费 `core-model` 的 `MitigationRequest`/`MitigationAction`。
 

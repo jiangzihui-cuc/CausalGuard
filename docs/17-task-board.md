@@ -177,11 +177,15 @@
 | B5-4 | Recommendation 选择 | 已完成 |
 | B5-5 | `RecheckComparator`：减少、无变化、被阻断、无法确认 | 已完成 |
 | B5-6 | 因果链、处置和复查页面 | 已完成 |
-| B5-7 | 至少 8 条处置前后评测样例 | 未开始 |
+| B5-7 | 至少 8 条处置前后评测样例 | 已完成 |
 
 集成契约：`B：Recommendation → A：MitigationExecutor → A：MitigationRecord + 新事件 → B：RecheckResult + 页面`。
 
+> **阶段 5 B 侧全部完成（成员 B，2026-10-09）**：B5-1~B5-7 全部完成，覆盖场景一致性、证据链、因果链、Recommendation 选择、确定性复查比较、因果链/处置/复查页面与 12 条处置前后评测样例。与 A 的集成契约已由 B5-6 页面链路与 B5-7 评测集闭环验证。B5-1 场景评估器已作为 `ScenarioMatch` 输入接入 runtime analysis path（显式 fixture context 优先、缺失时由 `scene-knowledge-v0.1` 确定性推导、`unknown` 不覆盖），见 [B5-1 场景知识库](b5-1-scene-knowledge.md)；B5-3 `SCENE-*` 推断节点仍不物化，属后续可选扩展，不计入阶段 5 缺口。
+
 > B5-1 进展（成员 B，2026-10-07）：建立 `scene-knowledge-v0.1` 与确定性 `SceneConsistencyEvaluator`；无明确知识时 `UNKNOWN`，不从包名/domain/tracker/risk 反推场景；与 frozen `e-20260921-0001`～`e-20260921-0004` scenario context 一致。
+
+> B5-1 runtime 接入（成员 B，2026-10-09）：`SceneConsistencyEvaluator` 经 `RuntimeFixtureLoader.loadSceneKnowledge` 加载 `scene-knowledge-v0.1` 并注入 `FixtureEventAnalysisService`；`scenarioMatch` 解析为「显式 fixture context 优先，缺失时由场景知识确定性推导，`UNKNOWN` 不覆盖」，行为与既有 frozen 评测保持一致，新增集成测试覆盖无显式 context 时的推导。
 
 > B5-2 进展（成员 B，2026-10-07）：`EvidenceChainBuilder` 仅物化 effective matched rule 的 supporting event；`RiskAssessment.evidenceIds` 从主事件扩展到实际 supporting event；temporal/rule link 均明确为 E3 Derived Inference，不将时间相关表述为因果。
 
@@ -192,6 +196,8 @@
 > B5-5 进展（成员 B，2026-10-08）：建立 deterministic `RecheckComparator`；基于等长前后窗口比较 `allowedCount`，区分 `NO_REQUEST` 与 `ALL_BLOCKED`，输出 `reduced/no_change/blocked/unknown`；非 executed、`OPEN_SETTINGS`、坏快照或不可比窗口均诚实降级为 `unknown`。
 
 > B5-6 进展（成员 B，2026-10-08）：Event Detail 已接入因果链、canonical Recommendation、处置与复查状态；`BLOCK_DOMAIN` 执行后基于固定 observation window 复查，`observationEnd` 前禁止查询 post window；`RecheckComparator` 结果可持久化并恢复；`OPEN_SETTINGS` 不伪装为已修改权限，`executed` 与 verified effect 保持分离。完整 app/rule-engine tests、assemble 和 lint 已通过。
+
+> B5-7 进展（成员 B，2026-10-09）：建立处置前后评测集 `fixtures/recheck-cases-v0.1.json`（输入：`MitigationRecord` + 处置前后 `NetworkObservation`）与 `fixtures/recheck-expected-v0.1.json`（oracle：`reduced/no_change/blocked/unknown`），共 12 条，回归入口 `RecheckEvaluationDatasetTest`；输入与 oracle 严格隔离，覆盖四类结论及非 executed、非 `block_domain`、坏快照、不可比窗口等降级边界，`reduced/no_change/blocked/unknown` 四类均有样例且比较确定。详见 [B5-7 处置前后评测样例](b5-7-recheck-evaluation.md)。
 
 > **阶段 5 执行层进展（A 回填，2026-10-03）**：A5-1~A5-6 代码完成，`:app` 单测 81 项通过（新增 `DeviceMitigationExecutorTest` 9 项、`RoomNetworkObservationRepositoryTest` 3 项）。契约新增 `core-model/.../MitigationApi.kt`（`MitigationAction`/`MitigationStatus`/`MitigationRequest`/`MitigationExecution`/`MitigationExecutor`/`NetworkObservation`/`NetworkRequestPresence`/`NetworkObservationRepository`）。实现：
 > - **A5-1**：`mitigation/DeviceMitigationExecutor` 按 action 分派；`DomainBlockController` 经 ordered broadcast（`TrackerControlBroadcast.ACTION_BLOCK_DOMAIN`）请求底座阻断，仅 `RESULT_OK` 回执为 `CONFIRMED`，超时/未接线一律 `UNAVAILABLE`，绝不谎报。

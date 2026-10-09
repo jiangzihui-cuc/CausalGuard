@@ -4,6 +4,7 @@ import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.PrivacyEventRepository
 import com.causalguard.core.model.RiskAssessment
 import com.causalguard.core.model.RuleInput
+import com.causalguard.core.model.ScenarioMatch
 import com.causalguard.data.fixture.ExplanationTemplate
 import com.causalguard.data.fixture.RuleInputContextAsset
 import com.causalguard.rules.EvaluationDegradation
@@ -12,6 +13,7 @@ import com.causalguard.rules.RecommendationSelection
 import com.causalguard.rules.RecommendationDecision
 import com.causalguard.rules.RuleAssetLoadResult
 import com.causalguard.rules.RuleEvaluator
+import com.causalguard.rules.SceneConsistencyEvaluator
 import kotlinx.coroutines.flow.first
 
 interface EventAnalysisService {
@@ -46,6 +48,12 @@ class FixtureEventAnalysisService(
     rules: RuleAssetLoadResult,
     private val inputContext: RuleInputContextAsset,
     templates: List<ExplanationTemplate>,
+    /**
+     * B5-1：版本化场景知识评估器。显式 fixture context 优先（独立上游输入，frozen
+     * 评测基线），缺失时由场景知识确定性推导 `ScenarioMatch`；评估器为 `UNKNOWN`
+     * 不覆盖 context，保持 `null`/`UNKNOWN` 的诚实降级语义。
+     */
+    private val sceneConsistencyEvaluator: SceneConsistencyEvaluator? = null,
 ) : EventAnalysisService {
     private val ruleAsset = rules as? RuleAssetLoadResult.Success
         ?: error("Unable to load runtime rule asset")
@@ -73,9 +81,7 @@ class FixtureEventAnalysisService(
         val input = RuleInput(
             event = event,
             appProfile = inputContext.appProfiles.singleOrNull { it.packageName == event.appId },
-            scenarioMatch = inputContext.scenarioMatches
-                .singleOrNull { it.eventId == event.eventId }
-                ?.asScenarioMatch(),
+            scenarioMatch = resolveScenarioMatch(event),
             relatedEvents = events.filter { it.appId == event.appId && it.eventId != event.eventId },
             priorEvents = events.filter { it.appId == event.appId && it.timestamp < event.timestamp },
             ruleVersion = ruleAsset.schema.ruleVersion,
@@ -102,6 +108,22 @@ class FixtureEventAnalysisService(
             evidence = evidence,
             degradation = evaluation.degradation,
         )
+    }
+
+    /**
+     * B5-1 场景一致性接入：显式 fixture context 优先，缺失时用版本化场景知识确定性推导。
+     * 评估器返回 `UNKNOWN` 时不覆盖 context，保持既有的 `null`/`UNKNOWN` 降级。
+     */
+    private fun resolveScenarioMatch(event: PrivacyEvent): ScenarioMatch? {
+        val explicit = inputContext.scenarioMatches
+            .singleOrNull { it.eventId == event.eventId }
+            ?.asScenarioMatch()
+        if (explicit != null) return explicit
+
+        val evaluator = sceneConsistencyEvaluator ?: return null
+        val appProfile = inputContext.appProfiles.singleOrNull { it.packageName == event.appId }
+        return evaluator.evaluate(event, appProfile).scenarioMatch
+            .takeIf { it != ScenarioMatch.UNKNOWN }
     }
 
     private fun ExplanationTemplate.toLocalExplanation(): LocalExplanation =

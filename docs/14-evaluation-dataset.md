@@ -79,6 +79,8 @@
 
 v0.1 首批自动规则评测由 frozen fixture 的 10 条事件和独立 evaluation extension 的 15 条事件组成，共 25 个可复现 case。扩展集物理拆分为 `fixtures/evaluation-events-v0.1.json`（事件输入）、`fixtures/evaluation-context-v0.1.json`（独立上游上下文）和 `fixtures/evaluation-expected-v0.1.json`（输出 oracle）。回归入口为 `RuleEvaluationDatasetTest`，只执行 deterministic rule layer；输入、上游 context 和输出 oracle 严格隔离，测试按 timestamp/appId 机械构造 related/prior events，不跨数据集关联。
 
+阶段 5 B5-7 另建处置前后评测集：`fixtures/recheck-cases-v0.1.json`（输入：`MitigationRecord` + 处置前 `preObservation`/`rawPreSnapshot` + 处置后 `NetworkObservation`）与 `fixtures/recheck-expected-v0.1.json`（输出 oracle：`reduced/no_change/blocked/unknown`），共 12 条，回归入口为 `RecheckEvaluationDatasetTest`。输入与 oracle 同样严格隔离，覆盖减少、无变化、被阻断、无法确认四类结论，以及非 executed、非 `block_domain`、坏快照、不可比窗口等诚实降级边界。详见 [B5-7 处置前后评测样例](b5-7-recheck-evaluation.md)。
+
 ## 3. 分布建议
 
 | 类别 | 比例 |

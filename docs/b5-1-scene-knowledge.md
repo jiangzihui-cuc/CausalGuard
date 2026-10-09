@@ -58,6 +58,6 @@ v0.1 只冻结当前已有主演示和 fixture 依据的四条知识：
 
 `docs/fixtures/rule-input-context-v0.1.json` 是既有 frozen synthetic evaluation context，继续手工提供 `scenarioMatches`，用于保持规则评测可复现。
 
-B5-1 的 evaluator 不修改该 frozen context，也不接入当前 runtime analysis path。新增测试只把 `e-20260921-0001` 到 `e-20260921-0004` 作为回归对照，确认新 evaluator 的推导与 frozen context 一致。
+B5-1 的 evaluator 已接入 runtime analysis path（`FixtureEventAnalysisService`，2026-10-09）：frozen context 的显式 `scenarioMatches` 仍优先，保持规则评测可复现；缺失时用版本化场景知识确定性推导 `ScenarioMatch`；评估器返回 `unknown` 时不覆盖 context，保持诚实降级。新增测试把 `e-20260921-0001` 到 `e-20260921-0004` 作为回归对照，确认 evaluator 推导与 frozen context 一致，并验证无显式 context 时 evaluator 可为 runtime 事件推导场景一致性。
 
 后续 B5-2 可以在构建 `EvidenceLink` 时引用 `knowledgeRuleId`，但本轮不实现证据链或因果链。
