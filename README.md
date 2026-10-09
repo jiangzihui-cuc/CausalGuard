@@ -54,6 +54,24 @@ CausalGuard/
     （后续）demo-app/           自研 Demo App / 演示沙箱
 ```
 
+## 构建与运行
+
+```bash
+export JAVA_HOME=$HOME/tools/jdk-17.0.13+11     # JDK 17
+export ANDROID_HOME=$HOME/android-sdk          # Android SDK platform 37 / build-tools 37.0.0
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+git submodule update --init --recursive        # 拉取网络底座（GPL-3.0）
+echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+./gradlew :app:assembleDebug                   # 构建
+./gradlew test                                  # 单元测试
+./gradlew :app:lintDebug                        # lint
+scripts/build-release-rc.sh                     # 签名 release APK（需 keystore.properties）
+```
+
+完整的环境与依赖版本、源码包与可复现说明见 [docs/a8-build-and-reproducibility.md](docs/a8-build-and-reproducibility.md)。
+
 ## 文档阅读顺序
 
 0. `docs/19-work-guide.md`（先看这个，知道下一步做什么）

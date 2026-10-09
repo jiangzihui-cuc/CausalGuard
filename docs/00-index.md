@@ -57,6 +57,8 @@
 | [a7-release-candidate](a7-release-candidate.md) | 阶段7 A7-1/A7-2/A7-5/A7-6：发布候选冻结环境、RC 构建与签名记录、真实数据与第三方修改证据、阻断性缺陷排查 | 成员 A |
 | [a7-install-auth-recovery](a7-install-auth-recovery.md) | 阶段7 A7-3：安装、授权、清理与故障恢复步骤 | 成员 A |
 | [a7-license-report](a7-license-report.md) | 阶段7 A7-4：依赖许可证报告（自动收集 + 人工核对） | 成员 A |
+| [a8-build-and-reproducibility](a8-build-and-reproducibility.md) | 阶段8 A8-2：构建说明、依赖版本与源码包（不依赖 B 的部分） | 成员 A |
+| [a8-gpl-compliance-verification](a8-gpl-compliance-verification.md) | 阶段8 A8-4：GPL 对应源码、许可证与 tag 核对 | 成员 A |
 | [b5-7-recheck-evaluation](b5-7-recheck-evaluation.md) | 阶段5 B5-7：处置前后评测样例（12 条，recheck 输入/oracle 分离 + 自动回归） | 成员 B |
 | [b6-1-local-explanation](b6-1-local-explanation.md) | 阶段6 B6-1：确定性本地解释模板与离线兜底 | 成员 B |
 | [b6-2-ai-explanation-validation](b6-2-ai-explanation-validation.md) | 阶段6 B6-2：AI 输入白名单、输出 schema 与本地事实校验 | 成员 B |
