@@ -132,6 +132,8 @@ no-match、version mismatch 和没有可用 witness 时不制造关联；unknown
 | R-009 | 权限已撤销仍观测 | permission revoked 后仍出现敏感访问 | 需要关注 |
 | R-010 | 证据不足 | 关键字段缺失 | 输出 E5、无法确认 |
 
+实现校准说明：当前 `rules-v0.1` 与 `rules-v0.2` 的 R-006 资产实际以事件 `foregroundState=unused` 匹配，`RuleEvaluator` 不直接消费 `RuleUsageContext.lastUsedAgoMs` 或在引擎内独立验证“超阈值”。因此“长期未使用”由上游状态离散化提供，`lastUsedAgoMs` 阈值仍是 semantic/contract gap，不在本轮凭空补充阈值。R-009 当前只要求同 App 更早的 revoked permission 事实，没有独立 `timeWindowMs`；长时间隔案例需要独立标注后再决定是否校准，不能由本契约臆造时间阈值。
+
 ## 5. 规则资产 JSON 格式与加载边界
 
 规则引擎加载的规则资产采用 JSON 格式。`docs/fixtures/risk-rules-v0.1.json` 是冻结的 v0.1 实例，`docs/fixtures/risk-rules-v0.2.json` 是 B4-4 校准实例；后续真实实现可从可配置路径读取同结构资产，但运行时只允许读取已经通过 JSON 解析、版本、枚举、唯一性和引用校验的资产。
@@ -215,7 +217,7 @@ no-match、version mismatch 和没有可用 witness 时不制造关联；unknown
 | `evidenceLevels` | array<string> | `PrivacyEvent.evidenceLevel` | 可取 `E1` 到 `E5` |
 | `domainHints` | array<string> | `network.domainHint` | 仅用于域名线索匹配；为空时不得从 IP 强推 tracker 结论 |
 | `packageName` | string | `network.packageName` 或 `appProfile.packageName` | 可用于 `unknown` 归属判断 |
-| `uid` | number | `network.uid` | `-1` 表示无法归属 |
+| `uid` | number | `network.uid` | v0.1 R-008 使用 `-1` 作为联合条件；v0.2 不以 UID 单独覆盖可靠包名归属 |
 | `sceneTypes` | array<string> | `RuleInput.appProfile.sceneType` | 场景类型由 App 画像提供，不得从包名临时猜测后直接写入事件 |
 | `scenarioMatchRequired` | string | 规则上下文 | 取值遵循 `scenarioMatch` 枚举，用于要求上游场景判断结果 |
 | `timeWindowMs` | number | 事件时间戳 | 用于相关事件时间窗，不能删除或合并原始事件 |
@@ -270,7 +272,8 @@ no-match、version mismatch 和没有可用 witness 时不制造关联；unknown
 
 当事件出现以下情况之一时，应优先输出 `category=unknown`、`scenarioMatch=unknown`、`confidence=low`，并避免确定性处置建议：
 
-- `network.packageName=unknown` 或 `network.uid=-1`；
+- 对 `rules-v0.2`，`network.packageName=unknown` 即表示无法可靠归属；`uid=-1` 单独出现时，如果 packageName 已由其他可靠来源确认，不应机械覆盖为 unknown；
+- 对冻结的 `rules-v0.1`，R-008 继续保持 `packageName=unknown` 且 `uid=-1` 的历史联合条件；
 - `domainHint` 为空且没有其他可靠分类来源；
 - `evidenceLevel=E5`；
 - 缺少场景、使用上下文或先前事件，导致规则前提不成立。
