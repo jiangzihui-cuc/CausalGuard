@@ -107,13 +107,19 @@ Boundary 覆盖 R-003 独立正例、R-006 `foregroundState=unused` 正负例、
 
 | 指标 | 定义 |
 |---|---|
-| 数据流向分类准确率 | 正确分类数 / 总数（必要/分析/高风险） |
-| 分类召回率 | 检出 / 应检出 |
-| 高风险识别召回率 | 高风险事件被标记的比例 |
-| 场景一致性准确率 | match/mismatch 判断正确比例 |
-| AI 事实一致率 | AI 输出事实与输入一致的比例 |
-| 用户处置耗时 | 完成一次处置所需时间 |
-| 处置前后频率变化 | 同类事件处置前后对比 |
+| 风险分类 exact-match agreement | `actual.category == expectedCategory` / 该 `ruleVersion` 全部 case |
+| 风险等级 exact-match agreement | `actual.riskLevel == expectedRiskLevel` / 该 `ruleVersion` 全部 case |
+| 分类召回率 | 对 `necessary/analytics/high_risk/unknown` 分别计算 TP / 该类 expected support；另报告有 support 类别的 macro recall |
+| 高风险识别召回率 | expected `riskLevel` 属于 `{high, critical}` 的 case 中，actual 仍识别为 `{high, critical}` 的比例 |
+| 场景一致性 exact-match agreement | `actual.scenarioMatch == expectedScenarioMatch` / 该 `ruleVersion` 全部 case；`unknown` 是合法值 |
+| synthetic AI guardrail disposition agreement | candidate 经本地 validator 得到的 `ACCEPT/REJECT/SANITIZE` 与独立 oracle 一致的比例 |
+| 真实 AI 事实一致率 | 需要固定真实模型/version 输出快照与独立人工事实标签；当前为 `N/A` |
+| 用户处置耗时 | 需要真人 `userActionStartedAt` 与 `userActionCompletedAt`；不能用观察窗口时长代替 |
+| synthetic recheck allowed-count change | 对 comparator 确认的 `REDUCED/NO_CHANGE/BLOCKED` case 报告 `postAllowed - preAllowed`；`pre=0` 时百分比为 `N/A` |
+
+B6-5 当前可测实现口径：历史 `rules-v0.1` 的 25 条与当前 `rules-v0.2` boundary 的 17 条必须分开报告；42 条只能作为 cross-version regression health，不能作为单一规则版本准确率。上述规则指标是 curated deterministic oracle agreement，不是未经限定的真实世界准确率。`necessary` 等 zero-support 类别的 recall 为 `N/A`，不能记为 0%。
+
+AI 评测不联网、不调用真实模型，使用独立 synthetic candidate/oracle fixture；因此只能报告 synthetic validator disposition agreement，不能把 validator 单测通过率写成 AI fact consistency。处置耗时后续由真人/真机协议补充：记录 `sampleId`、`actionType`、`targetType`、开始/完成时间、成功或中止、duration、设备系统和备注。
 
 ## 6. 失败案例
 
