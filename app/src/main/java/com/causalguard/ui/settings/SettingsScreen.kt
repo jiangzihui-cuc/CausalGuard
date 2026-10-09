@@ -52,7 +52,7 @@ fun SettingsScreen(
         }
 
         SettingsSection(title = "数据保留") {
-            Text("事件保留策略：当前 Fixture 模式不适用")
+            Text("事件保留策略")
             Text(state.retentionDescription, style = MaterialTheme.typography.bodyMedium)
             Button(onClick = {}, enabled = state.retentionAvailable) {
                 Text("配置保留天数")
@@ -81,10 +81,10 @@ fun SettingsScreen(
         }
 
         SettingsSection(title = "数据管理") {
-            Text("删除当前演示数据")
+            Text("删除本地事件")
             Text(state.deletionDescription, style = MaterialTheme.typography.bodyMedium)
             Button(onClick = {}, enabled = state.deletionAvailable) {
-                Text("删除演示数据")
+                Text("删除本地事件")
             }
         }
 
@@ -96,7 +96,7 @@ fun SettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(4.dp))
-        Text("Fixture 模式只展示内置演示资产，不代表实时设备监测状态。")
+        Text(state.footerNote)
     }
 }
 

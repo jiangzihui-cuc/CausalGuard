@@ -96,10 +96,11 @@ fun CausalGuardApp(
                 }
                 composable(SettingsRoute) {
                     val settingsViewModel: SettingsViewModel = viewModel(
-                        factory = SettingsViewModel.Factory(eventAnalysisService),
+                        factory = SettingsViewModel.Factory(eventAnalysisService, privacyEventRepository),
                     )
+                    val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
                     SettingsScreen(
-                        state = settingsViewModel.uiState,
+                        state = settingsState,
                         onBack = { navController.popBackStack() },
                     )
                 }

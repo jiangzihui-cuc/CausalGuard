@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">CausalGuard Spike</string>
+    <string name="app_name">CausalGuard</string>
     <string name="monitor_notification_channel">网络监测</string>
     <string name="monitor_notification_title">CausalGuard 正在监测网络</string>
     <string name="monitor_notification_text">保持 VPN 与采集存活，网络切换时自动恢复</string>

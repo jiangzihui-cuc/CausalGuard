@@ -8,22 +8,30 @@ import com.causalguard.data.fixture.RuleInputContextAsset
 import com.causalguard.data.repository.FakePrivacyEventRepository
 import com.causalguard.rules.RuleAssetLoadResult
 import com.causalguard.rules.RuleAssetLoader
-import com.causalguard.ui.FixtureDataSource
-import com.causalguard.ui.FixtureRuntimeMode
+import com.causalguard.ui.HybridDataSource
+import com.causalguard.ui.HybridRuntimeMode
+import com.causalguard.test.MainDispatcherRule
 import java.io.File
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.ListSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 
 class SettingsViewModelTest {
 
-    @Test
-    fun fixtureSettingsExposeOnlyAvailableCapabilities() {
-        val state = SettingsViewModel(fixtureAnalysisService()).uiState
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
-        assertEquals(FixtureRuntimeMode, state.runtimeMode)
+    @Test
+    fun fixtureSettingsExposeOnlyAvailableCapabilities() = runTest {
+        val viewModel = SettingsViewModel(fixtureAnalysisService(), FakePrivacyEventRepository(fixtureEvents()))
+        val state = viewModel.uiState.first { it.runtimeMode == HybridRuntimeMode }
+
+        assertEquals(HybridRuntimeMode, state.runtimeMode)
         assertFalse(state.monitoringAvailable)
         assertFalse(state.monitoringEnabled)
         assertFalse(state.retentionAvailable)
@@ -32,7 +40,7 @@ class SettingsViewModelTest {
         assertTrue(state.explanationMode.contains("本地确定性解释模板"))
         assertTrue(state.aiCloudDescription.contains("未配置密钥"))
         assertFalse(state.deletionAvailable)
-        assertEquals(FixtureDataSource, state.dataSource)
+        assertEquals(HybridDataSource, state.dataSource)
         assertEquals("rules-v0.1", state.ruleVersion)
     }
 
