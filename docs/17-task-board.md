@@ -249,14 +249,14 @@
 | A7-5 | 准备真实网络数据来源、日志和第三方修改证据 | 成员 A | - | 已完成（[A7 RC 记录](a7-release-candidate.md) 第 5 节：底座 commit、两补丁 SHA-256、复现命令） |
 | A7-6 | 只修阻断性缺陷 | 成员 A | - | 已完成（`assembleRelease` 通过；单测 261/0；lint 0 error/4 warning 均非阻断；无需改码） |
 | B7-1 | 完成 Demo App 场景重置流程 | 成员 B | 成员 A | 已完成 |
-| B7-2 | 3 分钟演示脚本和离线回放包 | 成员 B | 成员 A | 未开始 |
+| B7-2 | 3 分钟演示脚本和离线回放包 | 成员 B | 成员 A | 已完成 |
 | B7-3 | 录制候选视频、生成核心截图 | 成员 B | - | 未开始 |
 | B7-4 | 产品创新、证据等级、开源/原创边界答辩页 | 成员 B | 成员 A | 未开始 |
 | B7-5 | 独立按 A 的说明安装、授权和运行 RC | 成员 B | - | 未开始 |
 
 > 阶段 7 A 侧进展（成员 A，2026-10-07）：A7-1～A7-6 已完成，已推送分支 `release/v0.2.0-rc1` 并发起 **PR #27（待 CI + 成员 B review）**。冻结设备 PJW110/Android 16/API 36 与构建环境；构建并签名 RC `causalguard-0.2.0-rc1.apk`（SHA-256 `f1df27fb…`，源码构建 commit `c603d26`，tag `causalguard-v0.2.0-rc1`）；输出安装/授权/清理/恢复文档与依赖许可证报告（自动收集 + 人工核对）；整理底座 commit、两补丁 SHA-256 与复现命令作为第三方修改证据；回归 `assembleRelease` 通过、单测 261/0、lint 0 error/4 warning（均非阻断），无需修码。详见 [A7 RC 记录](a7-release-candidate.md)。
 >
-> 阶段 7 B 侧进展：B7-1 已完成。现有 reset 流程统一返回 `Ready`；DEMO-C reset 会作废 active token，旧异步 completion 不覆盖 `Ready`，重新 Arm 使用新 token；DEMO-D reset 清除 controller baseline，Activity Reset 同时清除 `DemoDSessionStore`。相关 unit tests 已覆盖这些 reset 边界。B7-2～B7-5 仍待材料制作与人工验收。
+> 阶段 7 B 侧进展：B7-1 已完成。现有 reset 流程统一返回 `Ready`；DEMO-C reset 会作废 active token，旧异步 completion 不覆盖 `Ready`，重新 Arm 使用新 token；DEMO-D reset 清除 controller baseline，Activity Reset 同时清除 `DemoDSessionStore`。相关 unit tests 已覆盖这些 reset 边界。B7-2 已完成：3 分钟录屏脚本、offline replay README/manifest 已形成，复用已有 canonical fixture/runtime assets，未新增业务代码，并明确分离 synthetic replay 与真实 VPN/system observation；完成定义不包含 clean-install 一键 fixture replay UI。B7-3～B7-5 仍待材料制作与人工验收。
 
 交叉验收：截图、视频、文档和 APK 来自同一 commit；授权失败、断网、VPN 停止和无法归属均完成演练。
 
