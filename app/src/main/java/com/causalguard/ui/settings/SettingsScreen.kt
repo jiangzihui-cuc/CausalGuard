@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.causalguard.ui.LocalExplanationMode
 
 @Composable
 fun SettingsScreen(
@@ -63,7 +62,7 @@ fun SettingsScreen(
         SettingsSection(title = "解释方式") {
             SettingRow(
                 title = "AI 云端解释",
-                description = "当前版本未接入云端 AI；核心分析不依赖网络。",
+                description = state.aiCloudDescription,
             ) {
                 Switch(
                     checked = state.aiCloudEnabled,
@@ -92,7 +91,7 @@ fun SettingsScreen(
         SettingsSection(title = "来源与版本") {
             FactLine("运行模式", state.runtimeMode)
             FactLine("数据来源", state.dataSource)
-            FactLine("解释模式", LocalExplanationMode)
+            FactLine("解释模式", state.explanationMode)
             FactLine("规则版本", state.ruleVersion)
         }
 

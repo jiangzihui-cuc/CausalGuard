@@ -14,10 +14,19 @@ import com.causalguard.rules.RecommendationDecision
 import com.causalguard.rules.RuleAssetLoadResult
 import com.causalguard.rules.RuleEvaluator
 import com.causalguard.rules.SceneConsistencyEvaluator
+import com.causalguard.rules.explain.AiExplanationProvider
+import com.causalguard.rules.explain.ExplanationContext
+import com.causalguard.rules.explain.ExplanationService
+import com.causalguard.rules.explain.ExplanationText
+import com.causalguard.rules.explain.LocalExplanationProvider
 import kotlinx.coroutines.flow.first
 
 interface EventAnalysisService {
     val ruleVersion: String
+
+    /** B6-3：在线 AI 解释增强当前是否可用（已配置且 Provider 就绪）。默认不可用。 */
+    val aiExplanationAvailable: Boolean
+        get() = false
 
     suspend fun analyze(eventId: String): EventAnalysisResult?
 
@@ -30,17 +39,9 @@ data class EventAnalysisResult(
     val recommendation: RecommendationDecision,
     val causalChain: CausalChainResult,
     val recommendationSelection: RecommendationSelection,
-    val explanation: LocalExplanation,
+    val explanation: ExplanationText,
     val evidence: List<PrivacyEvent>,
     val degradation: EvaluationDegradation,
-)
-
-data class LocalExplanation(
-    val summary: String,
-    val whyCare: String,
-    val evidence: String,
-    val action: String,
-    val caveat: String,
 )
 
 class FixtureEventAnalysisService(
@@ -54,14 +55,23 @@ class FixtureEventAnalysisService(
      * 不覆盖 context，保持 `null`/`UNKNOWN` 的诚实降级语义。
      */
     private val sceneConsistencyEvaluator: SceneConsistencyEvaluator? = null,
+    /**
+     * B6-3：可选的在线 AI 解释 Provider。未注入或不可用时，解释始终由本地确定性模板生成，
+     * 不影响 P0 断网可用；注入时模型输出仍经本地事实校验，不通过则回退本地模板。
+     */
+    aiExplanationProvider: AiExplanationProvider? = null,
 ) : EventAnalysisService {
     private val ruleAsset = rules as? RuleAssetLoadResult.Success
         ?: error("Unable to load runtime rule asset")
     private val evaluator = RuleEvaluator(ruleAsset.rules)
+    private val explanationService = ExplanationService(aiProvider = aiExplanationProvider)
     private val templatesByEventId = templates.associateBy { it.eventId }
 
     override val ruleVersion: String
         get() = ruleAsset.schema.ruleVersion
+
+    override val aiExplanationAvailable: Boolean
+        get() = explanationService.isAiAvailable
 
     override suspend fun analyze(eventId: String): EventAnalysisResult? {
         val events = repository.observeAll().first()
@@ -74,23 +84,49 @@ class FixtureEventAnalysisService(
         return events.map { event -> analyzeEvent(event, events) }
     }
 
-    private fun analyzeEvent(
+    private suspend fun analyzeEvent(
         event: PrivacyEvent,
         events: List<PrivacyEvent>,
     ): EventAnalysisResult {
+        val appProfile = inputContext.appProfiles.singleOrNull { it.packageName == event.appId }
+        val explicitScenarioMatch = inputContext.scenarioMatches
+            .singleOrNull { it.eventId == event.eventId }
+            ?.asScenarioMatch()
+        val sceneResult = sceneConsistencyEvaluator?.evaluate(event, appProfile)
+
+        val relatedEvents = events.filter { it.appId == event.appId && it.eventId != event.eventId }
+        val priorEvents = events.filter { it.appId == event.appId && it.timestamp < event.timestamp }
         val input = RuleInput(
             event = event,
-            appProfile = inputContext.appProfiles.singleOrNull { it.packageName == event.appId },
-            scenarioMatch = resolveScenarioMatch(event),
-            relatedEvents = events.filter { it.appId == event.appId && it.eventId != event.eventId },
-            priorEvents = events.filter { it.appId == event.appId && it.timestamp < event.timestamp },
+            appProfile = appProfile,
+            scenarioMatch = explicitScenarioMatch
+                ?: sceneResult?.scenarioMatch?.takeIf { it != ScenarioMatch.UNKNOWN },
+            relatedEvents = relatedEvents,
+            priorEvents = priorEvents,
             ruleVersion = ruleAsset.schema.ruleVersion,
         )
         val evaluation = evaluator.evaluate(input)
         val assessment = evaluation.assessment
-        val explanation = templatesByEventId[event.eventId]
-            ?.toLocalExplanation()
-            ?: fallbackExplanation(event, assessment, evaluation.recommendationDecision)
+        val explanationContext = ExplanationContext(
+            appName = event.appName ?: "该应用",
+            packageName = event.appId,
+            eventType = event.eventType,
+            foregroundState = event.foregroundState,
+            riskLevel = assessment.riskLevel,
+            scenarioMatch = assessment.scenarioMatch,
+            category = assessment.category,
+            matchedRules = assessment.matchedRules,
+            evidenceLevel = event.evidenceLevel,
+            occurrenceCount = relatedEvents.count { it.eventType == event.eventType } + 1,
+            explanationBoundary = assessment.explanationBoundary
+                ?: LocalExplanationProvider.DEFAULT_BOUNDARY,
+            scenarioMatchReason = sceneResult?.reason,
+            sceneType = sceneResult?.sceneType ?: appProfile?.sceneType,
+            evidenceSummary = event.evidenceSummary,
+            recommendationTitle = evaluation.recommendationDecision.title,
+        )
+        val explanation = templatesByEventId[event.eventId]?.toExplanationText()
+            ?: explanationService.explain(explanationContext).text
         val evidence = assessment.evidenceIds.mapNotNull { evidenceId ->
             events.firstOrNull { it.eventId == evidenceId }
         }
@@ -110,40 +146,6 @@ class FixtureEventAnalysisService(
         )
     }
 
-    /**
-     * B5-1 场景一致性接入：显式 fixture context 优先，缺失时用版本化场景知识确定性推导。
-     * 评估器返回 `UNKNOWN` 时不覆盖 context，保持既有的 `null`/`UNKNOWN` 降级。
-     */
-    private fun resolveScenarioMatch(event: PrivacyEvent): ScenarioMatch? {
-        val explicit = inputContext.scenarioMatches
-            .singleOrNull { it.eventId == event.eventId }
-            ?.asScenarioMatch()
-        if (explicit != null) return explicit
-
-        val evaluator = sceneConsistencyEvaluator ?: return null
-        val appProfile = inputContext.appProfiles.singleOrNull { it.packageName == event.appId }
-        return evaluator.evaluate(event, appProfile).scenarioMatch
-            .takeIf { it != ScenarioMatch.UNKNOWN }
-    }
-
-    private fun ExplanationTemplate.toLocalExplanation(): LocalExplanation =
-        LocalExplanation(summary, whyCare, evidence, action, caveat)
-
-    private fun fallbackExplanation(
-        event: PrivacyEvent,
-        assessment: RiskAssessment,
-        recommendation: RecommendationDecision,
-    ): LocalExplanation {
-        val evidenceFact = "证据等级 ${event.evidenceLevel.wire}，来源 ${event.source.wire}。"
-        val unknown = assessment.category.wire == "unknown" ||
-            assessment.confidence.wire == "low"
-        return LocalExplanation(
-            summary = event.evidenceSummary ?: "记录了 ${event.eventType.wire} 事件。",
-            whyCare = if (unknown) "当前证据不足以确认风险。" else "规则评估提示需要关注该事件。",
-            evidence = evidenceFact,
-            action = if (unknown) "当前证据不足以支持确定性处置，暂不执行操作。"
-            else "建议：${recommendation.title}。该建议尚未执行。",
-            caveat = assessment.explanationBoundary ?: "当前证据不足以确认风险。",
-        )
-    }
+    private fun ExplanationTemplate.toExplanationText(): ExplanationText =
+        ExplanationText(summary, whyCare, evidence, action, caveat)
 }

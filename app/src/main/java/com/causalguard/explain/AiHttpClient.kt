@@ -45,13 +45,21 @@ object AiHttpClient {
 
     /**
      * 构造 Retrofit 实例。仅在 [isConfigured] 时调用；未配置应回退本地模板，不要调用本方法。
+     *
+     * `baseUrl` 必须为合法 URL，这里统一补齐结尾 `/`，避免调用方配置 `https://host` 时抛错。
      */
     fun buildRetrofit(
         client: OkHttpClient,
         converterFactory: retrofit2.Converter.Factory,
     ): Retrofit = Retrofit.Builder()
-        .baseUrl(BuildConfig.AI_BASE_URL)
+        .baseUrl(normalizedBaseUrl())
         .client(client)
         .addConverterFactory(converterFactory)
         .build()
+
+    /** 规范化 base URL：去除首尾空白并补齐结尾 `/`。 */
+    fun normalizedBaseUrl(): String {
+        val trimmed = BuildConfig.AI_BASE_URL.trim()
+        return if (trimmed.endsWith("/")) trimmed else "$trimmed/"
+    }
 }

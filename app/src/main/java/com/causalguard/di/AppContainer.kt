@@ -44,9 +44,11 @@ import com.causalguard.data.repository.RoomRecommendationRepository
 import com.causalguard.data.repository.RoomRiskAssessmentRepository
 import com.causalguard.data.repository.RoomRuleVersionRepository
 import com.causalguard.data.repository.RoomUsageContextRepository
+import com.causalguard.explain.RetrofitAiExplanationProvider
 import com.causalguard.mitigation.AndroidAppSettingsLauncher
 import com.causalguard.mitigation.DeviceMitigationExecutor
 import com.causalguard.mitigation.TrackerControlDomainBlockController
+import com.causalguard.rules.explain.AiExplanationProvider
 
 /**
  * 依赖注入边界（A3-4）：ViewModel/导航只依赖本接口暴露的 Repository 与 Provider，
@@ -89,6 +91,13 @@ class AppContainer(
      */
     override val privacyEventRepository: PrivacyEventRepository = RoomPrivacyEventRepository(database)
 
+    /**
+     * B6-3：可选的在线 AI 解释增强。仅在 `AI_API_KEY`/`AI_BASE_URL` 注入时构造；否则为 null，
+     * 解释完全由本地确定性模板生成。模型输出仍经本地事实校验，失败/越界一律回退本地模板。
+     */
+    private val aiExplanationProvider: AiExplanationProvider? =
+        RetrofitAiExplanationProvider.create { message -> Log.i("CausalGuardAI", message) }
+
     override val eventAnalysisService: EventAnalysisService = FixtureEventAnalysisService(
         repository = privacyEventRepository,
         rules = RuntimeFixtureLoader.loadRules(context),
@@ -96,6 +105,7 @@ class AppContainer(
         templates = RuntimeFixtureLoader.loadExplanationTemplates(context).templates,
         sceneConsistencyEvaluator = (RuntimeFixtureLoader.loadSceneKnowledge(context) as? SceneKnowledgeLoadResult.Success)
             ?.let { SceneConsistencyEvaluator(it.knowledge) },
+        aiExplanationProvider = aiExplanationProvider,
     )
 
     override val eventSink: EventSink = RoomEventSink(privacyEventRepository)
