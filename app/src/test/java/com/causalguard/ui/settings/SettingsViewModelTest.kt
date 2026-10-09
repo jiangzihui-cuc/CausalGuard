@@ -29,6 +29,8 @@ class SettingsViewModelTest {
         assertFalse(state.retentionAvailable)
         assertFalse(state.aiCloudEnabled)
         assertTrue(state.localExplanationEnabled)
+        assertTrue(state.explanationMode.contains("本地确定性解释模板"))
+        assertTrue(state.aiCloudDescription.contains("未配置密钥"))
         assertFalse(state.deletionAvailable)
         assertEquals(FixtureDataSource, state.dataSource)
         assertEquals("rules-v0.1", state.ruleVersion)

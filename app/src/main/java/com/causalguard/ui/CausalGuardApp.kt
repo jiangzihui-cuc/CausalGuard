@@ -27,6 +27,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.PrivacyEventRepository
+import com.causalguard.core.model.MitigationExecution
+import com.causalguard.core.model.MitigationExecutor
+import com.causalguard.core.model.MitigationRecord
+import com.causalguard.core.model.MitigationRepository
+import com.causalguard.core.model.MitigationRequest
+import com.causalguard.core.model.MitigationStatus
+import com.causalguard.core.model.NetworkObservation
+import com.causalguard.core.model.NetworkObservationRepository
 import com.causalguard.analysis.EventAnalysisResult
 import com.causalguard.analysis.EventAnalysisService
 import com.causalguard.ui.eventdetail.EventDetailScreen
@@ -51,11 +59,16 @@ private const val EventIdArgument = "eventId"
 fun CausalGuardApp(
     privacyEventRepository: PrivacyEventRepository,
     eventAnalysisService: EventAnalysisService,
+    mitigationExecutor: MitigationExecutor,
+    mitigationRepository: MitigationRepository,
+    networkObservationRepository: NetworkObservationRepository,
     output: String,
     onOpenUsageSettings: () -> Unit,
     onCollectPackage: () -> Unit,
     onCollectUsage: () -> Unit,
     onProbeUid: () -> Unit,
+    onStartNetworkCollect: () -> Unit,
+    onStopNetworkCollect: () -> Unit,
     onClear: () -> Unit,
 ) {
     MaterialTheme {
@@ -108,12 +121,20 @@ fun CausalGuardApp(
                     val eventId = requireNotNull(backStackEntry.arguments?.getString(EventIdArgument))
                     val detailViewModel: EventDetailViewModel = viewModel(
                         key = "event-detail-$eventId",
-                        factory = EventDetailViewModel.Factory(eventId, eventAnalysisService),
+                        factory = EventDetailViewModel.Factory(
+                            eventId = eventId,
+                            analysisService = eventAnalysisService,
+                            mitigationExecutor = mitigationExecutor,
+                            mitigationRepository = mitigationRepository,
+                            networkObservationRepository = networkObservationRepository,
+                        ),
                     )
                     val state by detailViewModel.uiState.collectAsStateWithLifecycle()
                     EventDetailScreen(
                         state = state,
                         onBack = { navController.popBackStack() },
+                        onExecuteRecommendation = detailViewModel::executeRecommendation,
+                        onRecheck = detailViewModel::recheck,
                     )
                 }
                 composable(SpikeDebugRoute) {
@@ -123,6 +144,8 @@ fun CausalGuardApp(
                         onCollectPackage = onCollectPackage,
                         onCollectUsage = onCollectUsage,
                         onProbeUid = onProbeUid,
+                        onStartNetworkCollect = onStartNetworkCollect,
+                        onStopNetworkCollect = onStopNetworkCollect,
                         onClear = onClear,
                         onBack = { navController.popBackStack() },
                     )
@@ -139,6 +162,8 @@ private fun SpikeDebugPanel(
     onCollectPackage: () -> Unit,
     onCollectUsage: () -> Unit,
     onProbeUid: () -> Unit,
+    onStartNetworkCollect: () -> Unit,
+    onStopNetworkCollect: () -> Unit,
     onClear: () -> Unit,
     onBack: (() -> Unit)? = null,
 ) {
@@ -173,6 +198,12 @@ private fun SpikeDebugPanel(
         Button(onClick = onProbeUid) {
             Text("UID Probe")
         }
+        Button(onClick = onStartNetworkCollect) {
+            Text("Start Network Monitor (A4-5)")
+        }
+        Button(onClick = onStopNetworkCollect) {
+            Text("Stop Network Monitor (A4-5)")
+        }
         Button(onClick = onClear) {
             Text("Clear")
         }
@@ -192,11 +223,16 @@ private fun CausalGuardAppPreview() {
     CausalGuardApp(
         privacyEventRepository = PreviewPrivacyEventRepository,
         eventAnalysisService = PreviewEventAnalysisService,
+        mitigationExecutor = PreviewMitigationExecutor,
+        mitigationRepository = PreviewMitigationRepository,
+        networkObservationRepository = PreviewNetworkObservationRepository,
         output = "Spike / Debug output preview",
         onOpenUsageSettings = {},
         onCollectPackage = {},
         onCollectUsage = {},
         onProbeUid = {},
+        onStartNetworkCollect = {},
+        onStopNetworkCollect = {},
         onClear = {},
     )
 }
@@ -219,4 +255,44 @@ private object PreviewEventAnalysisService : EventAnalysisService {
     override suspend fun analyze(eventId: String): EventAnalysisResult? = null
 
     override suspend fun analyzeAll(): List<EventAnalysisResult> = emptyList()
+}
+
+private object PreviewMitigationExecutor : MitigationExecutor {
+    override suspend fun execute(request: MitigationRequest): MitigationExecution =
+        MitigationExecution(
+            status = MitigationStatus.UNSUPPORTED,
+            action = request.action,
+            packageName = request.packageName,
+            target = request.target,
+            message = "Preview does not execute actions",
+        )
+}
+
+private object PreviewMitigationRepository : MitigationRepository {
+    override suspend fun record(record: MitigationRecord): Long = 0L
+
+    override suspend fun get(id: Long): MitigationRecord? = null
+
+    override fun observeByApp(appId: String): Flow<List<MitigationRecord>> = flowOf(emptyList())
+
+    override suspend fun updateOutcome(
+        id: Long,
+        postResult: String,
+        reviewNotes: String?,
+        observationEnd: Long?,
+    ) = Unit
+}
+
+private object PreviewNetworkObservationRepository : NetworkObservationRepository {
+    override suspend fun observeWindow(
+        packageName: String,
+        domain: String?,
+        start: Long,
+        end: Long,
+    ): NetworkObservation = NetworkObservation(
+        packageName = packageName,
+        domain = domain,
+        windowStart = start,
+        windowEnd = end,
+    )
 }

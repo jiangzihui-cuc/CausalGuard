@@ -5,6 +5,13 @@
 > 责任人：成员 A / 成员 B
 > 目的：冻结规则引擎的输入输出，使规则与页面解耦，便于评测。
 
+## 版本化规则资产
+
+- `rules-v0.1` / `risk-rules-v0.1.json` 是冻结的历史评测基线，继续用于回归。
+- `rules-v0.2` / `risk-rules-v0.2.json` 是 B4-4 真实 fixture 校准版本，运行时当前使用该版本。
+- 两个版本唯一的语义差异是 R-008：v0.1 要求 `packageName=unknown` 且 `uid=-1`；v0.2 只要求 `packageName=unknown`，因为已知 UID（包括 `0`）不等于已知 App 归属。
+- v0.2 不改变 R-008 的低风险、unknown、低置信度、`none` 建议和未知降级输出，也不改变其他规则。
+
 ## 1. 规则输入
 
 ```json
@@ -74,7 +81,7 @@ v0.1 冻结以下字段来源，避免规则层、存储层和解释层各自推
 |---|---|
 | `id` | 确定性当前评估 ID，格式为 `r-${eventId}`。v0.1 中一个 `PrivacyEvent` 只维护一个当前 `RiskAssessment` 身份，不保存同一事件的多 `ruleVersion` assessment history。 |
 | `createdAt` | 规则引擎固定输出 `0L`，含义为 `UNASSIGNED_AT_DETERMINISTIC_EVALUATION_BOUNDARY`。它不是实际发生时间，也不得由规则引擎读取 wall clock 或用事件时间冒充。 |
-| `evidenceIds` | `PrivacyEvent.eventId` 字符串引用列表；v0.1 至少包含主事件 ID。它不等价于 Room `EvidenceLink.id`，完整 related/prior evidence 物化属于后续 evidence-chain 集成。 |
+| `evidenceIds` | `PrivacyEvent.eventId` 字符串引用列表；主事件始终第一个，effective rule 实际使用的 related/prior supporting event 会被去重并确定性加入。它不等价于 Room `EvidenceLink.id`。 |
 | `ruleVersion` | 写入实际 evaluator 使用的已验证规则资产版本，即验证后的规则集合版本。不得把不受支持的 `RuleInput.ruleVersion` 原样写入评估结果。 |
 
 规则版本来源与输入兼容：
@@ -83,6 +90,20 @@ v0.1 冻结以下字段来源，避免规则层、存储层和解释层各自推
 - evaluator version 来自验证后的同版本规则集合，不再独立声明另一个可漂移版本；
 - `RuleInput.ruleVersion` 必须匹配 evaluator version；
 - 若输入版本不匹配，规则引擎不得执行规则匹配，也不得抛出阻断上层流程的异常；必须返回 `riskScore=0`、`riskLevel=low`、`category=unknown`、`scenarioMatch=unknown`、`confidence=low`、`matchedRules=[]`、`recommendation.action=none`、`degradation.shouldShowUnknownDegradation=true` 的确定性安全降级结果，并在 `RiskAssessment.ruleVersion` 中记录实际 evaluator version。
+
+### 2.2 EvidenceLink 与证据链
+
+`RiskAssessment.evidenceIds` 始终引用 `PrivacyEvent.eventId`，不是 `EvidenceLink.id`。规则引擎只物化 effective matched rule 实际使用的 supporting event；输入中未支持有效规则的 related/prior event 不得被批量加入。主事件 ID 永远排在第一位，supporting ID 去重并按确定性顺序输出。
+
+`EvidenceLink.relation` 在本版的语义为：
+
+- `temporal`：事件之间的时间/先后关联，属于 E3 Derived Inference，不证明因果、敏感内容传输或数据泄露；
+- `rule`：规则基于事件事实产生的派生关系，属于 E3 Derived Inference，不是 System Fact 或 Observed Fact；
+- `app`：既有契约保留，本版 builder 不强制生成。
+
+no-match、version mismatch 和没有可用 witness 时不制造关联；unknown degradation 只允许 effective unknown rules 的 rule link 存在，不保留被抑制的高风险 rule link。B5-2 只构建结果，不自动持久化 EvidenceLink。
+
+`RuleEvaluationResult` 是 rule-engine 内部 rich metadata 结果，现包含 `evidenceLinks` 和可重建的 `causalChain`。`causalChain` 是由 `RuleInput`、canonical `RiskAssessment`、EvidenceLink 和降级结果确定性生成的 derived view，不是新的事实源；canonical `RiskRuleEngine.assess(input): RiskAssessment` 公共接口和 `RiskAssessment` 字段不变。链上的 event 节点保留原始证据等级，temporal/rule inference 为 E3，unknown/degraded assessment 为 E5，所有边仅表示 `supports`，不表示 `causes`。
 
 ## 3. 风险评分公式（初版）
 
@@ -107,13 +128,13 @@ v0.1 冻结以下字段来源，避免规则层、存储层和解释层各自推
 | R-005 | 已知分析追踪器 | 域名命中 tracker 映射表 | 分类为 analytics |
 | R-006 | 长期未使用仍联网 | `lastUsedAgoMs` 超阈值 + 后台网络 | 高风险 |
 | R-007 | 敏感数据伴随网络 | 场景不匹配且敏感行为时间窗内伴随网络事件 | 提高风险等级 |
-| R-008 | 无法归属网络 | network packageName=unknown | 置信度降为 low |
+| R-008 | 无法归属网络 | network `packageName=unknown`（v0.2 不再要求特定 UID） | 置信度降为 low |
 | R-009 | 权限已撤销仍观测 | permission revoked 后仍出现敏感访问 | 需要关注 |
 | R-010 | 证据不足 | 关键字段缺失 | 输出 E5、无法确认 |
 
 ## 5. 规则资产 JSON 格式与加载边界
 
-规则引擎加载的规则资产采用 JSON 格式。`docs/fixtures/risk-rules-v0.1.json` 是该格式的 v0.1 实例；后续真实实现可从可配置路径读取同结构资产，但运行时只允许读取已经通过 JSON 解析、版本、枚举、唯一性和引用校验的资产。
+规则引擎加载的规则资产采用 JSON 格式。`docs/fixtures/risk-rules-v0.1.json` 是冻结的 v0.1 实例，`docs/fixtures/risk-rules-v0.2.json` 是 B4-4 校准实例；后续真实实现可从可配置路径读取同结构资产，但运行时只允许读取已经通过 JSON 解析、版本、枚举、唯一性和引用校验的资产。
 
 规则资产只定义“什么条件产生什么结构化风险结果”，不存放原始事件、不写入 `PrivacyEvent`，也不包含评测期望。事件数据、规则定义、测试预期必须分离：
 
@@ -228,6 +249,16 @@ v0.1 冻结以下字段来源，避免规则层、存储层和解释层各自推
 
 建议动作只表示“推荐展示什么”，不代表系统已经执行处置。`unknown` 或证据不足时，`recommendation.action` 应为 `none`，除非已有足够证据支持非确定性提示。
 
+### 5.5 B5-4 Recommendation 选择
+
+规则资产的 `RecommendationDecision` 经 B5-4 生成 canonical `Recommendation`，并可生成可选的 `MitigationRequest`。Recommendation 是建议/审计 DTO，MitigationRequest 是执行请求计划；二者都不表示动作已经执行或已经生效。
+
+- unknown/degraded、no-match 和 version mismatch 只生成安全表达的 Recommendation，不生成 executable request；正常 `none` 仍保留规则标题“无需处置”。
+- `review_permission`、`limit_background_activity` 在可靠包名下映射为 `OPEN_SETTINGS`。
+- `limit_background_network` 只在 `assessment.evidenceIds` 中找到可靠 domain evidence 时映射为 `BLOCK_DOMAIN`，不映射 `BLOCK_APP`；缺域名时不 fallback 到 `OPEN_SETTINGS`。
+- domain target 必须来自 `assessment.evidenceIds` 对应的同 App 网络事件，不从 IP、标题、tracker 分类或 AI 推断。
+- selector 使用 deterministic name-based UUID，并保持 `Recommendation.evidenceIds == RiskAssessment.evidenceIds`；本轮不执行、不持久化、不接 UI。
+
 `degradation` 字段：
 
 | 字段 | 必填 | 类型 | 说明 |
@@ -281,7 +312,7 @@ interface RiskRuleEngine {
 - 规则只读事件，不修改原始事件；
 - 同 `ruleVersion` 且同输入必须输出稳定结果；
 - 规则异常不得阻断事件入库与页面展示，失败时返回最低置信度结果；
-- 任何规则命中都必须能展开到 `evidenceIds`。
+- 任何规则命中都必须能展开到主事件及其实际支持事件的 `evidenceIds`；相关 EvidenceLink 的时间和规则推断必须保留解释边界。
 
 ## 7. 规则版本管理
 

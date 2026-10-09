@@ -1,0 +1,363 @@
+{
+  "schema": {
+    "name": "recheck-cases-v0.1",
+    "purpose": "Independent input set (records + observations) for B5-7 pre/post mitigation recheck evaluation.",
+    "expectedFixture": "recheck-expected-v0.1.json",
+    "comparator": "RecheckComparator"
+  },
+  "cases": [
+    {
+      "caseId": "recheck-case-0001",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0001",
+        "action": "block_domain",
+        "target": "tracker.example.test",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 10,
+        "blockedCount": 0
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 0,
+        "blockedCount": 0
+      }
+    },
+    {
+      "caseId": "recheck-case-0002",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0002",
+        "action": "block_domain",
+        "target": "tracker.example.test",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 10,
+        "blockedCount": 0
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 6,
+        "blockedCount": 2
+      }
+    },
+    {
+      "caseId": "recheck-case-0003",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0003",
+        "action": "block_domain",
+        "target": "tracker.example.test",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 10,
+        "blockedCount": 0
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 10,
+        "blockedCount": 0
+      }
+    },
+    {
+      "caseId": "recheck-case-0004",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0004",
+        "action": "block_domain",
+        "target": "tracker.example.test",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 4,
+        "blockedCount": 4
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 5,
+        "blockedCount": 5
+      }
+    },
+    {
+      "caseId": "recheck-case-0005",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0005",
+        "action": "block_domain",
+        "target": "tracker.example.test",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 4,
+        "blockedCount": 0
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 4,
+        "blockedCount": 4
+      }
+    },
+    {
+      "caseId": "recheck-case-0006",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0006",
+        "action": "block_domain",
+        "target": "tracker.example.test",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "unavailable",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 10,
+        "blockedCount": 0
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 0,
+        "blockedCount": 0
+      }
+    },
+    {
+      "caseId": "recheck-case-0007",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0007",
+        "action": "open_settings",
+        "target": null,
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 10,
+        "blockedCount": 0
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 0,
+        "blockedCount": 0
+      }
+    },
+    {
+      "caseId": "recheck-case-0008",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0008",
+        "action": "block_domain",
+        "target": "tracker.example.test",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 0,
+        "blockedCount": 0
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 0,
+        "blockedCount": 0
+      }
+    },
+    {
+      "caseId": "recheck-case-0009",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0009",
+        "action": "block_domain",
+        "target": "tracker.example.test",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 3,
+        "blockedCount": 0
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 7,
+        "blockedCount": 0
+      }
+    },
+    {
+      "caseId": "recheck-case-0010",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0010",
+        "action": "block_domain",
+        "target": "tracker.example.test",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 10,
+        "blockedCount": 0
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1000500,
+        "requestCount": 0,
+        "blockedCount": 0
+      }
+    },
+    {
+      "caseId": "recheck-case-0011",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0011",
+        "action": "block_domain",
+        "target": " Tracker.Example.Test ",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "preObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 940000,
+        "windowEnd": 1000000,
+        "requestCount": 10,
+        "blockedCount": 0
+      },
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "TRACKER.EXAMPLE.TEST",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 4,
+        "blockedCount": 0
+      }
+    },
+    {
+      "caseId": "recheck-case-0012",
+      "record": {
+        "packageName": "com.demo.calculator",
+        "recommendationId": "rec-demo-0012",
+        "action": "block_domain",
+        "target": "tracker.example.test",
+        "executedAt": 1000000,
+        "ruleVersion": "rules-v0.1",
+        "executionStatus": "executed",
+        "postResult": "unknown",
+        "observationEnd": 1060000
+      },
+      "rawPreSnapshot": "not-json",
+      "postObservation": {
+        "packageName": "com.demo.calculator",
+        "domain": "tracker.example.test",
+        "windowStart": 1000000,
+        "windowEnd": 1060000,
+        "requestCount": 0,
+        "blockedCount": 0
+      }
+    }
+  ]
+}

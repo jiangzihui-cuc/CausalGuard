@@ -30,15 +30,29 @@
 
 步骤：
 
-1. 用户复制一段测试验证码（演示数据）；
-2. 计算器 Demo App 进入后台并触发后台读取剪贴板/位置 + 网络请求的受控事件；
-3. 哨兵弹出告警，显示时间、App、行为、前后台状态；
-4. 系统判断与计算器场景不匹配，显示风险分、置信度、证据来源；
-5. 展开隐私因果链：后台状态 → 读取剪贴板/位置 → 网络请求 → 可能影响 → 建议；
+1. DEMO-B：Android 16 后台剪贴板 probe，展示 `Platform Restricted`；
+2. DEMO-C：Demo Calculator 在后台执行最小网络 connection attempt，由 CausalGuard VPN 链路独立报告 Observed Fact；
+3. DEMO-D：Demo Weather 记录授权基线、用户撤权并执行 revoked-location probe，展示 PJW110 / Android 16 上的实际平台限制/失败结果；
+4. 哨兵显示时间、App、行为、前后台状态和证据来源；
+5. 高风险敏感访问与网络时间相关使用 deterministic synthetic fixture 展示，不把 synthetic 事件写成 Android 16 Runtime 事实；
 6. AI 将结构化证据解释为普通用户能理解的一段话，不新增事实；
 7. 用户执行建议：阻断域名/App 或跳转系统设置限制后台活动；
 8. 系统进入复查模式，展示处置前后行为数量变化；
 9. 查看事件证据卡片与（P1）每日摘要/PDF 报告。
+
+Runtime DEMO-C/D 不伪造 `PrivacyEvent`；真实 VPN/system API 事件仍由主 App 的观测链路产生。Synthetic evaluation fixture 与 Runtime Ground Truth 分开展示。
+
+最终验收口径：DEMO-C 的真机事实是 VPN 观察到 `com.demo.calculator → example.com:443` 的 TCP connection attempt，即使应用层最终为 `ConnectException`；这不表示 `Socket.connect` 成功，也不表示 tracker 命中或敏感数据外传。DEMO-D 的真机事实是撤权后 probe 得到 `Failure(IllegalStateException)`，不包装成成功读取位置。高风险规则故事使用独立、可重复的 synthetic fixture。
+
+### 3.1 B3-5 DEMO-B 边界演示
+
+1. 复制一段无隐私测试文本；
+2. 打开 Demo Calculator，点击 `Arm DEMO-B`；
+3. 按 Home 将 App 切到后台；
+4. 返回 Demo Calculator，展示 `Platform Restricted`；
+5. 强调 probe 已执行、系统拒绝访问、未生成 `PrivacyEvent`，且未读取或保存剪贴板原文。
+
+演示者不需要想办法进入 `Success`。目标设备 Android 16/API 36 的平台限制本身就是本场景的能力边界结果；跨平台成功分支只验证状态机和长度脱敏，不代表目标设备必然成功。
 
 ## 4. 离线与异常降级分支
 

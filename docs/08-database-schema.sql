@@ -138,6 +138,7 @@ CREATE TABLE IF NOT EXISTS mitigation_record (
     executedAt       INTEGER NOT NULL,
     ruleVersion      TEXT,
     preSnapshot      TEXT,                   -- JSON
+    executionStatus  TEXT    NOT NULL DEFAULT 'unknown', -- executed|unavailable|unsupported|failed|unknown
     postResult       TEXT    NOT NULL DEFAULT 'unknown', -- reduced|no_change|unknown
     observationEnd   INTEGER,
     reviewNotes      TEXT

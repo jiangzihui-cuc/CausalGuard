@@ -19,5 +19,15 @@ object Migrations {
         }
     }
 
-    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2)
+    /**
+     * v2 → v3：MitigationRecord 补 `executionStatus`，区分“已执行”与“失败/不可用”，
+     * 避免把失败持久化成已执行（PR #18 review 修正）。
+     */
+    val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE mitigation_record ADD COLUMN executionStatus TEXT NOT NULL DEFAULT 'unknown'")
+        }
+    }
+
+    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 }

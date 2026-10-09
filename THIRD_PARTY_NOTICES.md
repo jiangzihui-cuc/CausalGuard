@@ -1,7 +1,7 @@
 # THIRD_PARTY_NOTICES 第三方开源与数据来源登记
 
-> 版本：`v0.1`
-> 最后更新：2026-09-21
+> 版本：`v0.2`
+> 最后更新：2026-10-07
 > 责任人：成员 A（生成）／成员 B（汇总与复核）
 > 目的：登记所有引入本仓库的第三方源码、二进制、数据与素材的来源、版本、许可证、使用范围和团队修改，保证竞赛提交与发布时许可证合规、原创边界清晰。
 
@@ -20,7 +20,7 @@
 
 ## 1. 已导入的第三方组件
 
-> 当前仓库未复制第三方源码。以下条目登记已通过构建系统引入的第三方依赖。
+> 当前仓库以 git submodule 引入 TrackerControl Android 网络底座（见下），其余为通过构建系统引入的第三方依赖；团队对底座的修改以补丁形式交付并登记。
 
 <!-- 模板：
 ## <组件名称>
@@ -42,8 +42,10 @@
 - Repository: https://github.com/TrackerControl/tracker-control-android
 - Commit/Tag: tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（2026-08-05）
 - License: GPL-3.0（部分第三方组件/数据另有许可，见其根 `LICENSE` 与 `docs/20` 第 7 节）
-- Used files/modules: 网络底座（`VpnService`/TUN、TCP/UDP 处理、DNS 观测、连接记录、域名阻断）；当前仅作网络核心与 A4-3 Adapter 适配对象
-- Local modifications: 暂无（尚未修改）；后续修改必须另起 commit 并在此登记实际文件
+- Used files/modules: 网络底座（`VpnService`/TUN、TCP/UDP 处理、DNS 观测、连接记录、域名阻断）；当前作网络核心，A4-3 Adapter 适配对象与 A5-1 域名阻断控制通道
+- Local modifications: **有**（两处，以补丁形式维护，用 `scripts/apply-trackercontrol-hook.sh` 应用、`--revert` 回到固定 commit 原状；应用补丁后的底座源码即对应源码，随发布提供）：
+  - **A4-3 广播桥接（2026-09-28）**：新增 `app/src/main/java/eu/faircode/netguard/CausalGuardNetworkHook.java`；在 `app/src/main/java/eu/faircode/netguard/ServiceSinkhole.java` 的 `logPacket`/`dnsResolved` 回调末尾各加一处调用。改动仅发送脱敏元数据（时间、协议、五元组、uid、allowed、DNS qname/aname/ip），不改 native 核心，不读通信内容。补丁：`third_party/patches/a4-3-serversinkhole-network-hook.patch`。
+  - **A5-1 域名阻断控制通道（2026-10-03）**：新增 `app/src/main/java/eu/faircode/netguard/CausalGuardDomainBlockReceiver.java`（跨进程 ordered broadcast 处理 `com.causalguard.intent.BLOCK_DOMAIN`）；在 `ServiceSinkhole.java` 新增运行期阻断集 `mapCausalGuardBlocked` 并让 `isDomainBlocked` 仅对 CausalGuard 下发的域名做 DNS 层抑制；在 `AndroidManifest.xml` 注册导出的 receiver，并以 signature 权限（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）保护接收器，这是控制通道的唯一安全边界（不做基于 `Binder.getCallingUid()` 的 sender 二次校验）。仅按域名抑制解析，不改 native 核心，不读通信内容；`RESULT_OK` 仅在写入阻断集成功时回执，其余诚实降级。补丁：`third_party/patches/a5-1-domain-block-receiver.patch`。
 - Purpose: CausalGuard 网络事件的真实采集底座
 - Included license file: YES（随 submodule 内的根 `LICENSE`，保持原样）
 - Source availability: 以 git submodule 形式引入，路径 `third_party/tracker-control-android/`（`.gitmodules` 记录 URL，gitlink 固定到上述 commit）
@@ -104,6 +106,7 @@
 | Android SDK Platform | android-37.0 | Android SDK 条款 | 编译目标 |
 | Android SDK Build-Tools | 37.0.0 | Android SDK 条款 | 打包 |
 | Android SDK Platform-Tools | 37.0.1 | Apache-2.0（含 adb） | 设备工具 |
+| AndroidX LocalBroadcastManager | 1.1.0 | Apache-2.0 | 底座（TrackerControl）自身 UI 广播依赖；A4-3 桥接已改为跨进程显式包名广播，App 侧不再使用 |
 | Android NDK | 27.2.12479018 | 见 NDK 内 NOTICE（含 LLVM/clang，Apache-2.0 with LLVM exceptions 等） | JNI/CMake 原生编译 |
 | CMake | 3.22.1 | BSD-3-Clause | 原生构建 |
 | Rust 工具链 | 1.95.0 | MIT OR Apache-2.0 | 编译 WireGuard 桥 |
@@ -111,6 +114,9 @@
 | wgbridge-rs（TrackerControl 内） | 随底座 commit | GPL-3.0-only | WireGuard 桥接库 |
 | gotatun | 0.8.1 | MPL-2.0 | WireGuard 协议实现（Rust） |
 | tokio / base64 / hex / ipnetwork / getrandom / libc / log / jni / android_logger | 见 `wgbridge-rs/Cargo.lock` | MIT / Apache-2.0（各 crate 为准） | Rust 运行时依赖 |
+| Retrofit | 3.0.0 | Apache-2.0 | 在线 AI 增强网络层（可选，非 P0） |
+| Retrofit converter-kotlinx-serialization | 3.0.0 | Apache-2.0 | Retrofit + kotlinx.serialization 桥接 |
+| OkHttp | 4.12.0 | Apache-2.0 | Retrofit 底层 HTTP 客户端；安全配置（TLS/超时/无 Body 日志） |
 
 - TrackerControl 内部集成的 tracker/域名数据管线随底座引入，其数据来源与许可证以底座对应 commit 内的说明为准（另见 `docs/20-open-source-reuse-guide.md` 第 7 节）。
 - 数据依赖若要单独精简或替换，按 `docs/20` 第 7.3 节单独登记数据集。
@@ -132,7 +138,22 @@
 - Registered by / date: <成员 / 日期>
 -->
 
-无。
+## Disconnect Tracking Protection
+
+- Source: https://github.com/disconnectme/disconnect-tracking-protection
+- Upstream dataset: `services.json`
+- Snapshot source: TrackerControl Android bundled asset
+- TrackerControl commit: `9504d41b9f6fa1509d784e5503c084d4b428307d`
+- Bundled asset blob SHA: `6fa1d74b3dd74a174fe1a90af5d2b59edd7865dc`
+- Data license: CC BY-NC-SA 4.0
+- Transform script: `scripts/generate-tracker-dataset.py`
+- Generated asset: `app/src/main/assets/tracker-domains-v0.1.json`
+- Fields retained: exact normalized domain, original Disconnect category, source marker, and the source entity when present
+- Attribution: Disconnect Tracking Protection data by Disconnect, Inc.; the bundled source license identifies Disconnect, Inc. and CC BY-NC-SA 4.0
+- Commercial-use restriction: NonCommercial; this data and its derived subset are not licensed for commercial use
+- ShareAlike: the generated reduced dataset remains under CC BY-NC-SA 4.0 and must preserve the same license terms on redistribution
+- Team-original boundary: third-party original is Disconnect tracker/domain classification data; team-original work is snapshot extraction, deterministic trimming, the later `TrackerClassifier`, event correlation, rules, explanations, and UI
+- Registered by / date: 成员 B / 2026-10-04
 
 ---
 

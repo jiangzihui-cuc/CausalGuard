@@ -103,6 +103,8 @@
 | `ruleId` | String? | 命中的规则 |
 | `createdAt` | Long | 时间 |
 
+B5-2 中，`temporal` 和 `rule` 关联均属于 E3 Derived Inference：`temporal` 只表示事件的时间/先后关系，不表示因果、敏感内容传输或数据泄露；`rule` 表示规则基于事件事实得到的派生判断，不是 System Fact 或 Observed Fact。`app` 关系保留在契约中，但本版 builder 不强制生成。EvidenceLink 只在规则引擎中构建，不由 B5-2 自动持久化；no-match、version mismatch 和没有有效 supporting witness 时不制造 link。
+
 ### 2.6 RiskAssessment
 
 | 字段 | 类型 | 说明 |
@@ -116,7 +118,7 @@
 | `confidence` | String | low/medium/high |
 | `category` | String | necessary/analytics/high_risk/unknown（见 10 契约 §2） |
 | `explanationBoundary` | String | 解释边界说明 |
-| `evidenceIds` | String (JSON) | `PrivacyEvent.eventId` 字符串引用列表；v0.1 至少包含主事件 ID，不等同于 `EvidenceLink.id` |
+| `evidenceIds` | String (JSON) | `PrivacyEvent.eventId` 字符串引用列表；主事件始终第一个，effective rule 实际使用的 related/prior supporting event 随后加入；不等同于 `EvidenceLink.id` |
 | `matchedRules` | String (JSON) | 命中的规则 ID 列表，供解释与评测展开（见 10 契约 §2） |
 | `createdAt` | Long | 规则引擎输出为 `0` 时表示尚未分配持久化时间戳 |
 
@@ -124,14 +126,14 @@ v0.1 字段来源约束：
 
 - `RiskAssessment.id` 是当前评估身份，固定为 `r-${eventId}`；一个 `PrivacyEvent` 在 v0.1 只维护一个当前 `RiskAssessment`，不定义同一事件的多 `ruleVersion` 历史版本存储。
 - `RiskAssessment.createdAt = 0` 表示 `UNASSIGNED_AT_DETERMINISTIC_EVALUATION_BOUNDARY`，不是 Unix epoch 上真实发生的评估时间；真实持久化时间由后续集成契约定义。
-- `RiskAssessment.evidenceIds` 使用 `PrivacyEvent.eventId` 作为逻辑证据引用。v0.1 最低保证包含主事件 ID，完整 related/prior evidence 物化属于后续 evidence-chain 集成。
+- `RiskAssessment.evidenceIds` 使用 `PrivacyEvent.eventId` 作为逻辑证据引用。主事件始终包含且排在第一位；effective rule 实际使用的 related/prior supporting event 会被去重并按确定性顺序加入。它不等同于 `EvidenceLink.id`。
 - 如果未来支持同一事件的多规则版本历史，必须同步升级 ID、DAO 与存储契约，不能只修改规则引擎。
 
 ### 2.7 Recommendation
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `recommendationId` | String (PK) | UUID |
+| `recommendationId` | String (PK) | UUID；B5-4 使用 deterministic name-based UUID |
 | `riskType` | String | 对应风险类型 |
 | `title` | String | 建议标题 |
 | `reason` | String | 触发原因 |
@@ -140,6 +142,8 @@ v0.1 字段来源约束：
 | `reversible` | Boolean | 是否可逆 |
 | `applicableVersion` | String | 适用系统版本 |
 | `evidenceIds` | String (JSON) | 证据列表 |
+
+B5-4 中，`Recommendation` 是建议/审计 DTO，不代表执行；同一评估事件、规则版本、来源规则、来源 action 与目标域名使用 UTF-8 name-based UUID 生成稳定 `recommendationId`。它与 `MitigationRequest`（可执行请求计划）分开，后者也不代表动作已经执行或生效。
 
 ### 2.8 MitigationRecord
 
@@ -153,7 +157,8 @@ v0.1 字段来源约束：
 | `executedAt` | Long | 执行时间 |
 | `ruleVersion` | String | 规则版本 |
 | `preSnapshot` | String (JSON) | 处置前快照 |
-| `postResult` | String | reduced/no_change/unknown |
+| `executionStatus` | String | 执行结果：executed/unavailable/unsupported/failed/unknown；失败/不可用不伪装成已执行 |
+| `postResult` | String | reduced/no_change/blocked/unknown；`unknown` 表示 `RecheckOutcome.UNCONFIRMABLE` |
 | `observationEnd` | Long? | 观察窗口结束时间 |
 | `reviewNotes` | String? | 复查说明 |
 

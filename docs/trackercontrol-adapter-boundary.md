@@ -1,9 +1,9 @@
 # TrackerControl Adapter 边界（阶段 2 冻结）
 
-> 版本：`v0.1`
-> 最后更新：2026-09-24
+> 版本：`v0.3`
+> 最后更新：2026-09-28
 > 责任人：成员 A
-> 对应任务：A2-5（冻结 TrackerControl Adapter 边界）
+> 对应任务：A2-5（冻结 TrackerControl Adapter 边界）、A4-3（真实挂接实现，见第 9 节）
 > 上游底座：TrackerControl Android，tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（GPL-3.0）
 > 关联：[network-core-map](network-core-map.md)、[09 事件契约](09-event-contract.md)、[02 能力边界表](02-android-capability-matrix.md)、[06 模块设计](06-module-design.md) M3
 
@@ -102,9 +102,11 @@ interface EventSink {
 
 ## 5. 生命周期与线程
 
-- 挂接点：`ServiceSinkhole` 回调末尾调用 Adapter（[network-core-map](network-core-map.md) 第 9 节方案 1）；
-- 回调可能在 native 线程，Adapter 只做轻量转换 + 投递到有界队列，重活交后台；
-- `logPacket` 有节流上限（`MAX_QUEUE=1000`），Adapter 需容忍丢包并计数，不阻塞 native；
+- 挂接点：`ServiceSinkhole` 回调末尾由 `CausalGuardNetworkHook` 发送显式包名广播（[network-core-map](network-core-map.md) 第 9 节方案 2），跨进程投递给 `:app` 的 Adapter；
+- 回调在 native 线程，`CausalGuardNetworkHook` 只做轻量打包 + `sendBroadcast`，异常吞掉，绝不阻塞 native；
+- Adapter 在接收进程主线程做轻量转换 + 投递到有界队列，重活交后台；
+- `logPacket` 有节流上限（`MAX_QUEUE=1000`），Adapter 需容忍丢包并计数；
+- 接收器为动态注册，需 App 进程存活；生产生命周期由前台服务维持（A4-5）；
 - VPN 被系统回收/网络切换：`stop()` 后重新 `start()`，不丢历史事件。
 
 ---
@@ -138,3 +140,28 @@ interface EventSink {
 - 底座源码首次导入单独 commit，团队在 `ServiceSinkhole` 的挂接改动另起 commit；
 - 改动范围与回滚方式记入 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 与 PR；
 - 本边界一旦冻结，字段/接口变更需走独立契约 PR，并同步 [09](09-event-contract.md)、`core-model` 与 `docs/06` M3。
+
+---
+
+## 9. A4-3 真实挂接实现：广播桥接（2026-09-28 补充）
+
+第 5 节原方案是在 `ServiceSinkhole` 回调末尾直接调用 `TrackerControlCallback`。实施时确认底座（submodule，独立 Gradle 工程）与 CausalGuard `:app` 是两个编译单元，底座无法 import `com.causalguard.*`，直接调用会导致底座必须依赖本仓代码、难以回滚，也不利于在本仓 CI 验证。因此 A4-3 采用**广播桥接**（原第 9 节“方案 2”的落地版），冻结的 `TrackerControlCallback` 契约不变。
+
+**进程边界修正（2026-09-28）**：底座与 CausalGuard 是两个已安装 APK、两个进程，因此第一版 `LocalBroadcastManager`（仅同进程）在真机上收不到事件。A4-3 改为**跨进程显式包名广播**：底座 `sendBroadcast` + `Intent.setPackage("com.causalguard")`，App 侧用 `Context.registerReceiver(..., RECEIVER_EXPORTED)` 动态注册。桥接契约（action/extra key）不变：
+
+```text
+ServiceSinkhole.logPacket / dnsResolved
+  → CausalGuardNetworkHook（底座内新增，自包含，不 import 本仓）
+  → 显式包名广播 Intent.setPackage("com.causalguard")（跨进程）
+  → TrackerControlEventReceiver（:app，RECEIVER_EXPORTED）
+  → TrackerControlNetworkAdapter（实现冻结的 TrackerControlCallback）
+  → events() → NetworkEventIngestor → Room
+```
+
+- 底座补丁：`third_party/patches/a4-3-serversinkhole-network-hook.patch`，用 `scripts/apply-trackercontrol-hook.sh` 应用/撤销；
+- 桥接契约（目标包名、action、extra key）：`app/.../data/network/trackercontrol/TrackerControlBroadcast.kt`，与补丁一一对应，改动需同步；
+- 接收与生命周期：`TrackerControlEventReceiver.kt`、`TrackerControlEventSource.kt`。
+
+约束与降级不变：`uid=-1`→`packageName=unknown`；无 `dnsResolved`→`domainHint=null`；`allowed` 缺失按未阻断；队列满丢包计数；`stop()` 后不再接收广播。补丁只改 Java 回调、不动 native 核心。
+
+**安全边界与已知残留风险**：`setPackage` 限定只有 `com.causalguard` 进程内的导出接收器能收到广播，其他应用无法通过注册同名 action 截获（它们是别的包）。但导出接收器理论上可被任意应用以相同 action 的伪造广播投递；P0 接受该风险，P1 应以签名级权限（`protectionLevel="signature"`）加固发送/接收两端。真机端到端与 VPN 生命周期联调归 A4-5。

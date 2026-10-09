@@ -49,7 +49,7 @@ abstract class CausalGuardDatabase : RoomDatabase() {
     abstract fun auditLogDao(): AuditLogDao
 
     companion object {
-        const val VERSION: Int = 2
+        const val VERSION: Int = 3
 
         private const val NAME: String = "causalguard.db"
 

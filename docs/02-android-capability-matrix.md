@@ -1,9 +1,9 @@
 # 02 Android 能力边界表
 
 > 版本：`v0.1`（P0 设计基线）
-> 最后更新：2026-09-24
+> 最后更新：2026-10-04
 > 责任人：成员 B（协作：成员 A）
-> 状态：**技术事实已按阶段 1 Spike 定稿（A2-1，2026-09-24）**。证据见 [spike-results](spike-results.md)；协议级 UID 归属量化成功率待 A4-4 补。
+> 状态：**技术事实已按阶段 1 Spike 定稿（A2-1，2026-09-24）**。证据见 [spike-results](spike-results.md)；协议级 UID 归属量化成功率已于 2026-09-28 在真机 PJW110 / Android 16 补测（TCP/UDP 231/231 = 100%）。
 > 验收标准：每个产品功能都能指向一个真实数据来源，不能出现“先写页面，之后再想数据从哪里来”。
 
 ## 1. 用途
@@ -25,13 +25,19 @@
 | 流量/端口/协议 | `VpnService` | 是 | 稳定 | 是 | 无 | “网络流量” |
 | UID 归属 | 底座在 VpnService 内 `getConnectionOwnerUid`（`ServiceSinkhole.getUidQ`），App 侧不直接调用 | 是（仅对 TCP/UDP），仅底座进程内有效 | 普通 App 直接调用恒返回 `-1`（A1-8 真机验证）；ICMP 固定不归属；多用户/工作资料差异 | 部分 | 显示“无法归属” | “无法归属到具体应用” |
 | 阻断规则是否生效 | TrackerControl/NetGuard 本地转发/丢弃计数 | 是 | 依赖转发核心 | 是（本机规则事实） | 记录尝试但无法判定结果 | “已阻断/仍有尝试” |
-| 剪贴板读取 | Android 官方限制，第三方 App 无法可靠后台读取他人剪贴板 | — | Android 10+ 后台剪贴板访问被限制 | **仅 Demo App 可提供真值** | 只能走演示沙箱 | “演示事件：后台读取剪贴板” |
+| 剪贴板读取 | Android 官方限制，第三方 App 无法可靠后台读取他人剪贴板 | — | Android 10+ 后台剪贴板访问被限制；目标设备 Android 16/API 36 实测拒绝普通后台 App | **仅 Demo App 可探测自身 probe 结果，不保证内容可得** | `Platform Restricted` / `Unavailable`，不生成虚构 PrivacyEvent | “后台剪贴板访问边界探测” |
 | 位置调用历史 | 第三方 App 无法可靠读取他人完整定位历史 | — | — | **否** | 走 Demo App 真值 | “演示事件/有限观测” |
 | 通讯录访问历史 | 第三方 App 无法可靠读取他人访问历史 | — | — | **否** | 走 Demo App 真值 | “不可观测，需用户自查” |
 | 相机/麦克风访问历史 | 第三方 App 无法可靠读取 | — | — | **否** | 走 Demo App 真值 | “不可观测” |
 | 原始剪贴板/通讯录内容 | 不采集 | — | — | 否 | — | 不展示、不保存 |
 
-> 阶段 1 结论（A1-8，真机 OPPO Reno12 Pro，2026-09-23）：普通 App 在自身进程直接调用 `ConnectivityManager.getConnectionOwnerUid` 恒返回 `-1`，无论走 VPN 还是物理网络。因此 `uid` 一律取自底座 `VpnService` 内回调（`ServiceSinkhole.getUidQ` → `Packet.uid`），App 侧不重复调用系统 API；失败按第 6 节降级为 `unknown`。底座归属**量化成功率**（按 TCP/UDP 分别统计）待 A4-4 用 `scripts/capture-uid-attribution.*` 采集回填。
+### 2.1 DEMO-B 真机边界结论
+
+在目标设备 OPPO PJW110（Android 16 / API 36）上，Demo Calculator 退到后台后于 `onStop` 真实执行 `ClipboardManager.primaryClip` probe；系统拒绝普通后台应用访问。该结果记录为 `Platform Restricted` / `Unavailable`，不生成虚构 `PrivacyEvent`。
+
+该结论只代表目标真机验证结果，不扩大为所有 Android 版本或所有厂商的绝对相同结论。普通第三方 App 不能据此宣称可以普遍在后台读取剪贴板。
+
+> 阶段 1 结论（A1-8，真机 OPPO Reno12 Pro，2026-09-23）：普通 App 在自身进程直接调用 `ConnectivityManager.getConnectionOwnerUid` 恒返回 `-1`，无论走 VPN 还是物理网络。因此 `uid` 一律取自底座 `VpnService` 内回调（`ServiceSinkhole.getUidQ` → `Packet.uid`），App 侧不重复调用系统 API；失败按第 6 节降级为 `unknown`。底座归属**量化成功率**已于 2026-09-28 在真机 PJW110 / Android 16 补测：TCP/UDP **231/231 = 100%**（两轮，覆盖闲鱼/番茄小说/微信/支付宝/企业微信），ICMP 固定不归属；统计方法见 `docs/spike-results.md` §3 A1-8。
 
 ## 3. 三档可观测性定义
 

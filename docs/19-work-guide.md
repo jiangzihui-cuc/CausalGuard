@@ -1,7 +1,7 @@
 # 19 工作导引（打开仓库先看这个）
 
-> 版本：`v0.2`
-> 最后更新：2026-09-24
+> 版本：`v0.5`
+> 最后更新：2026-10-07
 > 用途：两人打开仓库后，30 秒内知道“现在到哪一步、我下一步做什么、改哪个文件”。
 > 配套：[20 开源复用建议](20-open-source-reuse-guide.md)、[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)、[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
 
@@ -11,13 +11,14 @@
 
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
-当前阶段：阶段 0/1/2/3 已完成并合入 main；进入阶段 4（真实数据接入）
-成员 A：阶段 3 已完成；阶段 4 A4-1/A4-2/A4-4 关联入库链路已完成，A4-3 底座源码已 submodule 导入（下一步写 Adapter），A4-5 待真机
+当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6，PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4，PR #25 已合入）、阶段 7 A 侧发布候选（A7-1~A7-6，PR #27 已合入）已完成；阶段 5 B 侧 B5-1~B5-7 已完成，阶段 6 B 侧 B6-1~B6-5 已完成，下一步 B6-6
+成员 A：A5-1~A5-6（含 A5-1 底座域名阻断补丁真机验证：PJW110/Android 16，RESULT_OK/RESULT_CANCELED 诚实回执）、A6-1~A6-4（在线 AI 安全网络层、密钥注入、真机稳定性、缺陷排查）已完成；阶段 7 发布候选 A7-1~A7-6 已完成并合入 main（冻结 PJW110/Android 16 环境、构建签名 RC `0.2.0-rc1`、安装/恢复文档、许可证报告、第三方修改证据、阻断性缺陷排查）；下一步 A8-1~A8-5（最终提交准备）
+成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-7 已完成（B5-7 处置前后评测集 12 条）；阶段 6 B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）、B6-4（评测集扩展）与 B6-5（指标统计）已完成，下一步 B6-6；不依赖真实 VPN
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
 
-**一句话**：事件库、Provider 与网络事件关联入库链路已就绪；**成员 A 现在做阶段 4 的真实数据接入（A4-3 TrackerControl Adapter、A4-5 VPN 生命周期；A4-1/A4-2/A4-4 已完成），成员 B 并行做不依赖真实 VPN 的规则与产品闭环**。
+**一句话**：阶段 0~4、阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询，PR #18 已合入）、阶段 5 B5-1~B5-7（场景、证据链、因果链、Recommendation 选择、确定性复查比较、因果链/处置/复查页面、12 条处置前后评测集）、阶段 6 A 侧（在线 AI 安全网络层 + 密钥注入 + 真机稳定性 + 缺陷排查，PR #25 已合入）与阶段 7 发布候选（A7-1~A7-6，PR #27 已合入）均已完成；阶段 6 B 侧 B6-1/B6-2/B6-3/B6-4/B6-5（本地解释模板与兜底、AI 白名单与本地事实校验、可选在线 Provider 与确定性编排、分版本评测集扩展、指标统计）已完成；**成员 A 下一步进入阶段 8 最终提交准备（A8-1~A8-5），成员 B 下一步做 B6-6（保存 disagreement、false positive、false negative、unknown 并判断是否需要规则校准）**。
 
 开源路线已定（详见 [20 开源复用建议](20-open-source-reuse-guide.md) 第 13 节）：优先走 **方案 A：TrackerControl / NetGuard（GPL-3.0）** 作为网络底座；接受 GPL 路线并明确开源与原创边界。MIT 备选路线仅在阶段 1 构建链持续失败时启用。
 
@@ -40,35 +41,52 @@
 
 ## 三、我是谁？我下一步做什么？
 
-### 成员 A（技术实现主责）——阶段 3 已完成，现在做阶段 4 真实数据接入（9/28-9/30）
+### 成员 A（技术实现主责）——阶段 5/6/7 已完成，下一步阶段 8（最终提交准备，10/8-10/10）
 
-**阶段 1（Spike）与阶段 2（契约冻结）已完成并合入 `main`**：A1-1～A1-8 全部完成（见 [Spike 结果](spike-results.md)）；A2-1～A2-6 全部完成（见 [17 任务看板](17-task-board.md) 阶段 2 进展）。A2-4 的 Room 实现按计划延后到本阶段。
+**阶段 1~4 已完成并合入 `main`**（A1-1～A1-8、A2-1～A2-6、A3-1～A3-5、A4-1～A4-5，见 [Spike 结果](spike-results.md) 与 [17 任务看板](17-task-board.md) 阶段进展）。
+
+**阶段 5 执行层（A5-1～A5-6）已完成并真机验证**（PR #18，见 [17 任务看板](17-task-board.md) 阶段 5）：
 
 | 任务编号 | 做什么 | 改哪里（新建/编辑） | 完成标准 | 当前状态 |
 |---|---|---|---|---|
-| A3-1 | Room Entity、DAO、migration | `app/.../data/local/`；schema 导出 `app/schemas/` | 写入、查询、重启持久化测试通过 | 已完成（已合入 main） |
-| A3-2 | `EventRepository` 与事件导入器 | `app/.../data/repository/`、`data/importer/` | 可批量导入 B 的 fixture | 已完成（已合入 main） |
-| A3-3 | AppProfile/PermissionState Repository | `app/.../data/provider/`、`data/repository/` | Fake 与真实 Provider 可替换 | 已完成（已合入 main） |
-| A3-4 | 导航/ViewModel 注入接口 | `app/.../di/AppContainer.kt` | 不包含页面视觉和业务文案 | 已完成（已合入 main） |
-| A3-5 | DAO、Adapter、Repository 单元测试 | `app/src/test/` | CI 通过 | 已完成（已合入 main） |
+| A5-1 | `DeviceMitigationExecutor` + `DomainBlockController` | `app/.../mitigation/`；`core-model/.../MitigationApi.kt` | 真实动作或诚实降级，`RESULT_OK` 才 `CONFIRMED` | 已完成（底座补丁真机验证通过） |
+| A5-2 | P0 仅 `BLOCK_DOMAIN`；`BLOCK_APP` 待 P1 | `app/.../mitigation/` | 明确 `UNSUPPORTED`/无动作 | 已完成 |
+| A5-3 | `AndroidAppSettingsLauncher` | `app/.../mitigation/` | 跳系统详情页，不声称已生效 | 已完成 |
+| A5-4 | `MitigationRecord` + 观察窗口 | `core-model`/`:app` | `preSnapshot` + `observationEnd` 落库 | 已完成 |
+| A5-5 | `RoomNetworkObservationRepository` | `app/.../data/` | 按 App/域名/时间窗聚合 | 已完成 |
+| A5-6 | `NetworkObservation.presence` | `core-model`/`:app` | `NO_REQUEST`/`ALL_BLOCKED`/`SOME_BLOCKED`/`ALLOWED` | 已完成 |
 
-> A3 代码已合入 `main`；A4-1/A4-2/A4-4 见 `data/provider/RealProviders.kt`、`data/ingest/NetworkEventIngestor.kt`、`data/network/ReplayNetworkEventSource.kt`、`data/repository/RoomEventSink.kt`，详见 [17 任务看板](17-task-board.md) 阶段 4 进展。
-> A4-3 底座以 submodule 固定在 `third_party/tracker-control-android/`（commit `9504d41b`）；克隆后需 `git submodule update --init --recursive`，构建见 [spike-build-guide](spike-build-guide.md) 第 4.2 节。
-> 接口只在 `:core-model`（纯契约），Room/映射只放 `:app`；构建用 KSP 2.3.4 + Room 2.7.0（与 AGP 9 内置 Kotlin 兼容，见 [18 风险清单](18-risk-register.md) RK-21）；数据库 `RiskAssessment` 升 v2 补 `category`/`matchedRules`。
+> A5 底座侧 `ACTION_BLOCK_DOMAIN` 接收器以 GPL 补丁交付：`third_party/patches/a5-1-domain-block-receiver.patch`（`CausalGuardDomainBlockReceiver` + `mapCausalGuardBlocked` + `isDomainBlocked` DNS 抑制 + manifest 注册，并以 signature 权限 `permission.CAUSALGUARD_BLOCK_DOMAIN` 作为控制通道唯一安全边界，不做 `Binder.getCallingUid()` 二次 sender 校验），已并入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用/`--revert`）并登记 `THIRD_PARTY_NOTICES.md`。真机（PJW110/Android 16）验证：两 APK 同签、授权 CausalGuard sender 回执 `RESULT_OK`、未授权 `adb shell` sender 被拒，`:app` 单测 112 项通过（含 v2→v3 `MIGRATION_2_3` 迁移回归测试）。详见 [spike-results](spike-results.md) §3 A5-1。
+>
+> **阶段 6（A6-1～A6-4）已完成**（在线 AI 安全网络层、密钥注入、真机稳定性、缺陷排查），见 [17 任务看板](17-task-board.md) 阶段 6。
+>
+> **阶段 7 发布候选（A7-1～A7-6）已完成**（2026-10-07）：冻结 PJW110/Android 16/API 36 与构建环境；构建并签名 RC `causalguard-0.2.0-rc1.apk`（SHA-256 `36d15cf5…`）；输出 [A7 安装·授权·清理·故障恢复](a7-install-auth-recovery.md) 与 [A7 依赖许可证报告](a7-license-report.md)；整理底座 commit + 两补丁 SHA-256 作为第三方修改证据；回归 `assembleRelease` 通过、单测 261/0、lint 0 error/4 warning（非阻断）。见 [A7 RC 记录](a7-release-candidate.md)。
+>
+> **下一步（阶段 8，10/8-10/10）**：A8-1 最终设备回归、A8-2 release APK/源码包/构建说明、A8-3 清理密钥与真实数据、A8-4 核对 GPL 对应源码与 tag、A8-5 创建最终 tag。
 
-### 成员 B（产品与智能分析主责）——现在做阶段 1 设计输入（9/21-9/22）
+### 成员 B（产品与智能分析主责）——B5-1~B5-7 已完成，阶段 6 B6-1~B6-4 已完成，下一步 B6-5~B6-6
+
+**阶段 4 B 侧（B4）**：B4-1（离线 tracker 数据集）、B4-2（`TrackerClassifier` 与域名归一化）、B4-3（真实/演示/未知来源标签与观测降级）、B4-5（Demo App 场景 C/D）已完成并合入 `main`；**B4-4（用 A 的真实 fixture 校准规则）已完成**（PR #26，2026-10-06）：20 条 PJW110 / Android 16 真机真实输入配套独立 fact oracle，tracker coverage diagnosis 为 mixed，运行时采用 `rules-v0.2` 完成 R-008 attribution calibration（`rules-v0.1` frozen baseline 保留）。见 [17 任务看板](17-task-board.md) 阶段 4。
+
+**阶段 6 AI 解释与评测（B6-1~B6-6）**：B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）已完成。B6-4 已建立 historical `rules-v0.1` 25 cases 与 current `rules-v0.2` boundary 17 cases，共 42 条；B6-5 已按 ruleVersion 报告 deterministic oracle agreement，完成 12 条 synthetic AI guardrail evaluation 与 12 条 synthetic recheck metrics。real AI fact consistency 为 `N/A`，user mitigation duration 为 `N/A`；下一步 B6-6 保存 disagreement、false positive、false negative、unknown 并判断是否需要规则校准。在线 AI 始终可选，关闭后不影响 P0。
 
 | 任务编号 | 做什么 | 改哪里 | 完成标准 |
 |---|---|---|---|
-| B1-1 | 定义 v0.1 事件 fixture | 新建 `docs/fixtures/`（8～12 条 JSON） | 正常、风险、unknown、沙箱均覆盖 |
-| B1-2 | 4 个 Demo 场景与预期证据链 | 新建 `docs/demo-scenarios.md` | 操作、真值、预期证据、失败降级完整 |
-| B1-3 | 事实/推断/不可观测三类文案模板 | 编辑 [11 AI 解释契约](11-ai-explanation-contract.md) | 三类模板可直接用，四类不混写 |
-| B1-4 | 第三方组件登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) | 仓库、版本、许可证、用途齐全 |
-| B1-5 | UI 状态草图 | `docs/demo-scenarios.md` 附页面状态表 | loading/empty/unknown/demo/error 均定义 |
-| B1-6 | 定稿 Android 能力边界表 | 编辑 [02-android-capability-matrix.md](02-android-capability-matrix.md) | 每行有来源、证据等级、降级 |
-| B1-7 | 真实/沙箱模式产品说明 | 编辑 [01 章程](01-project-charter.md) 第 4 节 | 两种模式表述清晰 |
+| B5-1 | 场景知识库和场景一致性 | `:rule-engine` / `docs/` | 已完成：`scene-knowledge-v0.1` 与确定性 evaluator |
+| B5-2 | `EvidenceLink` 与证据链构建器 | `:rule-engine` | 已完成：effective supporting event、E3 temporal/rule link、确定性 evidenceIds |
+| B5-3 | 因果链节点和事实/推断等级 | `:rule-engine` | 已完成：deterministic explanation DAG、E1/E2/E4/E5 事实节点、E3 推断节点、unknown E5 assessment |
+| B5-4 | Recommendation 选择 | `:rule-engine` / `:core-model` | 已完成：确定性 Recommendation 与可选 MitigationRequest；unknown/degraded 不生成执行请求 |
+| B5-5 | `RecheckComparator`：减少、无变化、被阻断、无法确认 | `:rule-engine` | 已完成：基于等长窗口和 allowedCount 确定性比较；无执行/无基线/不可比时 unknown |
+| B5-6 | 因果链、处置和复查页面 | `app/.../ui/` | 已完成：页面展示因果链、Recommendation、处置状态与窗口结束后的复查结果 |
+| B5-7 | 至少 8 条处置前后评测样例 | `docs/fixtures/` | 已完成：`recheck-cases-v0.1`/`recheck-expected-v0.1` 共 12 条 + `RecheckEvaluationDatasetTest` |
 
-> B 始终使用 fixture、Fake Repository 和 Fake Executor，**不等待 A 的真实 VPN**。唯一集成点是 A 导出的真实 NetworkEvent 必须能映射到 B 的 fixture schema。
+> B 始终使用 fixture、Fake Repository 和 Fake Executor，**不等待 A 的真实 VPN**。唯一集成点是 A 导出的真实 NetworkEvent 必须能映射到 B 的 fixture schema；`Recommendation → A：MitigationExecutor` 消费 `core-model` 的 `MitigationRequest`/`MitigationAction`。
+
+> B5-4 进展（成员 B，2026-10-08）：建立 deterministic `RecommendationSelector`；unknown/degraded 不生成执行请求；权限/后台活动建议映射 `OPEN_SETTINGS`；后台网络仅在 `evidenceIds` 中存在可靠 domain 时映射 `BLOCK_DOMAIN`；P0 不生成 `BLOCK_APP`。
+
+> B5-5 进展（成员 B，2026-10-08）：建立 deterministic `RecheckComparator`；基于等长前后窗口比较 `allowedCount`，区分 `NO_REQUEST` 与 `ALL_BLOCKED`，输出 `reduced/no_change/blocked/unknown`；非 executed、`OPEN_SETTINGS`、坏快照或不可比窗口均诚实降级为 `unknown`。
+
+> B5-6 进展（成员 B，2026-10-08）：Event Detail 已接入因果链、canonical Recommendation、处置与复查状态；`BLOCK_DOMAIN` 执行后基于固定 observation window 复查，`observationEnd` 前禁止查询 post window；`RecheckComparator` 结果可持久化并恢复；`OPEN_SETTINGS` 不伪装为已修改权限，`executed` 与 verified effect 保持分离。完整 app/rule-engine tests、assemble 和 lint 已通过。
 
 ### 两人共同
 

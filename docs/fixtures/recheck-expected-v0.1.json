@@ -1,0 +1,81 @@
+{
+  "schema": {
+    "name": "recheck-expected-v0.1",
+    "purpose": "Independent output oracle for recheck-cases-v0.1.json (B5-7).",
+    "caseFixture": "recheck-cases-v0.1.json"
+  },
+  "expectations": [
+    {
+      "caseId": "recheck-case-0001",
+      "kind": "improvement",
+      "expectedOutcome": "reduced",
+      "rationale": "Pre window allowed 10 connections and the post window observed no request, so allowedCount dropped to 0."
+    },
+    {
+      "caseId": "recheck-case-0002",
+      "kind": "improvement",
+      "expectedOutcome": "reduced",
+      "rationale": "Allowed connections fell from 10 to 4 even though some post requests were blocked."
+    },
+    {
+      "caseId": "recheck-case-0003",
+      "kind": "no_change",
+      "expectedOutcome": "no_change",
+      "rationale": "Allowed connections are equal (10) in both comparable windows."
+    },
+    {
+      "caseId": "recheck-case-0004",
+      "kind": "no_change",
+      "expectedOutcome": "no_change",
+      "rationale": "Both windows are ALL_BLOCKED; an already-blocked state must not be reported as new improvement."
+    },
+    {
+      "caseId": "recheck-case-0005",
+      "kind": "blocked",
+      "expectedOutcome": "blocked",
+      "rationale": "The post window has connection attempts and all of them are marked blocked while the pre window was not entirely blocked."
+    },
+    {
+      "caseId": "recheck-case-0006",
+      "kind": "unknown_boundary",
+      "expectedOutcome": "unknown",
+      "rationale": "executionStatus is not executed, so no reliable comparison is possible."
+    },
+    {
+      "caseId": "recheck-case-0007",
+      "kind": "unknown_boundary",
+      "expectedOutcome": "unknown",
+      "rationale": "open_settings cannot be verified by network observations and is not a network recheck."
+    },
+    {
+      "caseId": "recheck-case-0008",
+      "kind": "unknown_boundary",
+      "expectedOutcome": "unknown",
+      "rationale": "The pre window has no allowed-connection baseline, so a reduction cannot be confirmed."
+    },
+    {
+      "caseId": "recheck-case-0009",
+      "kind": "unknown_boundary",
+      "expectedOutcome": "unknown",
+      "rationale": "Allowed connections increased from 3 to 7, which cannot confirm a reduction."
+    },
+    {
+      "caseId": "recheck-case-0010",
+      "kind": "unknown_boundary",
+      "expectedOutcome": "unknown",
+      "rationale": "Pre and post window durations differ, so the windows are not comparable."
+    },
+    {
+      "caseId": "recheck-case-0011",
+      "kind": "improvement",
+      "expectedOutcome": "reduced",
+      "rationale": "Target, pre domain and post domain normalize to the same non-empty domain and allowedCount fell from 10 to 4."
+    },
+    {
+      "caseId": "recheck-case-0012",
+      "kind": "unknown_boundary",
+      "expectedOutcome": "unknown",
+      "rationale": "The pre snapshot is malformed and cannot be parsed, so the comparison degrades to unknown without throwing."
+    }
+  ]
+}

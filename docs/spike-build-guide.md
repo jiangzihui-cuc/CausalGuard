@@ -1,7 +1,7 @@
 # spike-build-guide（A1-1 本地构建指南）
 
-> 版本：`v0.1`
-> 最后更新：2026-09-21
+> 版本：`v0.2`
+> 最后更新：2026-09-28
 > 责任人：成员 A
 > 对应任务：A1-1
 > 关联：`docs/spike-results.md`、`docs/network-core-map.md`、`scripts/build-trackercontrol-spike.sh`、`THIRD_PARTY_NOTICES.md`
@@ -83,6 +83,39 @@ find app/build/outputs -name "*.apk"
 ```bash
 adb install -r app/build/outputs/apk/fdroid/debug/app-fdroid-debug.apk
 ```
+
+### 4.3 WSL2/容器下连接演示机（A1-8/A4 真机验证前置）
+
+WSL2 默认**不把 USB 设备透传进 Linux**（`lsusb` 只见根 hub），`adb devices` 为空。优先用**无线调试**（Android 11+，演示机 PJW110 / Android 16 即此法）：
+
+```bash
+export PATH="$HOME/android-sdk/platform-tools:$PATH"
+# 手机：开发者选项 → 无线调试 → 使用配对码配对设备（弹窗需保持打开，配对端口/码约 1 分钟内有效）
+adb pair <手机IP>:<配对端口>          # 输入 6 位配对码
+adb connect <手机IP>:<调试端口>       # 无线调试主界面显示的“IP 地址和端口”，与配对端口不同
+adb devices
+```
+
+socket 直连 `/dev/tcp` 测端口可确认弹窗是否已超时（ping 通但端口 refused 即弹窗已关）。USB 直连需 Windows 侧 `usbipd-win` 透传（`usbipd bind --busid <id>` → `usbipd attach --wsl --busid <id>`），再在 WSL `adb devices`。
+
+侧载 fdroid debug 底座（安装为 `net.kollnig.missioncontrol.fdroid.test`；`-r` 保留数据）：
+
+```bash
+adb install -r ~/trackercontrol-apk/TrackerControl-fdroidDebug-latest.apk
+# 手机里启动 TrackerControl 并授权 VPN，确认 tun 起：
+adb shell ip addr | grep tun0
+```
+
+补齐 A1-8 底座 UID 归属量化成功率——从 `TrackerControl.VPN` 日志（`ServiceSinkhole.getUidQ`，`ServiceSinkhole.java:2274/2276`）统计：
+
+```bash
+adb logcat -c
+# 手机交替使用多个 App 产生流量
+adb logcat -d -s TrackerControl.VPN | grep -E "Get uid local=|Get uid=-?[0-9]+"
+# 分母 = TCP/UDP 查询次数（不进入 getUidQ 的 ICMP 不计）；成功率 = 有效 uid 条数 / 分母
+```
+
+2026-09-28 实测（PJW110 / Android 16）：TCP/UDP 归属 **231/231 = 100%**，详见 `docs/spike-results.md` §3 A1-8。
 
 ---
 

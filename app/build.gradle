@@ -3,6 +3,16 @@ apply plugin: 'com.google.devtools.ksp'
 apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
 
+// A6-2：密钥通过本地配置/环境注入，仓库不得出现密钥。
+// 优先级：secrets.properties（已 .gitignore）> 环境变量 > 空（未配置，在线 AI 降级本地模板）。
+def aiSecrets = new Properties()
+def aiSecretsFile = rootProject.file('secrets.properties')
+if (aiSecretsFile.exists()) {
+    aiSecretsFile.withInputStream { aiSecrets.load(it) }
+}
+def aiApiKey = aiSecrets.getProperty('AI_API_KEY', System.getenv('AI_API_KEY') ?: '')
+def aiBaseUrl = aiSecrets.getProperty('AI_BASE_URL', System.getenv('AI_BASE_URL') ?: '')
+
 android {
     namespace 'com.causalguard'
     compileSdk 37
@@ -11,8 +21,11 @@ android {
         applicationId 'com.causalguard'
         minSdk 29
         targetSdk 37
-        versionCode 1
-        versionName '0.1.0'
+        versionCode 2
+        versionName '0.2.0-rc1'
+
+        buildConfigField 'String', 'AI_API_KEY', "\"${aiApiKey}\""
+        buildConfigField 'String', 'AI_BASE_URL', "\"${aiBaseUrl}\""
     }
 
     buildTypes {
@@ -28,6 +41,7 @@ android {
 
     buildFeatures {
         compose true
+        buildConfig true
     }
 
     testOptions {
@@ -60,6 +74,10 @@ dependencies {
     implementation 'androidx.room:room-runtime:2.7.0'
     implementation 'androidx.room:room-ktx:2.7.0'
     ksp 'androidx.room:room-compiler:2.7.0'
+    // A6-1：在线 AI 增强的网络层（Retrofit + OkHttp）；仅可选 AI 增强，失败回退本地模板。
+    implementation 'com.squareup.retrofit2:retrofit:3.0.0'
+    implementation 'com.squareup.retrofit2:converter-kotlinx-serialization:3.0.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.robolectric:robolectric:4.17'
     testImplementation 'androidx.test:core:1.6.1'

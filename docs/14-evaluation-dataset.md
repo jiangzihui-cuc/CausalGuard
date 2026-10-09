@@ -1,7 +1,7 @@
 # 14 评测数据集方案
 
 > 版本：`v0.1`（P0 设计基线）
-> 最后更新：2026-09-20
+> 最后更新：2026-10-02
 > 责任人：成员 B（协作：成员 A）
 > 目的：建立可复现、带标签的评测集，用数据证明“场景推理”和“处置闭环”的价值。
 
@@ -77,6 +77,14 @@
 
 该旁路格式用于 Fake Repository、规则引擎、证据链、解释页面和评测脚本共享同一组预期，不改变采集层事件格式。
 
+v0.1 首批自动规则评测由 frozen fixture 的 10 条事件和独立 evaluation extension 的 15 条事件组成，共 25 个可复现 case。扩展集物理拆分为 `fixtures/evaluation-events-v0.1.json`（事件输入）、`fixtures/evaluation-context-v0.1.json`（独立上游上下文）和 `fixtures/evaluation-expected-v0.1.json`（输出 oracle）。回归入口为 `RuleEvaluationDatasetTest`，只执行 deterministic rule layer；输入、上游 context 和输出 oracle 严格隔离，测试按 timestamp/appId 机械构造 related/prior events，不跨数据集关联。
+
+B6-4 新增独立 boundary dataset：`fixtures/evaluation-boundary-events-v0.1.json`、`fixtures/evaluation-boundary-context-v0.1.json` 和 `fixtures/evaluation-boundary-expected-v0.1.json`，共 17 条 physical/evaluated cases（包含 related/prior witness 的独立 oracle）。该组代表当前运行时边界，oracle 和 evaluator 均明确使用 `rules-v0.2`；历史 25 条仍固定使用 `rules-v0.1`，两组不构造跨 dataset 的 related/prior 事件，主规则评测资产总数为 42 条。由于规则版本不同，后续 B6-5 不得把两组直接合并成单一准确率指标。
+
+Boundary 覆盖 R-003 独立正例、R-006 `foregroundState=unused` 正负例、known-app/no-domain、R-007 的 59,999/60,000/60,001 毫秒边界、rules-v0.2 下 known UID 且 `packageName=unknown` 的 R-008、R-009 equal timestamp 与非 revoked prior、E5 完整 attribution 以及显式 unknown 场景。当前 rules-v0.2 资产对 R-006 实际只检查 `foregroundState=unused`；本数据集不宣称已验证 `lastUsedAgoMs` 阈值。当前活动规则尚未产生 `critical` 或 `match_with_concern` 输出，因此本批不人为添加对应 oracle。
+
+阶段 5 B5-7 另建处置前后评测集：`fixtures/recheck-cases-v0.1.json`（输入：`MitigationRecord` + 处置前 `preObservation`/`rawPreSnapshot` + 处置后 `NetworkObservation`）与 `fixtures/recheck-expected-v0.1.json`（输出 oracle：`reduced/no_change/blocked/unknown`），共 12 条，回归入口为 `RecheckEvaluationDatasetTest`。输入与 oracle 同样严格隔离，覆盖减少、无变化、被阻断、无法确认四类结论，以及非 executed、非 `block_domain`、坏快照、不可比窗口等诚实降级边界。详见 [B5-7 处置前后评测样例](b5-7-recheck-evaluation.md)。
+
 ## 3. 分布建议
 
 | 类别 | 比例 |
@@ -88,23 +96,30 @@
 
 ## 4. 评测流程
 
-对每条样例分别运行规则引擎与 AI 摘要，记录：
+对每条样例运行规则引擎，记录：
 
 - 实际分类、风险等级、场景一致性；
-- AI 摘要是否与输入事实一致（事实一致率）；
 - 是否误报/漏报/无法确认。
+
+本批回归不运行 AI 模型，也不报告 AI 事实一致率；AI 解释评测属于后续任务。
 
 ## 5. 重点指标
 
 | 指标 | 定义 |
 |---|---|
-| 数据流向分类准确率 | 正确分类数 / 总数（必要/分析/高风险） |
-| 分类召回率 | 检出 / 应检出 |
-| 高风险识别召回率 | 高风险事件被标记的比例 |
-| 场景一致性准确率 | match/mismatch 判断正确比例 |
-| AI 事实一致率 | AI 输出事实与输入一致的比例 |
-| 用户处置耗时 | 完成一次处置所需时间 |
-| 处置前后频率变化 | 同类事件处置前后对比 |
+| 风险分类 exact-match agreement | `actual.category == expectedCategory` / 该 `ruleVersion` 全部 case |
+| 风险等级 exact-match agreement | `actual.riskLevel == expectedRiskLevel` / 该 `ruleVersion` 全部 case |
+| 分类召回率 | 对 `necessary/analytics/high_risk/unknown` 分别计算 TP / 该类 expected support；另报告有 support 类别的 macro recall |
+| 高风险识别召回率 | expected `riskLevel` 属于 `{high, critical}` 的 case 中，actual 仍识别为 `{high, critical}` 的比例 |
+| 场景一致性 exact-match agreement | `actual.scenarioMatch == expectedScenarioMatch` / 该 `ruleVersion` 全部 case；`unknown` 是合法值 |
+| synthetic AI guardrail disposition agreement | candidate 经本地 validator 得到的 `ACCEPT/REJECT/SANITIZE` 与独立 oracle 一致的比例 |
+| 真实 AI 事实一致率 | 需要固定真实模型/version 输出快照与独立人工事实标签；当前为 `N/A` |
+| 用户处置耗时 | 需要真人 `userActionStartedAt` 与 `userActionCompletedAt`；不能用观察窗口时长代替 |
+| synthetic recheck allowed-count change | 对 comparator 确认的 `REDUCED/NO_CHANGE/BLOCKED` case 报告 `postAllowed - preAllowed`；`pre=0` 时百分比为 `N/A` |
+
+B6-5 当前可测实现口径：历史 `rules-v0.1` 的 25 条与当前 `rules-v0.2` boundary 的 17 条必须分开报告；42 条只能作为 cross-version regression health，不能作为单一规则版本准确率。上述规则指标是 curated deterministic oracle agreement，不是未经限定的真实世界准确率。`necessary` 等 zero-support 类别的 recall 为 `N/A`，不能记为 0%。
+
+AI 评测不联网、不调用真实模型，使用独立 synthetic candidate/oracle fixture；因此只能报告 synthetic validator disposition agreement，不能把 validator 单测通过率写成 AI fact consistency。处置耗时后续由真人/真机协议补充：记录 `sampleId`、`actionType`、`targetType`、开始/完成时间、成功或中止、duration、设备系统和备注。
 
 ## 6. 失败案例
 

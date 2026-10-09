@@ -1,7 +1,7 @@
 # 18 风险清单
 
-> 版本：`v0.4`
-> 最后更新：2026-09-27
+> 版本：`v0.5`
+> 最后更新：2026-10-07
 > 责任人：成员 B（协作：成员 A）
 > 关联：[20 开源复用建议](20-open-source-reuse-guide.md)、[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
 
@@ -31,6 +31,8 @@
 | RK-20 | 密钥、原始日志或真实数据入库 | 泄露风险 | 提交含 key/日志/个人信息 | `.gitignore` + 提交前检查 + 阶段 8 清理 | 成员 A |
 | RK-21 | AGP 9 内置 Kotlin 与注解处理/旧 KGP 不兼容 | Room 等注解处理无法编译，阻塞阶段 3 | apply KSP 2.2.x 报 “Kotlin source set contains generated/ksp”；apply KGP 2.2.10 报 `BaseExtension` 转换失败 | 保留内置 Kotlin，改用 **KSP 2.3.4 + Room 2.7.0**；不引入 kapt/KGP；版本固定并记录 | 成员 A |
 | RK-22 | TrackerControl 以 submodule 引入后目录为空/构建缺源码 | A4-3 Adapter 无法编译或验证；CI 不影响但本地开发受阻 | clone 后 `third_party/tracker-control-android/` 为空 | clone 后执行 `git submodule update --init --recursive`；README/导引写明；`.gitmodules` 固定 URL 与 commit，工作文档登记该步骤 | 成员 A |
+| RK-23 | 底座与主 App 签名不一致 | A5-1 域名阻断控制通道（signature 权限）失效，回执 `RESULT_CANCELED` | 两 APK signer SHA-256 不同 | 现场演示前用同一 release keystore 重签底座与主 App；`apksigner verify --print-certs` 核对同签；见 [A7 安装文档](a7-install-auth-recovery.md) | 成员 A |
+| RK-24 | APK 内嵌构建 commit（AGP VCS info），不同 commit 重建哈希不同 | RC/发布哈希不可跨 commit 复现 | 在其它 commit 重建得到不同 SHA-256 | 固定源码构建 commit 并在发布说明记录 commit SHA 与 APK SHA-256；复现时 checkout 该 commit；见 [A7 RC 记录](a7-release-candidate.md) | 成员 A |
 
 ## 风险复盘机制
 

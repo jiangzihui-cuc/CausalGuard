@@ -1,11 +1,11 @@
 # spike-results（阶段 1 技术 Spike 结果）
 
-> 版本：`v0.1`
-> 最后更新：2026-09-23
+> 版本：`v0.4`
+> 最后更新：2026-10-05
 > 责任人：成员 A
-> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8
+> 对应任务：A1-1、A1-3、A1-4、A1-6、A1-8、A4-3、A4-5、A5-1、A6-1、A6-2、A6-3、A6-4
 > 关联：`docs/network-core-map.md`、`docs/20-open-source-reuse-guide.md`、`THIRD_PARTY_NOTICES.md`
-> 状态：**基本完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；仅底座 UID 归属量化成功率待 adb 打通后补）
+> 状态：**全部完成**（A1-1、A1-3、A1-4、A1-5、A1-6、A1-8 通过；A1-7 已登记；A1-8 底座 UID 归属量化成功率已于 2026-09-28 真机补测；A4-3 跨进程网络事件端到端已于 2026-09-29 真机验证；A4-5 前台服务与网络切换恢复已于 2026-09-29 真机验证；A5-1 域名阻断控制通道已于 2026-10-05 真机验证；A6-1/A6-2 在线 AI 网络层与密钥注入、A6-3 真机稳定性、A6-4 缺陷排查已于 2026-10-05 完成，见第 3 节）
 
 ---
 
@@ -60,8 +60,8 @@
 | CMake | 3.22.1（SDK 包） |
 | NDK | 27.2.12479018 |
 | Rust / WireGuard | rustup 1.29.1 + Rust 1.95.0（4 个 Android target）+ cargo-ndk 4.1.2；APK 打包必须构建 `libwgbridge.so` |
-| 演示机型号 | OPPO Reno12 Pro |
-| Android 版本 | _待补（基线 API 29+）_ |
+| 演示机型号 | OPPO Reno12 Pro（A1-3/A1-4 Spike）；PJW110（A1-8 量化 + A4-4 真机，2026-09-28） |
+| Android 版本 | PJW110：Android 16 / API 36（adb 无线调试，2026-09-28）；Reno12 Pro：_待补（基线 API 29+）_ |
 | 构建命令 | `gradle --no-daemon assembleFdroidDebug`（Gradle 9.6.1；wrapper 分发地址被网络策略拦截，改用系统安装的 9.6.1） |
 | 构建结果 | **成功**，BUILD SUCCESSFUL in 9m 6s（首次）/ 3m 10s（缓存命中） |
 | APK 路径 | 构建产物 `app/build/outputs/apk/fdroid/debug/TrackerControl-fdroidDebug-latest.apk`；已复制持久副本到构建机 `~/trackercontrol-apk/` |
@@ -208,7 +208,144 @@
   2. 因此不能由 App 自行实现 UID 归属，必须复用底座在 **VpnService 内**的归属路径（`ServiceSinkhole.getUidQ` → `Packet.uid`），这也是底座能按 App 记录/拦截的原因（A1-5、A1-6 已在真机验证 per-App 事实）。
   3. 协议边界不变：底座仅对 TCP(6)/UDP(17) 调 `getUidQ`，ICMP 固定不归属。
 - 结论：满足 A1-8——**网络事件中的 `uid` 一律取自底座回调（`Packet.uid`），App 侧不重复调用系统 API**；归属失败时按 `docs/02`、`docs/09` 降级为 `unknown`。
-- 遗留：底座在真机上的**量化成功率**（成功归属条数 / 总连接条数）需在 adb 可用后从 `TrackerControl.VPN` 日志（`Get uid=...`）统计，当前演示机 adb 未打通，列为待补。
+- 遗留：底座 UID 归属**量化成功率**已于 2026-09-28 在真机 PJW110 补测，见下。
+
+#### A1-8 底座 UID 归属量化成功率（2026-09-28 真机 PJW110 / Android 16 / API 36）
+
+- 采集方式：`adb logcat -s TrackerControl.VPN`，读取底座 `ServiceSinkhole.getUidQ`（`ServiceSinkhole.java:2274/2276`）的 `Get uid local=... remote=...`（查询）与 `Get uid=<uid>`（结果）两行；分母 = TCP/UDP 查询次数（非 TCP/UDP 如 ICMP 不进入 `getUidQ`，不计入）。
+- 设备/安装：PJW110（Android 16 / API 36），安装 fdroid debug 包 `net.kollnig.missioncontrol.fdroid.test`（构建机持久副本 `~/trackercontrol-apk/TrackerControl-fdroidDebug-latest.apk`，`adb install -r` 侧载；经 WSL2 无线调试连接）。
+
+| 轮次 | 窗口 | TCP/UDP 查询（分母） | 成功返回有效 uid | `Get uid=-1` | 成功率 | ICMP/系统未归属（不计分母） |
+|---|---|---|---|---|---|---|
+| #1 单 App（闲鱼） | 19:59 | 137 | 137 | 0 | 100% | 13 |
+| #2 多 App | 20:02 | 94 | 94 | 0 | 100% | 1 |
+| **合计** | - | **231** | **231** | **0** | **100%** | 14 |
+
+- 第 2 轮覆盖多 App 且均正确归属到各自 uid：番茄小说 `com.phoenix.read`(10379) 49 条、微信 `com.tencent.mm`(10331) 32 条、支付宝 `com.eg.android.AlipayGphone`(10326) 11 条、企业微信 `com.tencent.wework`(10349) 2 条；第 1 轮全部为闲鱼 `com.taobao.idlefish`(10343)。
+- 结论：底座 VpnService 内 `getConnectionOwnerUid` 在 TCP/UDP 上成功率为 **231/231 = 100%**，且能区分多个 App；唯一未归属的是 ICMP（`p1`），与协议边界一致（`docs/02` §4、`docs/09`）。
+- 局限：两轮各约 1 分钟、4~5 个 App，样本量有限；后续可在长时、更多 App 与网络切换场景下复测。
+
+---
+
+### A4-3 跨进程网络事件端到端（2026-09-29 真机 PJW110 / Android 16 / API 36）
+
+- [x] 真机端到端验证通过（2026-09-29）
+- 目标：打通“底座 VpnService 回调 → 跨进程显式包名广播 → CausalGuard Adapter → Ingestor → Room”的真实链路。
+- 设备/安装：
+  - 演示机 PJW110（Android 16 / API 36），经 WSL2 无线调试接入 adb。
+  - CausalGuard debug：`com.causalguard`（`app/build/outputs/apk/debug/app-debug.apk`，`adb install -r`）。
+  - 底座 fdroid debug：`net.kollnig.missioncontrol.fdroid.test`（`TrackerControl-fdroidDebug-latest.apk`），先 `./scripts/apply-trackercontrol-hook.sh` 应用 A4-3 补丁再构建；补丁已确认编译进 APK（`classes7.dex` 含 `CausalGuardNetworkHook`）。底座 VPN 正常起 `tun0`（`10.1.10.1/32`）。
+- 操作流程：CausalGuard 点「5) 启动网络采集（A4-3）」→ `collecting=true`；在真机打开 Chrome / 闲鱼 / 微信 / 淘宝并访问百度、腾讯等站点产生 TCP/UDP/DNS 流量 → 点「6) 停止网络采集」。
+- 结果（`run-as com.causalguard` 拉取 `databases/causalguard.db` + `-wal`）：
+
+| 指标 | 结果 |
+|---|---|
+| `network_event` / `privacy_event` | **486 / 486**（一一对应，同步入库） |
+| `source` / `evidenceLevel` | `vpn` / `E2`（全部） |
+| UID→包名归属 | 414 已归属（85.2%）、72 条 `uid=-1` 降级 |
+| DNS 域名线索 | 353/486 有 `domainHint`，**60** 个不同域名 |
+| 阻断记录 | 2 条 `UDP:53 blocked=1`（DNS 被底座阻断） |
+| 覆盖应用 | `com.android.chrome`(283)、`com.taobao.idlefish`(71)、`com.tencent.mm`(49)、`com.taobao.taobao`(5) 等 |
+
+- 归属样本：闲鱼 TCP→`yixiu-abtest.alicdn.com`、Chrome→`optimizationguide-pa.googleapis.com`、淘宝→`msgacs.m.taobao.com`，包名/协议/端口/域名均正确。
+- 降级证据（诚实记录）：
+  - `uid=-1` 共 72 条：ICMP 39 条（协议边界固定不归属，符合 `docs/02`/`docs/09`）、TCP 33 条（IPv4 14 / IPv6 19，含 `accounts.google.com`、`www.baidu.com`、`optimizationguide-pa.googleapis.com` 等），属底座在混合真实流量下未返回归属的诚实降级，保留 `packageName=unknown`。
+  - 无域名：`blocked` 的 DNS（UDP:53）记录 `domainHint` 为空，正确表达“有请求但被阻断”。
+- 去重说明：`dedupKey` 按 60s 时间窗生成；依 `docs/09` §4，`dedupKey` 仅用于查询期频率聚合、**不删原始事件留存**，故 486 条原始事件保留属预期。
+- 结论：满足 A4-3 阶段门——至少一种真实网络事件进入 Room、至少一个 App 获得使用上下文、无域名/UID 时诚实降级。跨进程 `setPackage("com.causalguard")` + App 侧 `RECEIVER_EXPORTED` 广播桥接在真机生效。
+- 遗留：A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）见下节；本节验证时为手工 start/stop 且需保持 CausalGuard 进程存活，下节前台服务已补齐。
+
+### A4-5 前台服务与网络切换/VPN 回收自动恢复（2026-09-29 真机 PJW110 / Android 16 / API 36）
+
+- [x] 真机验证通过（2026-09-29）
+- 目标：以 `dataSync` 前台服务维持采集进程存活；VPN 被系统回收 / 网络切换后自动 `stop() → start()` 重新订阅，历史事件已在 Room 不丢（`docs/trackercontrol-adapter-boundary` §5）。
+- 实现：
+  - `data/ingest/NetworkCollector`：采集器最小契约（生产实现为 `NetworkEventCollector`）。
+  - `data/ingest/NetworkMonitorController`：`start/stop/restart` 经 `Mutex` 串行化，异常回调 `onError` 后回到可重试状态，绝不 crash。纯逻辑，可 JVM 单测。
+  - `service/NetworkMonitorService`：`START_STICKY` 前台服务 + `FOREGROUND_SERVICE_TYPE_DATA_SYNC` 常驻通知；网络回调经 800ms 去抖合并为一次 restart。
+  - `service/AndroidConnectivityWatcher`：`registerDefaultNetworkCallback`，忽略注册时的基线回调，仅在真实 `onLost/onAvailable`/VPN 能力变化时通知。
+- 操作流程：CausalGuard 点「Start Network Monitor (A4-5)」→ 前台服务常驻；`adb shell am force-stop net.kollnig.missioncontrol.fdroid.test` 模拟 VPN 回收，随后 `monkey` 重启底座恢复 VPN。
+- 结果：
+
+| 指标 | 结果 |
+|---|---|
+| 前台服务 | `isForeground=true`、`foregroundId=1001`、`types=0x1`（dataSync），常驻通知与渠道 `causalguard_network_monitor` 建立 |
+| VPN 回收 | `network changed: lost/available/vpn-down` → 去抖后仅一次 `network restart done: active=true collecting=true` |
+| VPN 恢复 | `network changed: available/vpn-up` → 一次 restart，`active=true collecting=true` |
+| 事件不丢 | Room `privacy_event`/`network_event` 同步增长 **486 → 495 → 510**（重启前后持续入库、一一对应） |
+| 并发安全 | 修复注册基线/多回调并发 `restart` 造成的 `IllegalArgumentException: Receiver not registered`（`Mutex` 串行化 + 基线抑制 + 去抖） |
+| 停止 | UI「Stop Network Monitor」后 `dumpsys activity services com.causalguard` 无 ServiceRecord、通知消失 |
+
+- 关键修复（合并 `origin/main` 回归）：`AppContainer.privacyEventRepository` 曾采用 main 的 `FakePrivacyEventRepository` 默认值，导致 A4 采集只写内存、Room 不增长；已恢复为 `RoomPrivacyEventRepository(database)`，对齐 `docs/17` 阶段门与「Room 为唯一写入口」。
+- 遗留：厂商（ColorOS/Oppo）后台限制对 `START_STICKY` 的长期影响、锁屏/深度 Doze 下的保活需后续实测；通知权限未授权时服务仍运行但不显示常驻通知。
+
+### A5-1 域名阻断控制通道端到端（2026-10-05 真机 PJW110 / Android 16 / API 36）
+
+- [x] 真机验证通过（2026-10-05）
+- 目标：App 经 ordered broadcast（`ACTION_BLOCK_DOMAIN`）请求底座按域名阻断，底座仅在写入运行期阻断集成功后回执 `RESULT_OK`，其余诚实降级；`isDomainBlocked` 据此做 DNS 层抑制。
+- 实现（见 `third_party/patches/a5-1-domain-block-receiver.patch`，与 A4-3 一并由 `scripts/apply-trackercontrol-hook.sh` 应用）：
+  - 底座新增 `eu.faircode.netguard.CausalGuardDomainBlockReceiver`（跨进程 ordered broadcast，处理 `com.causalguard.intent.BLOCK_DOMAIN`）；成功写 `ServiceSinkhole.mapCausalGuardBlocked` 后回 `Activity.RESULT_OK`，缺域名/写入失败保持默认 `RESULT_CANCELED`。
+  - `ServiceSinkhole.isDomainBlocked` 仅对 `mapCausalGuardBlocked` 中的域名返回 `true`，native `is_domain_blocked` → Java `isDomainBlocked` 路径在 DNS 响应解析时抑制答案。
+  - `AndroidManifest.xml` 注册导出 receiver，并以 signature 权限（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）保护接收器作为控制通道的唯一安全边界；不做基于 `Binder.getCallingUid()` 的 sender 二次校验。
+- 操作流程（**加固前历史验证**，2026-10-05）：用 `gradle` 以固定 commit `9504d41b` 的 submodule + 两补丁构建 fdroid debug 底座并侧载；CausalGuard `:app` 构建 debug 侧载；`adb shell am broadcast -a com.causalguard.intent.BLOCK_DOMAIN --es domain example.com -p net.kollnig.missioncontrol.fdroid.test` 模拟 App 下发。**注：此为 signature 权限加固前的历史验证，`adb shell` 不代表当前授权 sender 语义。**
+- 结果（加固前）：
+
+| 指标 | 结果 |
+|---|---|
+| 补丁校验 | `git apply --check` 两补丁均通过，`CausalGuardDomainBlockReceiver` 已编入 `classes7.dex` |
+| 有效域名回执 | `Broadcast completed: result=-1`（`RESULT_OK`），日志 `CausalGuard block domain confirmed: example.com` |
+| 缺域名降级 | `Broadcast completed: result=0`（`RESULT_CANCELED`），日志 `CausalGuard block domain: missing domain, cancel` |
+| 底座版本 | `2026.08.05-fdroid-test`（commit `9504d41b` + A4-3/A5-1 补丁），`tun0` 正常 |
+| App 侧 | `com.causalguard` 0.1.0 侧载，`DomainBlockController` 契约（`ACTION_BLOCK_DOMAIN`/`EXTRA_DOMAIN="domain"`/`RESULT_OK`）与底座一致 |
+| 单测 | `:app:testDebugUnitTest` 112 项通过（含 `DeviceMitigationExecutorTest` 9 项、`RoomNetworkObservationRepositoryTest` 3 项、`MigrationTest` 1 项：v2→v3 迁移保留 `mitigation_record` 且 `executionStatus` 默认 `unknown`；另含 B4-4 `RealNetworkCalibrationTest` 等） |
+
+- 结论：满足 A5-1 阶段门——`BLOCK_DOMAIN` 端到端回执语义在真机生效（`RESULT_OK`/`RESULT_CANCELED` 诚实回执），DNS 层抑制路径（`isDomainBlocked` → `mapCausalGuardBlocked`）已接线；未接线/未构建时 App 侧按 `UNAVAILABLE` 降级，绝不谎报。控制通道安全边界以 signature 权限（`${applicationId}.permission.CAUSALGUARD_BLOCK_DOMAIN`）为准，不做基于 `Binder.getCallingUid()` 的 sender 二次校验。
+- 遗留：真实 App 场景下「阻断后 DNS 不再解析」的用户可见效果（Chrome 等已缓存域名的重载）依赖浏览器自身 DNS 缓存策略，属预期；深度 Doze/后台限制下阻断集的进程存活见 A4-5 遗留。
+
+#### A5-1 signature 权限安全验证（2026-10-07 真机 PJW110 / Android 16 / API 36）
+
+- [x] 签名权限安全验证通过（2026-10-07）
+- 目标：验证 signature 权限作为控制通道唯一安全边界——两 APK 同签、授权 sender 成功、未授权 sender 被拒，不再依赖 `Binder.getCallingUid()`。
+- Certificate（`apksigner verify --print-certs`）：
+  - `com.causalguard` signer SHA-256：`77768f162c129cd8bc7999f9916216d457d28014e185f9af7cedf466ee96602a`
+  - `net.kollnig.missioncontrol.fdroid.test` signer SHA-256：`77768f162c129cd8bc7999f9916216d457d28014e185f9af7cedf466ee96602a`
+  - 结论：**same**（两 APK 同签，signature 权限前提成立）。
+- Authorized sender（真实 CausalGuard App 代码路径）：`TrackerControlDomainBlockController` → `sendOrderedBroadcast(ACTION_BLOCK_DOMAIN)` → 底座 receiver 写 `mapCausalGuardBlocked` → 日志 `CausalGuard block domain confirmed: cg-auth-final.example` → 回执 `result=-1`（`RESULT_OK`）→ App 侧 `DomainBlockOutcome.CONFIRMED`。
+- Unauthorized sender（`adb shell am broadcast`，无 signature 权限）：`Broadcast completed: result=0`（`RESULT_CANCELED`），ActivityManager `Enqueued broadcast ... : 0`（receiver 被权限策略跳过、`onReceive` 未执行），无 `confirmed` 日志，**未修改 block set**。
+- 关键实现修正（2026-10-07）：App 侧 `TrackerControlDomainBlockController` 发送 ordered broadcast 时**不**把 `CAUSALGUARD_BLOCK_DOMAIN` 作为 `receiverPermission` 参数传入——实测在 PJW110/Android 16 上传入该参数会误拒持有该签名权限的授权 sender（sender 校验路径差异），而接收器 manifest `android:permission`（signature）本身已足以约束投递方。安全边界不变：只有与底座同签名的 App 能被授予并投递。
+### A6-1/A6-2 在线 AI 网络层与密钥注入（2026-10-05，单元测试）
+
+- [x] 完成（单元测试，无需真机）
+- 目标：为在线 AI 增强（可选、非 P0 门禁）提供安全网络底座——Retrofit/OkHttp 安全配置、明确超时、无 Body/header 日志；密钥经本地配置/环境注入，仓库不得出现密钥。
+- 实现（`app/src/main/java/com/causalguard/explain/`）：
+  - `AiHttpClient`：构造安全 `OkHttpClient`（连接/读/写超时，TLS 默认强校验，不降级 cleartext）与 `Retrofit`（`baseUrl` 来自 BuildConfig）；`isConfigured` 仅当 `AI_API_KEY`/`AI_BASE_URL` 均已注入时为真，否则整体不可用、业务侧回退本地模板。
+  - `NoBodyLoggingInterceptor`：只记录方法/URL/状态码/耗时，**绝不记录请求或响应 Body，也不记录 header（含授权头）**。
+  - A6-2 密钥注入：`app/build.gradle` 读 `secrets.properties`（已 `.gitignore`）→ 环境变量 → 空；`buildConfigField` 注入 `AI_API_KEY`/`AI_BASE_URL`，`buildFeatures.buildConfig=true`。
+- 依赖登记：`retrofit 3.0.0`、`converter-kotlinx-serialization 3.0.0`、`okhttp 4.12.0`（Apache-2.0，已登记 `THIRD_PARTY_NOTICES` 1.1）。
+- 结果：`:app:testDebugUnitTest` 84 项通过（新增 `AiHttpClientTest` 3 项：超时配置、拦截器无 Body/header 泄漏、未配置密钥判定）；`git check-ignore` 确认 `secrets.properties`/`local.properties`/`keystore.properties` 不入库。
+
+### A6-3 真机稳定性（2026-10-05 真机 PJW110 / Android 16 / API 36）
+
+- [x] 真机验证通过（有限时长一轮，长稳见遗留）
+- 目标：验证 VPN 回收 / 网络切换 / 服务回收下 `NetworkMonitorService` 的自动恢复，历史事件不丢。
+- 操作流程：CausalGuard「Start Network Monitor」→ 前台服务常驻；`am force-stop` 底座模拟 VPN 回收；`monkey` 重启底座恢复 VPN；观察 `CausalGuardNet` 日志。
+- 结果：
+
+| 指标 | 结果 |
+|---|---|
+| 启动 | `isForeground=true foregroundId=1001 types=0x1`（dataSync），日志 `monitor started: active=true collecting=true`、`connectivity baseline: available/vpn=true` |
+| VPN 回收 | `network restart done: active=true collecting=true`（去抖后仅一次 restart） |
+| VPN 恢复 | `tun0` 恢复，真实事件持续入库（微信/QQ/支付宝等，日志 `ingested id=... app=... blocked=false`） |
+| 停止 | `monitor service stopped`，`dumpsys activity services` 无 `NetworkMonitorService` ServiceRecord |
+
+- 结论：满足 A6-3 阶段门——VPN 回收/恢复各触发一次去抖 restart，服务回收后 `START_STICKY` 可重建，事件持续入库不丢；网络切换/VPN 回收有诚实降级。
+- 遗留：长时间（数小时）与深度 Doze/锁屏下的保活仍需后续实测（A4-5 已登记同项遗留，本阶段未新增缺陷）。
+
+### A6-4 P0 缺陷排查（2026-10-05）
+
+- [x] 完成（未发现阻断性缺陷，不新增功能）
+- 结果：`gradle build`（除 lint daemon 内存回收外）通过；`:app:lintDebug` 0 error 4 warning（2 条为依赖版本可用提示，2 条为 manifest 建议：`allowBackup` deprecated、缺 application icon，均非阻断）；`:app` 单测 84 项全绿。
+- 结论：当前无阻断性 P0 缺陷；4 条 lint warning 均为非阻断，按「不新增功能」原则不在本阶段处理。
 
 ---
 
@@ -228,6 +365,7 @@
 
 ## 5. 未决/阻塞
 
-1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）；A1-8 自测完成（见上，归属依赖底座）。
-2. 待补：底座 UID 归属**量化成功率**，需 adb 打通后从 `TrackerControl.VPN` 日志统计（演示机 adb 当前不可用）。
-3. 演示机型号 OPPO Reno12 Pro；Android 版本待补。
+1. A1-1、A1-3、A1-4、A1-5、A1-6 已完成；A1-7 构建/运行时依赖已登记（`THIRD_PARTY_NOTICES.md` 1.1）；A1-8 自测与量化成功率均完成（见第 3 节 A1-8，归属依赖底座）。
+2. 已补测：底座 UID 归属**量化成功率** 231/231 = 100%（TCP/UDP，真机 PJW110 / Android 16，2026-09-28，经 WSL2 无线调试采集 `TrackerControl.VPN` 日志）。
+3. 演示机 PJW110 为 Android 16 / API 36；早期 Spike 机 OPPO Reno12 Pro 的 Android 版本仍待补（基线 API 29+）。
+4. A4-3 跨进程网络事件端到端已于 2026-09-29 在 PJW110 真机验证（486 条事件入库，见第 3 节 A4-3）；A4-4 关联入库链路随该验证一并打通。A4-5（VPN 生命周期、前台服务、网络切换与异常恢复）已于 2026-09-29 真机验证（`dataSync` 前台服务、VPN 回收/恢复各触发一次去抖 restart、事件 486→510 持续入库、停止后服务注销），见第 3 节 A4-5；遗留为 ColorOS 后台限制与深度 Doze 保活的长期观察。

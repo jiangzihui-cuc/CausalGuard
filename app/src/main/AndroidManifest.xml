@@ -6,6 +6,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- A4-5：前台服务维持网络采集进程存活；Android 13+ 常驻通知需运行时授权 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- A1-3：读取已安装应用的包名/版本/声明权限（Android 11+ 需要包可见性） -->
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
@@ -15,6 +20,10 @@
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
+
+    <!-- A5-1：持有底座定义的 signature 权限，才能向底座投递 BLOCK_DOMAIN 控制广播。
+         底座（fdroid debug 变体）applicationId = net.kollnig.missioncontrol.fdroid.test。 -->
+    <uses-permission android:name="net.kollnig.missioncontrol.fdroid.test.permission.CAUSALGUARD_BLOCK_DOMAIN" />
 
     <application
         android:allowBackup="false"
@@ -29,5 +38,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- A4-5：网络监测前台服务（dataSync），维持采集并在网络切换时自动恢复 -->
+        <service
+            android:name=".service.NetworkMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 </manifest>

@@ -6,15 +6,18 @@ import com.causalguard.core.model.AppProfile
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.rules.RuleAssetLoadResult
 import com.causalguard.rules.RuleAssetLoader
+import com.causalguard.rules.SceneKnowledgeLoadResult
+import com.causalguard.rules.SceneKnowledgeLoader
 import com.causalguard.core.model.ScenarioMatch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 
 object RuntimeFixtureLoader {
     const val ASSET_NAME: String = "privacy-events-v0.1.json"
-    const val RULE_ASSET_NAME: String = "risk-rules-v0.1.json"
+    const val RULE_ASSET_NAME: String = "risk-rules-v0.2.json"
     const val RULE_INPUT_CONTEXT_ASSET_NAME: String = "rule-input-context-v0.1.json"
-    const val EXPLANATION_TEMPLATES_ASSET_NAME: String = "explanation-templates-v0.1.json"
+    const val EXPLANATION_TEMPLATES_ASSET_NAME: String = "explanation-templates-v0.2.json"
+    const val SCENE_KNOWLEDGE_ASSET_NAME: String = "scene-knowledge-v0.1.json"
 
     fun loadPrivacyEvents(context: Context): List<PrivacyEvent> {
         val json = readAsset(context, ASSET_NAME)
@@ -25,7 +28,7 @@ object RuntimeFixtureLoader {
     }
 
     fun loadRules(context: Context): RuleAssetLoadResult =
-        RuleAssetLoader().loadFromString(readAsset(context, RULE_ASSET_NAME))
+        RuleAssetLoader("risk-rules-v0.2", "rules-v0.2").loadFromString(readAsset(context, RULE_ASSET_NAME))
 
     fun loadRuleInputContext(context: Context): RuleInputContextAsset =
         ContractJson.instance.decodeFromString(
@@ -38,6 +41,10 @@ object RuntimeFixtureLoader {
             ExplanationTemplateAsset.serializer(),
             readAsset(context, EXPLANATION_TEMPLATES_ASSET_NAME),
         )
+
+    /** B5-1：加载版本化场景知识资产，供 runtime 场景一致性推导使用。 */
+    fun loadSceneKnowledge(context: Context): SceneKnowledgeLoadResult =
+        SceneKnowledgeLoader().loadFromString(readAsset(context, SCENE_KNOWLEDGE_ASSET_NAME))
 
     private fun readAsset(context: Context, name: String): String =
         context.assets.open(name).bufferedReader().use { it.readText() }
