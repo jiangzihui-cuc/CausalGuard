@@ -82,7 +82,7 @@
 | 字段 | 说明 |
 |---|---|
 | `modelName` | 模型名称与版本 |
-| `inputFields` | 实际发送字段白名单 |
+| `inputFields` | 本次 online provider attempt 使用的字段白名单；未发起 attempt 时为空，不表示请求一定到达远端 |
 | `outputStatus` | success / fallback / error |
 | `createdAt` | 调用时间 |
 

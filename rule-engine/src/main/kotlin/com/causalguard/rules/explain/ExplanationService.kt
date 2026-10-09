@@ -35,7 +35,10 @@ data class ExplanationResult(
     val aiStatus: ExplanationAiStatus,
     /** 实际模型名称；未发起在线调用时为 null。 */
     val modelName: String? = null,
-    /** 审计用：实际发送的字段白名单。 */
+    /**
+     * 审计用：本次 online provider attempt 使用的字段白名单；未发起 online attempt 时为空。
+     * 这不表示请求一定已经到达远端。
+     */
     val inputFields: List<String> = emptyList(),
 )
 
@@ -65,15 +68,16 @@ class ExplanationService(
             return localResult(context, ExplanationAiStatus.UNAVAILABLE)
         }
 
+        val request = AiExplanationRequest.from(context)
         val response = try {
-            provider.explain(AiExplanationRequest.from(context))
+            provider.explain(request)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (failure: Exception) {
-            return localResult(context, ExplanationAiStatus.FAILED, provider.modelName)
-        } ?: return localResult(context, ExplanationAiStatus.FAILED, provider.modelName)
+            return onlineFallbackResult(context, ExplanationAiStatus.FAILED, provider.modelName)
+        } ?: return onlineFallbackResult(context, ExplanationAiStatus.FAILED, provider.modelName)
 
-        return when (val validation = validator.validate(context, response)) {
+        return when (val validation = validator.validate(request, response)) {
             is ExplanationValidation.Accepted -> ExplanationResult(
                 text = validation.text,
                 source = ExplanationSource.AI_ENHANCED,
@@ -82,7 +86,7 @@ class ExplanationService(
                 inputFields = AiExplanationRequest.WHITELIST_FIELDS,
             )
 
-            is ExplanationValidation.Rejected -> localResult(
+            is ExplanationValidation.Rejected -> onlineFallbackResult(
                 context = context,
                 status = ExplanationAiStatus.REJECTED,
                 modelName = provider.modelName,
@@ -100,5 +104,17 @@ class ExplanationService(
         aiStatus = status,
         modelName = modelName,
         inputFields = emptyList(),
+    )
+
+    private fun onlineFallbackResult(
+        context: ExplanationContext,
+        status: ExplanationAiStatus,
+        modelName: String?,
+    ): ExplanationResult = ExplanationResult(
+        text = localProvider.render(context),
+        source = ExplanationSource.LOCAL_TEMPLATE,
+        aiStatus = status,
+        modelName = modelName,
+        inputFields = AiExplanationRequest.WHITELIST_FIELDS,
     )
 }

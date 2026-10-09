@@ -24,7 +24,7 @@ sealed interface ExplanationValidation {
  * - 数字/数量必须来自输入，出现输入之外的数字即丢弃；
  * - 不得引用输入之外的 App（包名样式 token）；
  * - 不得新增输入之外的事件类型；
- * - 不得升级输入的风险等级；
+ * - 不得升级或降级输入的风险等级；
  * - 出现“窃取/恶意上传/已泄露”等违规措辞时替换为中性表述（不整体丢弃）。
  *
  * 这是保守的启发式校验：宁可丢弃回退本地模板，也不放行越界输出。
@@ -32,7 +32,7 @@ sealed interface ExplanationValidation {
 class ExplanationFactValidator {
 
     fun validate(
-        context: ExplanationContext,
+        request: AiExplanationRequest,
         response: ExplanationText,
     ): ExplanationValidation {
         val fields = listOf(
@@ -43,39 +43,44 @@ class ExplanationFactValidator {
             response.caveat,
         )
         val joined = fields.joinToString(" ")
-        val inputText = contextText(context)
+        val inputText = requestText(request)
         val reasons = mutableListOf<String>()
 
         if (fields.any { it.isBlank() }) {
             reasons += "解释字段为空。"
         }
 
-        val allowedPackages = packageTokens(inputText) + context.packageName
+        val allowedPackages = packageTokens(inputText)
         val foreignPackages = packageTokens(joined).filter { it !in allowedPackages }
         if (foreignPackages.isNotEmpty()) {
             reasons += "解释引用了输入之外的 App：${foreignPackages.sorted().joinToString()}。"
         }
 
+        val factualText = listOf(
+            response.summary,
+            response.whyCare,
+            response.evidence,
+        ).joinToString(" ")
         val foreignTypes = eventTypeTerms
-            .filterKeys { it != context.eventType }
+            .filterKeys { it.wire != request.eventType }
             .flatMap { (_, terms) -> terms }
-            .filter { term -> joined.contains(term) && !inputText.contains(term) }
+            .filter { term -> factualText.contains(term) && !inputText.contains(term) }
             .distinct()
         if (foreignTypes.isNotEmpty()) {
             reasons += "解释新增了事件类型：${foreignTypes.joinToString()}。"
         }
 
-        val allowedNumbers = (numbersIn(inputText) + context.occurrenceCount.toString()).toSet()
+        val allowedNumbers = (numbersIn(inputText) + request.occurrenceCount.toString()).toSet()
         val extraNumbers = numbersIn(joined).filter { it !in allowedNumbers }
         if (extraNumbers.isNotEmpty()) {
             reasons += "解释包含输入之外的数量：${extraNumbers.sorted().joinToString()}。"
         }
 
         val escalated = ESCALATION_TERMS
-            .filter { (term, level) -> joined.contains(term) && context.riskLevel.rank < level.rank }
+            .filter { (term, level) -> joined.contains(term) && request.riskLevel != level }
             .map { it.first }
         if (escalated.isNotEmpty()) {
-            reasons += "解释升级了风险等级：${escalated.joinToString()}。"
+            reasons += "解释的风险等级与输入不一致：${escalated.joinToString()}。"
         }
 
         if (reasons.isNotEmpty()) {
@@ -96,30 +101,25 @@ class ExplanationFactValidator {
     private fun sanitize(value: String): String =
         FORBIDDEN_WORDING.fold(value) { acc, (from, to) -> acc.replace(from, to) }
 
-    private fun contextText(context: ExplanationContext): String = listOfNotNull(
-        context.appName,
-        context.packageName,
-        context.evidenceLevel.wire,
-        context.explanationBoundary,
-        context.evidenceSummary,
-        context.recommendationTitle,
-        context.scenarioMatchReason,
-        context.sceneType,
-        context.matchedRules.joinToString(" "),
+    private fun requestText(request: AiExplanationRequest): String = listOfNotNull(
+        request.task,
+        request.locale,
+        request.appName,
+        request.eventType,
+        request.foregroundState,
+        request.riskLevel,
+        request.scenarioMatch,
+        request.category,
+        request.matchedRules.joinToString(" "),
+        request.evidenceLevel,
+        request.occurrenceCount.toString(),
+        request.explanationBoundary,
     ).joinToString(" ")
 
     private fun numbersIn(value: String): List<String> = NUMBER_REGEX.findAll(value).map { it.value }.toList()
 
     private fun packageTokens(value: String): List<String> =
         PACKAGE_REGEX.findAll(value.lowercase()).map { it.value }.toList()
-
-    private val RiskLevel.rank: Int
-        get() = when (this) {
-            RiskLevel.LOW -> 0
-            RiskLevel.MEDIUM -> 1
-            RiskLevel.HIGH -> 2
-            RiskLevel.CRITICAL -> 3
-        }
 
     companion object {
         private val NUMBER_REGEX = Regex("""\d+""")
@@ -134,13 +134,16 @@ class ExplanationFactValidator {
             EventType.PERMISSION to listOf("权限"),
         )
 
-        private val ESCALATION_TERMS: List<Pair<String, RiskLevel>> = listOf(
-            "高风险" to RiskLevel.HIGH,
-            "严重" to RiskLevel.HIGH,
-            "紧急" to RiskLevel.HIGH,
-            "危急" to RiskLevel.HIGH,
-            "极度危险" to RiskLevel.CRITICAL,
-            "致命" to RiskLevel.CRITICAL,
+        private val ESCALATION_TERMS: List<Pair<String, String>> = listOf(
+            "低风险" to RiskLevel.LOW.wire,
+            "中风险" to RiskLevel.MEDIUM.wire,
+            "中等风险" to RiskLevel.MEDIUM.wire,
+            "高风险" to RiskLevel.HIGH.wire,
+            "严重" to RiskLevel.HIGH.wire,
+            "紧急" to RiskLevel.HIGH.wire,
+            "危急" to RiskLevel.HIGH.wire,
+            "极度危险" to RiskLevel.CRITICAL.wire,
+            "致命" to RiskLevel.CRITICAL.wire,
         )
 
         /** 违规措辞 → 中性表述（docs/11 §4）。长词在前避免部分替换。 */

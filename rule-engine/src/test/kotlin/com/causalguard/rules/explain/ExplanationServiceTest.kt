@@ -2,9 +2,11 @@ package com.causalguard.rules.explain
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 
 class ExplanationServiceTest {
@@ -36,6 +38,7 @@ class ExplanationServiceTest {
 
         assertEquals(ExplanationAiStatus.UNAVAILABLE, result.aiStatus)
         assertFalse(called, "未配置的 Provider 不应发起请求")
+        assertTrue(result.inputFields.isEmpty())
     }
 
     @Test
@@ -72,6 +75,7 @@ class ExplanationServiceTest {
         assertEquals(ExplanationAiStatus.REJECTED, result.aiStatus)
         assertEquals(ExplanationSource.LOCAL_TEMPLATE, result.source)
         assertEquals(expectedFallback, result.text)
+        assertEquals(AiExplanationRequest.WHITELIST_FIELDS, result.inputFields)
     }
 
     @Test
@@ -96,6 +100,7 @@ class ExplanationServiceTest {
         assertEquals(ExplanationAiStatus.FAILED, result.aiStatus)
         assertEquals(ExplanationSource.LOCAL_TEMPLATE, result.source)
         assertEquals(expectedFallback, result.text)
+        assertEquals(AiExplanationRequest.WHITELIST_FIELDS, result.inputFields)
     }
 
     @Test
@@ -104,6 +109,16 @@ class ExplanationServiceTest {
 
         assertEquals(ExplanationAiStatus.FAILED, result.aiStatus)
         assertEquals(expectedFallback, result.text)
+        assertEquals(AiExplanationRequest.WHITELIST_FIELDS, result.inputFields)
+    }
+
+    @Test
+    fun `rethrows cancellation from provider`() {
+        val provider = FakeProvider { throw CancellationException("cancelled") }
+
+        assertFailsWith<CancellationException> {
+            runBlocking { ExplanationService(aiProvider = provider).explain(context) }
+        }
     }
 
     private class FakeProvider(

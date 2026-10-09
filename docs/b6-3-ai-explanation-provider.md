@@ -20,13 +20,20 @@
 
 1. 用 [LocalExplanationProvider](b6-1-local-explanation.md) 渲染确定性本地兜底；
 2. 未注入或 Provider `isAvailable=false` → `aiStatus=UNAVAILABLE`，**不发起网络**；
-3. 经 `AiExplanationRequest.from(context)` 投影 12 字段白名单后请求；
+3. 经 `AiExplanationRequest.from(context)` 投影 12 字段白名单后请求；同一个 request 同时交给 Provider 和本地事实校验，确保校验边界等于 online attempt 的输入边界；
 4. 模型输出一律经 [ExplanationFactValidator](b6-2-ai-explanation-validation.md) 校验：
    - 通过 → `source=AI_ENHANCED`、`aiStatus=SUCCEEDED`（`sanitized` 时可携带清洗后文本）；
    - 拒绝 → 回退本地模板，`aiStatus=REJECTED`；
 5. 超时/网络错误/解析失败/返回 null → 回退本地模板，`aiStatus=FAILED`。
 
 `CancellationException` 原样抛出，不吞掉，保持结构化并发语义。
+
+## `ExplanationResult` 审计元数据
+
+- Provider 未配置或 `isAvailable=false`，没有发起 online attempt：`inputFields=[]`；
+- 一旦调用 `provider.explain(request)`，无论成功、输出被拒绝、返回 `null` 或抛出普通异常，最终结果都保留 `AiExplanationRequest.WHITELIST_FIELDS`；
+- 这里表示本次 online provider attempt 使用的请求字段集合，不表示请求一定已到达远端服务器；客户端无法从普通异常判断失败发生在发送前还是发送后；
+- B6-3 当前仅生成包含这些审计元数据的 `ExplanationResult`，尚未将其持久化到 `AuditLogRepository`/`audit_log`；持久化留给后续 B6-5/B6-6 或阶段收口，不在本切片扩展 Room/DAO/schema。
 
 ## 运行时接入
 
