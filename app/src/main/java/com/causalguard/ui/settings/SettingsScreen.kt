@@ -13,7 +13,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -42,34 +41,19 @@ fun SettingsScreen(
             SettingRow(
                 title = "实时监测",
                 description = state.monitoringDescription,
-            ) {
-                Switch(
-                    checked = state.monitoringEnabled,
-                    onCheckedChange = null,
-                    enabled = state.monitoringAvailable,
-                )
-            }
+            )
         }
 
         SettingsSection(title = "数据保留") {
             Text("事件保留策略")
             Text(state.retentionDescription, style = MaterialTheme.typography.bodyMedium)
-            Button(onClick = {}, enabled = state.retentionAvailable) {
-                Text("配置保留天数")
-            }
         }
 
         SettingsSection(title = "解释方式") {
             SettingRow(
                 title = "AI 云端解释",
                 description = state.aiCloudDescription,
-            ) {
-                Switch(
-                    checked = state.aiCloudEnabled,
-                    onCheckedChange = null,
-                    enabled = false,
-                )
-            }
+            )
             SettingRow(
                 title = "本地解释模板",
                 description = if (state.localExplanationEnabled) {
@@ -83,9 +67,6 @@ fun SettingsScreen(
         SettingsSection(title = "数据管理") {
             Text("删除本地事件")
             Text(state.deletionDescription, style = MaterialTheme.typography.bodyMedium)
-            Button(onClick = {}, enabled = state.deletionAvailable) {
-                Text("删除本地事件")
-            }
         }
 
         SettingsSection(title = "来源与版本") {
