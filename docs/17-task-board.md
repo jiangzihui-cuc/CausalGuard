@@ -265,9 +265,9 @@
 | 编号 | 任务 | 主责 | 协作 | 状态 |
 |---|---|---|---|---|
 | A8-1 | 最终设备回归 | 成员 A | 成员 B | 未开始 |
-| A8-2 | release APK、源码包、构建说明和依赖版本 | 成员 A | - | 未开始 |
-| A8-3 | 清理密钥、账号、真实数据、原始日志和临时文件 | 成员 A | 成员 B | 未开始 |
-| A8-4 | 核对 GPL 对应源码、许可证与 tag | 成员 A | 成员 B | 未开始 |
+| A8-2 | release APK、源码包、构建说明和依赖版本 | 成员 A | - | 进行中（构建说明/依赖版本/源码打包脚本完成；最终 APK/源码包待 B 合入后冻结） |
+| A8-3 | 清理密钥、账号、真实数据、原始日志和临时文件 | 成员 A | 成员 B | 已完成（`scripts/verify-clean-submission.sh` 全部通过；最终 tag 前以冻结 commit 复跑） |
+| A8-4 | 核对 GPL 对应源码、许可证与 tag | 成员 A | 成员 B | 已完成（对应源码/许可证/登记自动核对通过；最终 tag 一致性待 A8-5 建 tag 后复核） |
 | A8-5 | 在 `main` 创建最终版本 tag | 成员 A | 成员 B | 未开始 |
 | B8-1 | 正式设计文档 PDF | 成员 B | - | 未开始 |
 | B8-2 | 3 张核心截图和最终 MP4 | 成员 B | - | 未开始 |
@@ -277,6 +277,12 @@
 
 
 > 阶段 8 B 侧进展：B8-3 已完成，证据为 [第三方与原创边界说明](b8-3-third-party-original-boundary.md)；该任务不替代 A8-4 的 GPL/submodule 最终核验。B8-4 已具备核心来源：[B6-5 评测指标](b6-5-evaluation-metrics.md)、[B6-6 失败分析](b6-6-failure-analysis.md) 和 [评测失败案例登记](fixtures/evaluation-failure-cases-v0.1.json)，剩余为最终材料汇编，不需要新增评测代码。
+
+> A8-2 进展（成员 A，2026-10-09）：建立 [构建说明·依赖版本·源码包](a8-build-and-reproducibility.md)（固定环境与依赖表、干净环境构建步骤、发布签名、测试/lint 门禁、源码包内容与可复现性）；新增 `scripts/package-source.sh`（`git archive` 主仓 + submodule 对应源码 + 补丁 + `SOURCE_MANIFEST.txt`，天然排除密钥/真实数据/临时文件）。最终 release APK 与源码包待 B 合入、A8-5 建 tag 后以最终版重新生成。
+
+> A8-4 进展（成员 A，2026-10-09）：建立 [GPL 对应源码·许可证·tag 核对](a8-gpl-compliance-verification.md) 与 `scripts/verify-gpl-compliance.sh`。自动核对通过：submodule 固定 commit `9504d41b`（tag `2026080501`）、根 `LICENSE` 为 GPL-3.0、两补丁与 `apply-trackercontrol-hook.sh` SHA-256 一致、补丁 `git apply --check` 干净应用、`THIRD_PARTY_NOTICES` 登记齐全、仓库未跟踪密钥/APK/PDF/MP4；最终发布 tag 一致性待 A8-5 建 tag 后 `--tag` 复核。
+
+> A8-3 进展（成员 A，2026-10-09）：建立 [提交前清理核对](a8-submission-cleanup.md) 与 `scripts/verify-clean-submission.sh`。四项检查全部通过：工作区受控文件无敏感/大文件、git 历史从未新增敏感/大文件、无非忽略未跟踪文件、`.gitignore` 覆盖 9 项关键模式；最终 tag 前以冻结 commit 复跑一次。
 
 最终交叉检查：干净环境按 README 编译源码（B）；按最终脚本完整演示 APK（A）；检查技术陈述与能力边界（A）；检查 APK/文档/视频/截图版本一致（B）；许可证和署名两人各检查一次。任何材料与最终 tag 功能不一致，不能提交。
 
