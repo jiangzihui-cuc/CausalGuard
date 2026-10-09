@@ -13,12 +13,12 @@
 时间基线：2026-09-20 起，10/8-10/10 提交截止
 当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6，PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4，PR #25 已合入）、阶段 7 A 侧发布候选（A7-1~A7-6，PR #27 已合入）已完成；阶段 5 B 侧 B5-1~B5-7 已完成，阶段 6 B 侧 B6-1~B6-6 已完成
 成员 A：A5-1~A5-6（含 A5-1 底座域名阻断补丁真机验证：PJW110/Android 16，RESULT_OK/RESULT_CANCELED 诚实回执）、A6-1~A6-4（在线 AI 安全网络层、密钥注入、真机稳定性、缺陷排查）已完成；阶段 7 发布候选 A7-1~A7-6 已完成并合入 main（冻结 PJW110/Android 16 环境、构建签名 RC `0.2.0-rc1`、安装/恢复文档、许可证报告、第三方修改证据、阻断性缺陷排查）；下一步 A8-1~A8-5（最终提交准备）
-成员 B：B4-1~B4-5、B5-1~B5-7、B6-1~B6-6 已完成；B7-1~B7-2 已完成，B8-3 第三方与原创边界说明已完成，B8-4 已具备评测与失败案例核心内容、待最终汇编；成员 B 已无必须继续开发的新业务代码，后续进入演示材料、RC 人工验收、截图视频、设计文档和最终汇编阶段。
+成员 B：B4-1~B4-5、B5-1~B5-7、B6-1~B6-6 已完成；B7-1、B7-2、B7-4 已完成，B8-3 第三方与原创边界说明已完成，B8-4 已具备评测与失败案例核心内容、待最终汇编；成员 B 已无必须继续开发的新业务代码，后续进入演示材料、RC 人工验收、截图视频、设计文档和最终汇编阶段。
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
 
-**一句话**：阶段 0~4、阶段 5 A/B、阶段 6 A/B 与阶段 7 A 侧发布候选均已完成；成员 B 的 B7-1~B7-2 也已完成，B8-3 已形成第三方与原创边界说明，B8-4 已有评测与失败案例核心内容。**成员 A 继续阶段 8 最终提交准备；成员 B 不再新增业务代码，转入演示材料、RC 人工验收、截图视频、设计文档和最终汇编。**
+**一句话**：阶段 0~4、阶段 5 A/B、阶段 6 A/B 与阶段 7 A 侧发布候选均已完成；成员 B 的 B7-1、B7-2、B7-4 也已完成，B8-3 已形成第三方与原创边界说明，B8-4 已有评测与失败案例核心内容。**成员 A 继续阶段 8 最终提交准备；成员 B 不再新增业务代码，转入演示材料、RC 人工验收、截图视频、设计文档和最终汇编。**
 
 开源路线已定（详见 [20 开源复用建议](20-open-source-reuse-guide.md) 第 13 节）：优先走 **方案 A：TrackerControl / NetGuard（GPL-3.0）** 作为网络底座；接受 GPL 路线并明确开源与原创边界。MIT 备选路线仅在阶段 1 构建链持续失败时启用。
 
@@ -70,7 +70,7 @@
 
 **阶段 6 AI 解释与评测（B6-1~B6-6）**：B6-1（本地解释模板与兜底）、B6-2（AI 输入白名单与本地事实校验）、B6-3（可选 `AiExplanationProvider` 与确定性编排）已完成。B6-4 已建立 historical `rules-v0.1` 25 cases 与 current `rules-v0.2` boundary 17 cases，共 42 条；B6-5 已按 ruleVersion 报告 deterministic oracle agreement，完成 12 条 synthetic AI guardrail evaluation 与 12 条 synthetic recheck metrics。B6-6 已完成 failure registry、动态 failure classification 与 calibration decision 记录，且 `:rule-engine:testDebugUnitTest` 已在正常 WSL BUILD SUCCESSFUL。real AI fact consistency 为 `N/A`，user mitigation duration 为 `N/A`；后续仅在有独立证据时判断是否需要规则校准。在线 AI 始终可选，关闭后不影响 P0。
 
-**后续状态**：B7-1 Demo reset 流程和 B7-2 三分钟演示脚本/离线回放包已完成；B8-3 已形成 `docs/b8-3-third-party-original-boundary.md`；B8-4 已具备 B6-5/B6-6 与 failure registry 作为核心来源，待最终材料汇编。B7-3~B7-5、B8-1、B8-2、B8-4、B8-5 仍属于材料制作或人工验收，不预先标记完成；A8-4 GPL/submodule 最终核验仍由阶段 8 单独完成。
+**后续状态**：B7-1 Demo reset、B7-2 三分钟演示脚本/离线回放包和 B7-4 答辩核心页已完成；B8-3 已形成 `docs/b8-3-third-party-original-boundary.md`；B8-4 已具备 B6-5/B6-6 与 failure registry 作为核心来源，待最终材料汇编。B7-3、B7-5、B8-1、B8-2、B8-4、B8-5 仍属于材料制作或人工验收，不预先标记完成；A8-4 GPL/submodule 最终核验仍由阶段 8 单独完成。
 
 | 任务编号 | 做什么 | 改哪里 | 完成标准 |
 |---|---|---|---|
