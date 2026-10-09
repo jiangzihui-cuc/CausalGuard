@@ -181,7 +181,11 @@
 
 集成契约：`B：Recommendation → A：MitigationExecutor → A：MitigationRecord + 新事件 → B：RecheckResult + 页面`。
 
+> **阶段 5 B 侧全部完成（成员 B，2026-10-09）**：B5-1~B5-7 全部完成，覆盖场景一致性、证据链、因果链、Recommendation 选择、确定性复查比较、因果链/处置/复查页面与 12 条处置前后评测样例。与 A 的集成契约已由 B5-6 页面链路与 B5-7 评测集闭环验证。B5-1 场景评估器已作为 `ScenarioMatch` 输入接入 runtime analysis path（显式 fixture context 优先、缺失时由 `scene-knowledge-v0.1` 确定性推导、`unknown` 不覆盖），见 [B5-1 场景知识库](b5-1-scene-knowledge.md)；B5-3 `SCENE-*` 推断节点仍不物化，属后续可选扩展，不计入阶段 5 缺口。
+
 > B5-1 进展（成员 B，2026-10-07）：建立 `scene-knowledge-v0.1` 与确定性 `SceneConsistencyEvaluator`；无明确知识时 `UNKNOWN`，不从包名/domain/tracker/risk 反推场景；与 frozen `e-20260921-0001`～`e-20260921-0004` scenario context 一致。
+
+> B5-1 runtime 接入（成员 B，2026-10-09）：`SceneConsistencyEvaluator` 经 `RuntimeFixtureLoader.loadSceneKnowledge` 加载 `scene-knowledge-v0.1` 并注入 `FixtureEventAnalysisService`；`scenarioMatch` 解析为「显式 fixture context 优先，缺失时由场景知识确定性推导，`UNKNOWN` 不覆盖」，行为与既有 frozen 评测保持一致，新增集成测试覆盖无显式 context 时的推导。
 
 > B5-2 进展（成员 B，2026-10-07）：`EvidenceChainBuilder` 仅物化 effective matched rule 的 supporting event；`RiskAssessment.evidenceIds` 从主事件扩展到实际 supporting event；temporal/rule link 均明确为 E3 Derived Inference，不将时间相关表述为因果。
 

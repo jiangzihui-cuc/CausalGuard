@@ -43,4 +43,4 @@ no-match 和 version mismatch 都只生成 primary `EVENT_EVIDENCE` 与 E5 `ASSE
 
 builder 对 primary、证据事件、link relation、rule link、linked event、节点/边唯一性和 DAG 结构执行 fail-fast 校验；不为缺失或内部不一致的数据编造 unknown 节点。链顺序和所有 ID 均 deterministic，可由同一输入重建。
 
-scene knowledge 的 `SCENE-*` inference 本轮不物化；B5-1 的 scene evaluator 仍未接入当前 runtime analysis path。后续任务可以在明确集成边界后再扩展。
+scene knowledge 的 `SCENE-*` inference 本轮不物化为因果链节点；B5-1 的 scene evaluator 已在 runtime 作为 `ScenarioMatch` 输入接入（见 [B5-1](b5-1-scene-knowledge.md)），但因果链仍只消费规则评估结果，不直接展开场景知识节点。后续任务可以在明确集成边界后再扩展。

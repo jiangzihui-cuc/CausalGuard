@@ -1,13 +1,20 @@
 package com.causalguard.analysis
 
 import com.causalguard.core.model.ContractJson
+import com.causalguard.core.model.AppProfile
 import com.causalguard.core.model.PrivacyEvent
+import com.causalguard.core.model.RiskCategory
+import com.causalguard.core.model.ScenarioMatch
 import com.causalguard.data.fixture.ExplanationTemplateAsset
 import com.causalguard.data.fixture.RuleInputContextAsset
+import com.causalguard.data.fixture.RuleInputContextSchema
 import com.causalguard.data.repository.FakePrivacyEventRepository
 import com.causalguard.rules.RuleAssetLoadResult
 import com.causalguard.rules.RuleAssetLoader
 import com.causalguard.rules.CausalChainNodeKind
+import com.causalguard.rules.SceneConsistencyEvaluator
+import com.causalguard.rules.SceneKnowledgeLoadResult
+import com.causalguard.rules.SceneKnowledgeLoader
 import java.io.File
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.ListSerializer
@@ -69,6 +76,36 @@ class EventAnalysisServiceTest {
     }
 
     @Test
+    fun sceneKnowledgeDerivesScenarioMatchWhenFixtureContextIsAbsent() = runTest {
+        val rules = RuleAssetLoader("risk-rules-v0.2", "rules-v0.2").loadFromPath(
+            repoFile("docs/fixtures/risk-rules-v0.2.json").toPath(),
+        ) as RuleAssetLoadResult.Success
+        val contextWithoutOverrides = RuleInputContextAsset(
+            schema = RuleInputContextSchema(name = "test-context", purpose = "scene integration test"),
+            appProfiles = listOf(
+                AppProfile(packageName = "com.demo.map", appName = "Demo Map", sceneType = "map"),
+                AppProfile(packageName = "com.demo.calculator", appName = "Demo Calculator", sceneType = "calculator"),
+            ),
+            scenarioMatches = emptyList(),
+        )
+
+        fun service(evaluator: SceneConsistencyEvaluator?) = FixtureEventAnalysisService(
+            repository = FakePrivacyEventRepository(fixtureEvents()),
+            rules = rules,
+            inputContext = contextWithoutOverrides,
+            templates = emptyList(),
+            sceneConsistencyEvaluator = evaluator,
+        )
+
+        val withoutKnowledge = requireNotNull(service(null).analyze("e-20260921-0001"))
+        val withKnowledge = requireNotNull(service(sceneEvaluator()).analyze("e-20260921-0001"))
+
+        assertEquals(RiskCategory.UNKNOWN, withoutKnowledge.assessment.category)
+        assertEquals(RiskCategory.NECESSARY, withKnowledge.assessment.category)
+        assertEquals(ScenarioMatch.MATCH, withKnowledge.assessment.scenarioMatch)
+    }
+
+    @Test
     fun analyzeMatchesAnalyzeAllForTheSameEvent() = runTest {
         val service = fixtureAnalysisService()
         val fromAll = service.analyzeAll().single { it.event.eventId == "e-20260921-0009" }
@@ -113,6 +150,15 @@ class EventAnalysisServiceTest {
         ListSerializer(PrivacyEvent.serializer()),
         repoFile("docs/fixtures/privacy-events-v0.1.json").readText(),
     )
+
+    private fun sceneEvaluator(): SceneConsistencyEvaluator {
+        val loaded = SceneKnowledgeLoader().loadFromPath(
+            repoFile("docs/fixtures/scene-knowledge-v0.1.json").toPath(),
+        )
+        val success = loaded as? SceneKnowledgeLoadResult.Success
+            ?: error("failed to load scene knowledge: ${(loaded as SceneKnowledgeLoadResult.Failure).errors}")
+        return SceneConsistencyEvaluator(success.knowledge)
+    }
 
     private fun repoFile(relative: String): File {
         var directory = File(".").absoluteFile

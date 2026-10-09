@@ -20,6 +20,8 @@ import com.causalguard.core.model.RuleVersionRepository
 import com.causalguard.core.model.UsageContextProvider
 import com.causalguard.core.model.UsageContextRepository
 import com.causalguard.data.fixture.RuntimeFixtureLoader
+import com.causalguard.rules.SceneConsistencyEvaluator
+import com.causalguard.rules.SceneKnowledgeLoadResult
 import com.causalguard.data.importer.EventImporter
 import com.causalguard.data.ingest.NetworkCollector
 import com.causalguard.data.ingest.NetworkEventCollector
@@ -92,6 +94,8 @@ class AppContainer(
         rules = RuntimeFixtureLoader.loadRules(context),
         inputContext = RuntimeFixtureLoader.loadRuleInputContext(context),
         templates = RuntimeFixtureLoader.loadExplanationTemplates(context).templates,
+        sceneConsistencyEvaluator = (RuntimeFixtureLoader.loadSceneKnowledge(context) as? SceneKnowledgeLoadResult.Success)
+            ?.let { SceneConsistencyEvaluator(it.knowledge) },
     )
 
     override val eventSink: EventSink = RoomEventSink(privacyEventRepository)
