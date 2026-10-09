@@ -1,0 +1,81 @@
+{
+  "schema": {
+    "name": "causalguard-offline-replay-manifest",
+    "version": "v0.1",
+    "purpose": "Index existing canonical fixtures and runtime assets for a deterministic offline demonstration; this manifest does not create or copy event data."
+  },
+  "assets": [
+    {
+      "path": "docs/fixtures/privacy-events-v0.1.json",
+      "role": "Canonical privacy-event evaluation input",
+      "runtimeCopied": true,
+      "truthType": "synthetic_evaluation"
+    },
+    {
+      "path": "docs/fixtures/risk-rules-v0.2.json",
+      "role": "Canonical deterministic rule asset",
+      "runtimeCopied": true,
+      "truthType": "synthetic_evaluation"
+    },
+    {
+      "path": "docs/fixtures/rule-input-context-v0.1.json",
+      "role": "Independent app profile and scenario context input",
+      "runtimeCopied": true,
+      "truthType": "synthetic_evaluation"
+    },
+    {
+      "path": "docs/fixtures/scene-knowledge-v0.1.json",
+      "role": "Versioned scene knowledge for deterministic matching",
+      "runtimeCopied": true,
+      "truthType": "synthetic_evaluation"
+    },
+    {
+      "path": "docs/fixtures/explanation-templates-v0.2.json",
+      "role": "Local deterministic explanation templates",
+      "runtimeCopied": true,
+      "truthType": "synthetic_evaluation"
+    },
+    {
+      "path": "docs/fixtures/recheck-cases-v0.1.json",
+      "role": "Deterministic mitigation recheck evaluation input",
+      "runtimeCopied": false,
+      "truthType": "synthetic_evaluation"
+    },
+    {
+      "path": "docs/fixtures/recheck-expected-v0.1.json",
+      "role": "Recheck oracle used only for evaluation",
+      "runtimeCopied": false,
+      "truthType": "oracle_only"
+    },
+    {
+      "path": "app/src/main/assets/privacy-events-v0.1.json",
+      "role": "Runtime copy of the canonical privacy-event asset",
+      "runtimeCopied": false,
+      "truthType": "runtime_asset"
+    },
+    {
+      "path": "app/src/main/assets/risk-rules-v0.2.json",
+      "role": "Runtime copy loaded by RuntimeFixtureLoader",
+      "runtimeCopied": false,
+      "truthType": "runtime_asset"
+    },
+    {
+      "path": "app/src/main/assets/rule-input-context-v0.1.json",
+      "role": "Runtime copy loaded by RuntimeFixtureLoader",
+      "runtimeCopied": false,
+      "truthType": "runtime_asset"
+    },
+    {
+      "path": "app/src/main/assets/scene-knowledge-v0.1.json",
+      "role": "Runtime copy loaded by RuntimeFixtureLoader",
+      "runtimeCopied": false,
+      "truthType": "runtime_asset"
+    },
+    {
+      "path": "app/src/main/assets/explanation-templates-v0.2.json",
+      "role": "Runtime copy loaded by RuntimeFixtureLoader",
+      "runtimeCopied": false,
+      "truthType": "runtime_asset"
+    }
+  ]
+}
