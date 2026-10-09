@@ -14,5 +14,6 @@ data class SettingsUiState(
     val deletionAvailable: Boolean,
     val deletionDescription: String,
     val dataSource: String,
+    val footerNote: String,
     val ruleVersion: String,
 )

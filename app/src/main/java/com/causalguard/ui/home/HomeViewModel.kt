@@ -7,7 +7,8 @@ import com.causalguard.analysis.EventAnalysisResult
 import com.causalguard.analysis.EventAnalysisService
 import com.causalguard.core.model.PrivacyEventRepository
 import com.causalguard.core.model.RiskLevel
-import com.causalguard.ui.FixtureRuntimeMode
+import com.causalguard.ui.runtimeModeFor
+import com.causalguard.ui.runtimeModeNoteFor
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -25,8 +26,10 @@ class HomeViewModel(
                 HomeUiState.Empty
             } else {
                 val analyses = analysisService.analyzeAll()
+                val runtimeMode = runtimeModeFor(events)
                 HomeUiState.Content(
-                    runtimeMode = FixtureRuntimeMode,
+                    runtimeMode = runtimeMode,
+                    runtimeModeNote = runtimeModeNoteFor(runtimeMode),
                     eventCount = events.size,
                     overallRisk = analyses.maxOfOrNull { it.assessment.riskLevel.severity() }
                         ?.let { severity -> RiskLevel.entries.first { it.severity() == severity } }
