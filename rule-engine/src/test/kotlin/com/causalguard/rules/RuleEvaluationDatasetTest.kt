@@ -21,35 +21,90 @@ import kotlin.test.assertTrue
 class RuleEvaluationDatasetTest {
 
     @Test
-    fun `frozen and extension datasets match every independent oracle`() {
-        val rules = RuleAssetLoader().loadFromPath(
-            repoFile("docs/fixtures/risk-rules-v0.1.json").toPath(),
-        ) as RuleAssetLoadResult.Success
-        val evaluator = RuleEvaluator(rules.rules)
+    fun `historical and boundary datasets match every independent oracle`() {
+        val frozenCases = evaluateDataset(
+            DatasetSpec(
+                name = "historical frozen",
+                prefix = "fixture",
+                ruleAsset = "docs/fixtures/risk-rules-v0.1.json",
+                ruleSchemaName = "risk-rules-v0.1",
+                ruleVersion = "rules-v0.1",
+                events = "docs/fixtures/privacy-events-v0.1.json",
+                context = "docs/fixtures/rule-input-context-v0.1.json",
+                oracle = "docs/fixtures/privacy-events-v0.1.expected.json",
+                expectedSize = 10,
+            ),
+        )
+        val extensionCases = evaluateDataset(
+            DatasetSpec(
+                name = "historical extension",
+                prefix = "extension",
+                ruleAsset = "docs/fixtures/risk-rules-v0.1.json",
+                ruleSchemaName = "risk-rules-v0.1",
+                ruleVersion = "rules-v0.1",
+                events = "docs/fixtures/evaluation-events-v0.1.json",
+                context = "docs/fixtures/evaluation-context-v0.1.json",
+                oracle = "docs/fixtures/evaluation-expected-v0.1.json",
+                expectedSize = 15,
+            ),
+        )
+        val boundaryCases = evaluateDataset(
+            DatasetSpec(
+                name = "current boundary",
+                prefix = "boundary",
+                ruleAsset = "docs/fixtures/risk-rules-v0.2.json",
+                ruleSchemaName = "risk-rules-v0.2",
+                ruleVersion = "rules-v0.2",
+                events = "docs/fixtures/evaluation-boundary-events-v0.1.json",
+                context = "docs/fixtures/evaluation-boundary-context-v0.1.json",
+                oracle = "docs/fixtures/evaluation-boundary-expected-v0.1.json",
+                expectedSize = 17,
+            ),
+        )
 
-        val frozenEvents = loadEvents("docs/fixtures/privacy-events-v0.1.json")
-        val frozenContext = loadContext("docs/fixtures/rule-input-context-v0.1.json")
-        val frozenOracle = loadOracle("docs/fixtures/privacy-events-v0.1.expected.json")
-        val extensionEvents = loadEvents("docs/fixtures/evaluation-events-v0.1.json")
-        val extensionContext = loadContext("docs/fixtures/evaluation-context-v0.1.json")
-        val extensionOracle = loadOracle("docs/fixtures/evaluation-expected-v0.1.json")
-
-        val frozenCases = buildCases("fixture", frozenEvents, frozenContext, frozenOracle)
-        val extensionCases = buildCases("extension", extensionEvents, extensionContext, extensionOracle)
-        val allCases = frozenCases + extensionCases
+        val historicalCases = frozenCases + extensionCases
+        val allCases = historicalCases + boundaryCases
 
         assertEquals(10, frozenCases.size)
         assertEquals(15, extensionCases.size)
-        assertEquals(25, allCases.size)
-        assertEquals(frozenCases.size + extensionCases.size, allCases.size)
+        assertEquals(25, historicalCases.size)
+        assertEquals(17, boundaryCases.size)
+        assertEquals(42, allCases.size)
         assertEquals(allCases.size, allCases.map { it.caseId }.toSet().size)
         assertEquals(allCases.size, allCases.map { it.event.eventId }.toSet().size)
         assertTrue(extensionCases.none { extension -> frozenCases.any { it.event.eventId == extension.event.eventId } })
 
-        assertContextHasNoOutputOracleFields("docs/fixtures/rule-input-context-v0.1.json")
-        assertContextHasNoOutputOracleFields("docs/fixtures/evaluation-context-v0.1.json")
+        val normal = historicalCases.count { it.oracle.kind == "normal" }
+        val abnormal = historicalCases.count { it.oracle.kind == "abnormal" }
+        val mismatch = historicalCases.count { it.oracle.expectedScenarioMatch == "mismatch" }
+        val unknown = historicalCases.count { it.oracle.kind == "unknown_boundary" }
+        println(
+            "evaluation summary: historical rules-v0.1=${historicalCases.size} " +
+                "(normal=$normal, abnormal=$abnormal, mismatch=$mismatch, unknown=$unknown), " +
+                "current boundary rules-v0.2=${boundaryCases.size}, total=${allCases.size}",
+        )
+        assertTrue(normal > 0)
+        assertTrue(abnormal > 0)
+        assertTrue(mismatch > 0)
+        assertTrue(unknown > 0)
+    }
 
-        allCases.forEach { evaluationCase ->
+    private fun evaluateDataset(spec: DatasetSpec): List<EvaluationCase> {
+        val rules = RuleAssetLoader(
+            supportedSchemaName = spec.ruleSchemaName,
+            supportedRuleVersion = spec.ruleVersion,
+        ).loadFromPath(repoFile(spec.ruleAsset).toPath()) as RuleAssetLoadResult.Success
+        val evaluator = RuleEvaluator(rules.rules)
+        val events = loadEvents(spec.events)
+        val context = loadContext(spec.context)
+        val oracle = loadOracle(spec.oracle)
+        val cases = buildCases(spec.prefix, events, context, oracle, spec.ruleVersion)
+
+        assertEquals(spec.expectedSize, cases.size, spec.name)
+        assertEquals(events.size, events.map { it.eventId }.toSet().size, spec.name)
+        assertContextHasNoOutputOracleFields(spec.context)
+
+        cases.forEach { evaluationCase ->
             val input = evaluationCase.input(rules.schema.ruleVersion)
             val result = evaluator.evaluate(input)
             val assessment = result.assessment
@@ -70,19 +125,7 @@ class RuleEvaluationDatasetTest {
             )
             assertEquals(assessment, evaluator.assess(input), evaluationCase.caseId)
         }
-
-        val normal = allCases.count { it.oracle.kind == "normal" }
-        val abnormal = allCases.count { it.oracle.kind == "abnormal" }
-        val mismatch = allCases.count { it.oracle.expectedScenarioMatch == "mismatch" }
-        val unknown = allCases.count { it.oracle.kind == "unknown_boundary" }
-        println(
-            "evaluation summary: total=${allCases.size}, normal=$normal, " +
-                "abnormal=$abnormal, mismatch=$mismatch, unknown=$unknown",
-        )
-        assertTrue(normal > 0)
-        assertTrue(abnormal > 0)
-        assertTrue(mismatch > 0)
-        assertTrue(unknown > 0)
+        return cases
     }
 
     private fun buildCases(
@@ -90,11 +133,12 @@ class RuleEvaluationDatasetTest {
         events: List<PrivacyEvent>,
         context: EvaluationContext,
         oracle: EvaluationOracleAsset,
+        ruleVersion: String,
     ): List<EvaluationCase> {
         val expectedByEventId = oracle.expectations.associateBy { it.eventId }
         assertEquals(events.size, expectedByEventId.size)
         assertEquals(events.map { it.eventId }.toSet(), expectedByEventId.keys)
-        assertEquals("rules-v0.1", oracle.schema.ruleVersion)
+        assertEquals(ruleVersion, oracle.schema.ruleVersion)
         assertTrue(context.scenarioMatches.map { it.eventId }.toSet().size == context.scenarioMatches.size)
         assertTrue(context.scenarioMatches.all { entry -> events.any { it.eventId == entry.eventId } })
         assertTrue(context.appProfiles.all { profile -> events.any { it.appId == profile.packageName } })
@@ -185,6 +229,18 @@ class RuleEvaluationDatasetTest {
         val schema: ContextSchema,
         val appProfiles: List<AppProfile> = emptyList(),
         val scenarioMatches: List<ScenarioMatchEntry> = emptyList(),
+    )
+
+    private data class DatasetSpec(
+        val name: String,
+        val prefix: String,
+        val ruleAsset: String,
+        val ruleSchemaName: String,
+        val ruleVersion: String,
+        val events: String,
+        val context: String,
+        val oracle: String,
+        val expectedSize: Int,
     )
 
     @Serializable
