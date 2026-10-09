@@ -1,7 +1,7 @@
 # 19 工作导引（打开仓库先看这个）
 
-> 版本：`v0.4`
-> 最后更新：2026-10-05
+> 版本：`v0.5`
+> 最后更新：2026-10-07
 > 用途：两人打开仓库后，30 秒内知道“现在到哪一步、我下一步做什么、改哪个文件”。
 > 配套：[20 开源复用建议](20-open-source-reuse-guide.md)、[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)、[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
 
@@ -11,14 +11,14 @@
 
 ```text
 时间基线：2026-09-20 起，10/8-10/10 提交截止
-当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6）已完成并真机验证（PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4）已完成（PR #25 已合入）；阶段 5 B 侧 B5-1~B5-6 已完成，下一步 B5-7，B6 未开始
-成员 A：A5-1~A5-6 已完成（A5-1 底座域名阻断补丁已真机验证：PJW110/Android 16，RESULT_OK/RESULT_CANCELED 诚实回执），A6-1~A6-4 已完成（在线 AI 安全网络层、密钥注入、真机稳定性、缺陷排查）；下一步 A7-1~A7-6（发布候选）
+当前阶段：阶段 0~4 已完成并合入 main；阶段 5 A 侧执行层（A5-1~A5-6，PR #18 已合入）、阶段 6 A 侧（A6-1~A6-4，PR #25 已合入）、阶段 7 A 侧发布候选（A7-1~A7-6，PR #27 已合入）已完成；阶段 5 B 侧 B5-1~B5-6 已完成，下一步 B5-7，B6 未开始
+成员 A：A5-1~A5-6（含 A5-1 底座域名阻断补丁真机验证：PJW110/Android 16，RESULT_OK/RESULT_CANCELED 诚实回执）、A6-1~A6-4（在线 AI 安全网络层、密钥注入、真机稳定性、缺陷排查）已完成；阶段 7 发布候选 A7-1~A7-6 已完成并合入 main（冻结 PJW110/Android 16 环境、构建签名 RC `0.2.0-rc1`、安装/恢复文档、许可证报告、第三方修改证据、阻断性缺陷排查）；下一步 A8-1~A8-5（最终提交准备）
 成员 B：B4-1~B4-5 已完成（B4-4 已由 PR #26 合入）；B5-1~B5-6 已完成，下一步为 B5-7 至少 8 条处置前后评测样例；不依赖真实 VPN
 主演示案例：后台读取剪贴板/位置 + 网络行为解释
 首版基线：Android 10 / API 29+
 ```
 
-**一句话**：阶段 0~4、阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询，PR #18 已合入）、阶段 5 B5-1~B5-6（场景、证据链、因果链、Recommendation 选择、确定性复查比较、因果链/处置/复查页面）与阶段 6 A 侧（在线 AI 安全网络层 + 密钥注入 + 真机稳定性 + 缺陷排查，PR #25 已合入）均已完成；**成员 A 推进阶段 7 发布候选（A7-1~A7-6），成员 B 下一步做 B5-7 至少 8 条处置前后评测样例**。
+**一句话**：阶段 0~4、阶段 5 A 侧执行层（`MitigationExecutor` + 底座域名阻断补丁 + 聚合查询，PR #18 已合入）、阶段 5 B5-1~B5-6（场景、证据链、因果链、Recommendation 选择、确定性复查比较、因果链/处置/复查页面）、阶段 6 A 侧（在线 AI 安全网络层 + 密钥注入 + 真机稳定性 + 缺陷排查，PR #25 已合入）与阶段 7 发布候选（A7-1~A7-6，PR #27 已合入）均已完成；**成员 A 下一步进入阶段 8 最终提交准备（A8-1~A8-5），成员 B 下一步做 B5-7 至少 8 条处置前后评测样例**。
 
 开源路线已定（详见 [20 开源复用建议](20-open-source-reuse-guide.md) 第 13 节）：优先走 **方案 A：TrackerControl / NetGuard（GPL-3.0）** 作为网络底座；接受 GPL 路线并明确开源与原创边界。MIT 备选路线仅在阶段 1 构建链持续失败时启用。
 
@@ -41,7 +41,7 @@
 
 ## 三、我是谁？我下一步做什么？
 
-### 成员 A（技术实现主责）——阶段 5 已完成，现在做阶段 6（AI 解释、评测与可用性，10/4-10/5）
+### 成员 A（技术实现主责）——阶段 5/6/7 已完成，下一步阶段 8（最终提交准备，10/8-10/10）
 
 **阶段 1~4 已完成并合入 `main`**（A1-1～A1-8、A2-1～A2-6、A3-1～A3-5、A4-1～A4-5，见 [Spike 结果](spike-results.md) 与 [17 任务看板](17-task-board.md) 阶段进展）。
 
@@ -58,7 +58,11 @@
 
 > A5 底座侧 `ACTION_BLOCK_DOMAIN` 接收器以 GPL 补丁交付：`third_party/patches/a5-1-domain-block-receiver.patch`（`CausalGuardDomainBlockReceiver` + `mapCausalGuardBlocked` + `isDomainBlocked` DNS 抑制 + manifest 注册，并以 signature 权限 `permission.CAUSALGUARD_BLOCK_DOMAIN` 作为控制通道唯一安全边界，不做 `Binder.getCallingUid()` 二次 sender 校验），已并入 `scripts/apply-trackercontrol-hook.sh`（A4-3 + A5-1 一并应用/`--revert`）并登记 `THIRD_PARTY_NOTICES.md`。真机（PJW110/Android 16）验证：两 APK 同签、授权 CausalGuard sender 回执 `RESULT_OK`、未授权 `adb shell` sender 被拒，`:app` 单测 112 项通过（含 v2→v3 `MIGRATION_2_3` 迁移回归测试）。详见 [spike-results](spike-results.md) §3 A5-1。
 >
-> **下一步（阶段 6，10/4-10/5）**：A6-1 Retrofit/OkHttp 安全配置、A6-2 密钥环境注入、A6-3 长时间 VPN/网络切换/服务回收真机稳定性、A6-4 修复 P0 缺陷（见 [17 任务看板](17-task-board.md) 阶段 6）。
+> **阶段 6（A6-1～A6-4）已完成**（在线 AI 安全网络层、密钥注入、真机稳定性、缺陷排查），见 [17 任务看板](17-task-board.md) 阶段 6。
+>
+> **阶段 7 发布候选（A7-1～A7-6）已完成**（2026-10-07）：冻结 PJW110/Android 16/API 36 与构建环境；构建并签名 RC `causalguard-0.2.0-rc1.apk`（SHA-256 `36d15cf5…`）；输出 [A7 安装·授权·清理·故障恢复](a7-install-auth-recovery.md) 与 [A7 依赖许可证报告](a7-license-report.md)；整理底座 commit + 两补丁 SHA-256 作为第三方修改证据；回归 `assembleRelease` 通过、单测 261/0、lint 0 error/4 warning（非阻断）。见 [A7 RC 记录](a7-release-candidate.md)。
+>
+> **下一步（阶段 8，10/8-10/10）**：A8-1 最终设备回归、A8-2 release APK/源码包/构建说明、A8-3 清理密钥与真实数据、A8-4 核对 GPL 对应源码与 tag、A8-5 创建最终 tag。
 
 ### 成员 B（产品与智能分析主责）——B4-1~B4-5 已完成，现在做阶段 5 原创分析层（B5-1~B5-7）
 
