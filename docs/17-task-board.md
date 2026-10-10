@@ -268,7 +268,7 @@
 | A8-2 | release APK、源码包、构建说明和依赖版本 | 成员 A | - | 已完成（v1.0.0 APK SHA `3a851914…`、源码包 SHA `256e0135…`，见 [A8-2 §8](a8-build-and-reproducibility.md)） |
 | A8-3 | 清理密钥、账号、真实数据、原始日志和临时文件 | 成员 A | 成员 B | 已完成（`scripts/verify-clean-submission.sh` 全部通过，已以 `causalguard-v1.0.0` 复跑） |
 | A8-4 | 核对 GPL 对应源码、许可证与 tag | 成员 A | 成员 B | 已完成（对应源码/许可证/登记自动核对通过；已以 `--tag causalguard-v1.0.0` 复核通过） |
-| A8-5 | 在 `main` 创建最终版本 tag | 成员 A | 成员 B | 已完成（`causalguard-v1.0.0` → `c3dcc45`，已推送；`verify-gpl-compliance --tag` 通过） |
+| A8-5 | 在 `main` 创建最终版本 tag | 成员 A | 成员 B | 已完成（`causalguard-v1.0.0` → 发布 commit `ad637b5`，已推送；创建 tag 时 `verify-gpl-compliance --tag` 通过；其后为文档提交） |
 | B8-1 | 正式设计文档 PDF | 成员 B | - | 未开始 |
 | B8-2 | 3 张核心截图和最终 MP4 | 成员 B | - | 未开始 |
 | B8-3 | 第三方与原创边界说明 | 成员 B | 成员 A | 已完成 |
