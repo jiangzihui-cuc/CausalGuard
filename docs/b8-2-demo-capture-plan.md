@@ -2,8 +2,8 @@
 
 > 任务：B8-2（阶段 8：3 张核心截图和最终 MP4）
 > 文档性质：拍摄方案，不是截图、视频或最终媒体产物
-> 事实基线：`origin/main` 的 `54f37a983668dcb2621e810b738ca3a1d1303ce3`
-> 状态：待最终 APK、真机回归、评测附录和素材实拍后执行；本轮不录制媒体
+> 事实基线：`origin/main` 的 `6b1e222359d1251dbe5246083dfd117a0cf217ec`；最终发布 tag 为 `causalguard-v1.0.0`（指向发布构建 commit `ad637b5`）
+> 状态：A8-1～A8-5 的发布、真机 smoke、清理和 GPL 核对记录已在当前基线完成；B8-3 和 B8-4 附录源稿已合入。B8-2 的真实截图与 MP4 尚未生成，本轮不录制媒体。
 
 ## 1. 目标、交付物与事实边界
 
@@ -32,7 +32,7 @@
 | `Fixture / 离线演示分析` | 固定 JSON 驱动的规则、证据链、解释和 UI | 设备刚刚实时发生的事件 |
 | `Unknown` / E5 | 无法归属、缺证据或不可观测状态 | 强行归因、确定性处置、已改善 |
 
-当前 A7 已有 RC `0.2.0-rc1` 的设备和构建记录，但 A8-1～A8-5 尚未完成。因此文中涉及最终 release APK、最终 tag、最终设备回归、最终评测附录和最终媒体文件的步骤均为“待最终确认”，不得提前写成已完成。
+当前基线已记录 A8-1 的预演和 `v1.0.0` 真机 smoke，A8-2 的 `v1.0.0` release APK/源码包，A8-3 的提交清理、A8-4 的 GPL 核对和 A8-5 的最终 tag；这些记录不等于 B8-2 媒体已经实拍。B8-3 已合入，B8-4 的评测与失败案例附录源稿已合入但任务看板仍保留最终材料汇编状态。`origin/main` 当前未包含 `docs/b8-1-formal-design-document.md`，故本文不将 B8-1 写成已合入事实，待其分支/PR 与最终材料统一核验。截图、MP4、其媒体真实性交叉核对及 B8-5 文案核对仍为待完成事项。
 
 ## 2. 拍摄总原则
 
@@ -109,12 +109,12 @@ causalguard-<final-tag>-S03-unknown-degradation.png
 | V-02 来源图例 | 15–20 秒 | 首页/设置页的来源与版本信息；必要时简短标题卡解释 REAL、SANDBOX、FIXTURE、UNKNOWN | 真实观测、Demo 真值和离线 fixture 分开显示 | 标题卡不得冒充 App 画面；AI 为可选增强 |
 | V-03 DEMO-B 平台边界 | 18–25 秒 | Demo Calculator：`Arm DEMO-B` → Home → 返回，展示 `Platform Restricted` | 后台 clipboard probe 已执行，但 Android 16 拒绝访问；未读取保存内容，未生成虚假 PrivacyEvent | 这是能力边界，不是高风险 Runtime 事件 |
 | V-04 DEMO-C 触发 | 20–28 秒 | Demo Calculator：`Arm DEMO-C` → Home → 返回，展示 probe 状态/结果 | Calculator 只发起最小 TCP connection attempt，无 payload | 不说连接成功、tracker 命中或数据外传 |
-| V-05 真实观测核对 | 18–25 秒 | 仅在 A8-1 终验可复现时：主 App 展示对应 VPN 事件的来源、协议、`example.com:443` 线索和归属；否则展示缺失/unknown 的诚实状态 | VPN 观测是独立 Observed Fact；是否可见域名/UID 以实机为准 | 待最终确认；无观测绝不补造 `source=vpn` 事件 |
+| V-05 真实观测核对 | 18–25 秒 | A8-1 预演与 `v1.0.0` smoke 已证明主 App 可记录真实观测；录制时仅在本次设备仍可复现时展示 VPN 事件的来源、协议和可见线索，否则展示缺失/unknown 的诚实状态 | VPN 观测是独立 Observed Fact；是否可见域名/UID 以本次实机为准 | 已有回归记录不替代本段实拍；无观测绝不补造 `source=vpn` 事件 |
 | V-06 低风险对照 | 18–24 秒 | Demo Map 前台位置场景或其明确 SANDBOX fixture 详情 | 位置访问不必然危险；前台地图场景可被判为低风险/必要 | 保留 Demo 标识；不展示坐标 |
 | V-07 高风险 fixture 进入 | 20–26 秒 | 首页/时间线显示 fixture 高风险事件，点击详情；画面保留 fixture 标识 | 为可重复验证规则，下面展示固定 synthetic fixture，而非刚才 Runtime probe | 与 DEMO-C/D Runtime 画面用标题卡隔开 |
 | V-08 风险、证据与解释 | 32–40 秒 | Event Detail：Risk Assessment、Explanation、Evidence、证据支持链 | 规则输出可追溯到证据；时间关联只表示 supports，不证明敏感数据外传 | 读出解释边界，不使用“泄露已发生” |
 | V-09 建议与执行状态 | 25–32 秒 | Recommendation 区；若最终设备已验证，则操作 `BLOCK_DOMAIN` 或 `OPEN_SETTINGS` 并展示真实回执；否则展示建议未执行/能力不可用 | 建议可逆，建议不等于执行；系统设置打开不等于用户已修改设置 | 只说最终屏幕实际显示的状态；`BLOCK_APP` 属 P1/unsupported |
-| V-10 复查 | 20–28 秒 | 观察窗口结束后点击“复查”，展示 `reduced`、`no_change`、`blocked` 或 `unknown` 的真实结果 | 复查比较前后可比窗口；无法确认同样是有效、诚实输出 | 依赖最终 APK、执行回执和 A8-1；不能把等待窗口时长说成用户操作耗时 |
+| V-10 复查 | 20–28 秒 | 观察窗口结束后点击“复查”，展示 `reduced`、`no_change`、`blocked` 或 `unknown` 的真实结果 | 复查比较前后可比窗口；无法确认同样是有效、诚实输出 | `v1.0.0` 已冻结，但本镜头仍依赖本次实拍的执行回执与可比较观察；不能把等待窗口时长说成用户操作耗时 |
 | V-11 unknown 安全降级 | 18–24 秒 | unknown Event Detail：E5/无法归属、`Boundary / Unknown`、无自动操作 | 归属或证据不足时不强行指向 App，也不生成确定性处置 | 不将 unknown 说成绝对安全或绝对恶意 |
 | V-12 结束画面 | 12–16 秒 | 回到首页或版本/来源页，显示最终版本信息；标题卡列出能力边界 | 总结：证据可追溯、建议可复查、未知不强行归因 | final tag、APK、截图、视频版本一致后才录制定稿 |
 
@@ -134,8 +134,8 @@ causalguard-<final-tag>-S03-unknown-degradation.png
 
 ### 5.1 版本与设备
 
-- 待最终确认：A8-2 的 release APK、Demo App APK、底座 APK、源码包、版本号和 final tag 已冻结并相互对应。
-- 演示机按 A7 冻结基线为 PJW110 / Android 16 / API 36；如最终换机，必须重新记录型号、系统和影响，并完成 A8-1 回归。
+- A8-2/A8-5 已记录 `v1.0.0` release APK、源码包和 `causalguard-v1.0.0` tag 的对应关系；B8-2 实拍前仍须取得受控归档中的 APK，并逐项登记本次安装的 APK SHA-256、Demo App/底座版本与 tag，不能以文档记录代替设备核对。
+- A8-1 已记录 PJW110 / Android 16 / API 36 的预演和 `v1.0.0` smoke；如本次实拍换机、重装或出现运行差异，仍须记录型号、系统和影响，并按实际结果拍摄或降级。
 - 安装顺序为底座 → 主 App → Demo App；需演示域名阻断时，底座和主 App 必须同一 release keystore 签名。
 - 录屏前关闭其他应用通知、悬浮窗、个人账户、浏览器标签、蓝牙设备名和网络名称。
 
@@ -164,7 +164,7 @@ causalguard-<final-tag>-S03-unknown-degradation.png
 | 阻断控制通道无法确认 | 不写“已阻断” | 展示 `UNAVAILABLE`/`FAILED`/`unknown`；移除成功阻断的旁白 |
 | 观察窗口尚未结束或不可比较 | 不伪造 `reduced` | 展示“观察中”或“当前证据无法确认改善”；视频 V-10 仍可作为 unknown 复查镜头 |
 | 在线 AI 不可用 | 不截取外部模型生成文本当核心能力 | 用本地模板解释；说明离线核心不依赖 AI |
-| 最终 APK/评测/真机回归尚未冻结 | 不录制最终成片或提交截图 | 只保留拍摄脚本和可重录原始步骤，等待 A8/B8 最终确认 |
+| 本次实拍所需 APK、设备状态、评测/真机证据或媒体交叉核对不完整 | 不把 A8 已有记录或 fixture 当作本次实拍证明，也不提交最终成片 | 使用已冻结 `v1.0.0` 记录作为版本基线；只保留拍摄脚本和可重录原始步骤，等待实际 APK/设备材料与 B8-4/B8-5 最终核对 |
 
 ## 7. 媒体真实性核查清单
 
@@ -192,8 +192,8 @@ causalguard-<final-tag>-S03-unknown-degradation.png
 | 真实、Demo、synthetic 分离 | [Demo 场景](demo-scenarios.md)第 2～8 节 | 逐镜头标记来源，核对口播不混写 |
 | 断网、VPN、UID、域名降级 | [演示与发布方案](16-demo-and-release-plan.md)第 4 节、[A7 安装文档](a7-install-auth-recovery.md)第 8 节 | 至少排练并保留一种 unknown/降级片段 |
 | 安装、授权、reset、清理 | [A7 安装·授权·清理·故障恢复](a7-install-auth-recovery.md)第 3～9 节 | 拍摄前后执行检查和清理 |
-| RC 基线和版本复现 | [A7 发布候选记录](a7-release-candidate.md)第 1～8 节 | 等待 A8 最终版本替换 RC 信息后登记 |
-| 阶段 8 待完成事项 | [任务看板](17-task-board.md)阶段 8、[工作导引](19-work-guide.md) | 在 A8-1～A8-5、B8-4/B8-5 完成后执行最终实拍与交叉复核 |
+| 最终版本、真机与发布基线 | [A8-1 最终设备回归记录](a8-1-final-device-regression.md)、[A8-2 构建说明](a8-build-and-reproducibility.md)第 8 节、[A8-4 GPL 核对](a8-gpl-compliance-verification.md) | 以 `causalguard-v1.0.0` 与已登记 APK/源码包为版本基线；录制前重新核对本次实拍安装物和设备状态 |
+| 阶段 8 待完成事项 | [任务看板](17-task-board.md)阶段 8、[工作导引](19-work-guide.md) | A8-1～A8-5 已完成；B8-2 媒体实拍、B8-4 最终材料汇编和 B8-5 文案/媒体交叉核对完成前，不将本方案当作最终媒体验收 |
 
 ## 9. 本轮范围声明
 
