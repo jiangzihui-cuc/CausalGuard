@@ -156,7 +156,8 @@
 | F1 | VPN 被系统回收 | `adb shell am force-stop net.kollnig.missioncontrol.fdroid.test` | `vpn-down` → 服务自动 restart；无崩溃 | 无需修（设计内降级） | 监测暂停，恢复后继续 |
 | F2 | 撤销 Usage Access | `adb shell appops set com.causalguard GET_USAGE_STATS deny` | 无崩溃；**未见额外降级差异**（因缺陷①前台状态恒 `unknown`） | ❌ 未修复 | 结论保持 unknown/低 |
 | F3 | DEMO-C 计算器后台 probe 未被 VPN 观测 | 触发 `Arm DEMO-C` → Home → 返回 | Demo App 报 `ConnectException`，VPN 未 ingest，`未生成 PrivacyEvent` | ❌ 不可控（ColorOS 后台限制） | 不补造事件，诚实留空 |
-| F4 | 设备级断网 | — | **未执行**（adb 走 Wi-Fi，切断即失联） | 待补 | 核心分析本地化；AI 未配置 → 本地模板 |
+
+> **设备级断网：不做单独验证（本轮裁剪）。** 离线可用性由**本地优先架构**保证：核心规则与解释在设备本地运行，AI 云端解释为可选且当前未配置（走本地确定性模板），事件数据存本地 Room。按验收口径，此项以“设计保证、未做设备级断网回归”记录，**不声明已完成真机断网验证**。
 
 ### 6.4 已知缺陷与降级（未修复）
 
