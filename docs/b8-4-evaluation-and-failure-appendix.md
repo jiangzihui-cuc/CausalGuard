@@ -4,7 +4,7 @@
 >
 > 责任人：成员 B。
 >
-> 事实截止点：本文件基于 `origin/main` 的 `2b2b8510522b6f9ba9280bd1b5c5197c905c5bf7` 整理；未运行新的设备测试，也不把 fixture 结论表述为真实设备采集结果。
+> 事实截止点：设计文档部分基于 `origin/main` 的 `2b2b8510522b6f9ba9280bd1b5c5197c905c5bf7` 整理；**§4.1 与 §6 已由成员 A 在最终冻结 commit `6b1e222` 与真机 `PJW110 / Android 16` 上补齐真实证据**（2026-10-10）。未运行新的评测代码，也不把 fixture 结论表述为真实设备采集结果。
 > 关联：[评测数据集方案](14-evaluation-dataset.md)、[验收清单](15-acceptance-checklist.md)、[任务看板](17-task-board.md)、[B6-5 评测指标](b6-5-evaluation-metrics.md)、[B6-6 失败分析](b6-6-failure-analysis.md)。
 
 ---
@@ -19,7 +19,7 @@
 - synthetic AI guardrail 不联网、不调用真实模型，因此不能代替真实 AI 事实一致率；后者当前为 `N/A`。
 - synthetic recheck 的 allowed-count 变化不是用户实际操作耗时，也不是设备上的流量下降比例。
 - Demo/沙箱事件只能证明 Demo App 在受控条件下的行为；VPN、系统 API 和 UsageStats 的观测事实另有各自边界，详见 [Demo 场景](demo-scenarios.md)。
-- 本轮没有执行真机回归、APK 安装、截图、视频或成员 A 的设备数据采集；所有此类字段均保留为“待 A 提供”。
+- 本轮已由成员 A 在最终冻结 commit `6b1e222` 上重跑软件层命令（见 §4.1），并在真机 `PJW110 / Android 16` 上完成 A8-1 回归（见 §6）；真机结果为**真实观测**数据，fixture/Demo 仍单独区分（见 §6.5）。
 
 ## 2. 测试层次与证据边界
 
@@ -78,9 +78,9 @@
 
 | 命令 | 覆盖范围 | 证据位置 | 本轮执行状态 |
 |---|---|---|---|
-| `./gradlew :rule-engine:testDebugUnitTest` | 规则、fixture、评测指标、failure registry、解释和复查比较器 | [B6-5](b6-5-evaluation-metrics.md)、[B6-6](b6-6-failure-analysis.md)、[任务看板](17-task-board.md) B6-4～B6-6 | 未在本轮重新执行；已有 main 记录为通过 |
-| `./gradlew test` | `app`、`core-model`、`demo-app`、`rule-engine` 的 Gradle 单元测试任务 | [A8 构建说明](a8-build-and-reproducibility.md) §2、§4；[CI 配置](../.github/workflows/ci.yml) | 未在本轮重新执行；命令可复现 |
-| `./gradlew :app:lintDebug` | app 静态检查 | [A8 构建说明](a8-build-and-reproducibility.md) §2、§4 | 未在本轮重新执行；命令可复现 |
+| `./gradlew :rule-engine:testDebugUnitTest` | 规则、fixture、评测指标、failure registry、解释和复查比较器 | [B6-5](b6-5-evaluation-metrics.md)、[B6-6](b6-6-failure-analysis.md)、[任务看板](17-task-board.md) B6-4～B6-6；`./gradlew test` 已覆盖 | ✅ 由 `./gradlew test` 覆盖通过 |
+| `./gradlew test` | `app`、`core-model`、`demo-app`、`rule-engine` 的 Gradle 单元测试任务 | [A8 构建说明](a8-build-and-reproducibility.md) §2、§4；[CI 配置](../.github/workflows/ci.yml) | ✅ 2026-10-10 于 `6b1e222` 执行：**386 tests / 0 failures / 0 errors / 0 skipped**（BUILD SUCCESSFUL） |
+| `./gradlew :app:lintDebug` | app 静态检查 | [A8 构建说明](a8-build-and-reproducibility.md) §2、§4 | ✅ 2026-10-10 于 `6b1e222`：**0 errors / 4 warnings**（可升级依赖、`allowBackup` deprecated、缺 `android:icon`，均非阻断） |
 | `gradle build --stacktrace` | CI 的构建与单元测试门禁 | [CI 配置](../.github/workflows/ci.yml) | 未在本轮重新执行；CI 使用官方 Gradle 9.6.1 |
 
 这些均为软件层命令，不需要连接真机；执行仍依赖 JDK 17、Android SDK platform 37 / build-tools 37.0.0 等环境，完整前置见 [A8 构建说明](a8-build-and-reproducibility.md) §1～§2。
@@ -119,28 +119,67 @@
 |---|---|---|---|---|---|---|
 | `待登记` | `待提供` | `待独立标注` | `待运行记录` | `待分析` | `待决定` | `./gradlew :rule-engine:testDebugUnitTest` 或冻结的专用测试命令 |
 
-## 6. 真机评测待补表（成员 A 提供）
+## 6. 真机评测（成员 A 提供，真实观测）
 
-本表故意不填写任何设备、APK、网络或真实采集数字。A7 的 RC 历史记录不能替代最终冻结 tag 上的回归；待 A8-1、A8-2、A8-5 完成后，再将可核验原始证据链接到下表。
+> 来源：[A8-1 最终设备回归记录](a8-1-final-device-regression.md)、Logcat tag `CausalGuardNet`、[A8-2 发布产物](a8-build-and-reproducibility.md) §8。以下为**真实观测**（`source=vpn`），非 fixture、非 Demo。
 
-| 必填项 | 当前状态 | 最终需提供的可复查证据 |
+### 6.1 环境与版本
+
+| 项 | 值 |
+|---|---|
+| 设备 / 系统 | PJW110 / Android 16 / API 36 |
+| APK | `causalguard-1.0.0.apk`（versionName `1.0.0` / versionCode `3`） |
+| APK SHA-256 | `83643fb03883f6df24f9a3e9f6a130d333d1965424700eb2cf8a6af763efcc9d` |
+| 构建 commit / tag | `ad637b5191df39e40f8fede8f110eee2ea1b306b` / `causalguard-v1.0.0` |
+| 网络底座 | `net.kollnig.missioncontrol.fdroid.test`（submodule `9504d41b`，同签名 `b3ed3f7d…`） |
+| 授权 | 通知、Usage Access、VPN 三项已授权 |
+| 测试日期 | 2026-10-10 |
+
+### 6.2 成功场景（真实观测）
+
+| # | 场景 | 结果 | 证据 |
+|---|---|---|---|
+| S1 | 启动监测（底座 VPN + 前台服务） | `monitor started: active=true collecting=true`；`tun0` 建立 | Logcat |
+| S2 | 真实流量采集入库 | Chrome 访问 baidu/qq/taobao → 单轮 426 条 ingest，`source=vpn`/`evidenceLevel=E2` | Logcat |
+| S3 | 首页总览 | `运行模式：真实观测`；事件数持续增长（1483 → 2441） | `a8-1/01-home.png` |
+| S4 | 时间线 | 逐条 `Type: network` / `Mode: 真实观测` | `a8-1/02-timeline.png` |
+| S5 | 事件详情：事实 + 证据等级 | 事件 ID / UID / 包名 / 协议 / IP / 端口 / 域名线索；`Evidence: E2` | `a8-1/03-detail-top.png` |
+| S6 | 事件详情：因果链 + 建议 + 复查 | 事件事实(E2) → 最终评估(E5)；建议“无法确认，暂不处置”；处置复查“尚未执行处置” | `a8-1/05-*.png` |
+| S7 | VPN 回收 → 恢复 | `network changed: vpn-down` → 服务 `network restart done`；重拉底座 `tun0` 恢复，事件继续入库 | Logcat |
+| S8 | UID 无法归属 | 保留 `unknown`，`Matched rules: R-008`，不强行归因 | 时间线/详情 |
+| S9 | 域名不可见 | `Domain hint: 域名不可见`，只展示 IP | 详情 |
+
+### 6.3 异常/失败场景、复现与结论
+
+| # | 场景 | 复现步骤 | 现象 / 日志摘要 | 是否修复 | 降级 |
+|---|---|---|---|---|---|
+| F1 | VPN 被系统回收 | `adb shell am force-stop net.kollnig.missioncontrol.fdroid.test` | `vpn-down` → 服务自动 restart；无崩溃 | 无需修（设计内降级） | 监测暂停，恢复后继续 |
+| F2 | 撤销 Usage Access | `adb shell appops set com.causalguard GET_USAGE_STATS deny` | 无崩溃；**未见额外降级差异**（因缺陷①前台状态恒 `unknown`） | ❌ 未修复 | 结论保持 unknown/低 |
+| F3 | DEMO-C 计算器后台 probe 未被 VPN 观测 | 触发 `Arm DEMO-C` → Home → 返回 | Demo App 报 `ConnectException`，VPN 未 ingest，`未生成 PrivacyEvent` | ❌ 不可控（ColorOS 后台限制） | 不补造事件，诚实留空 |
+| F4 | 设备级断网 | — | **未执行**（adb 走 Wi-Fi，切断即失联） | 待补 | 核心分析本地化；AI 未配置 → 本地模板 |
+
+### 6.4 已知缺陷与降级（未修复）
+
+- **缺陷①**：真实网络事件 `Foreground` 恒 `unknown`（`AppContainer` 构造 `NetworkEventIngestor` 未注入 `ForegroundStateResolver`）→ 前后台规则 R-003/R-006 不触发。降级：结论保持 unknown/低，不误报。
+- **缺陷②**：`R-005` 未接 tracker 数据集，真实流量基本只命中 `R-008`。降级：不生成确定性处置。
+
+### 6.5 数据分类（fixture / Demo / 真实）
+
+| 类别 | 来源标记 | 本附录使用 |
 |---|---|---|
-| 设备型号与 Android/API 版本 | **待 A 提供** | 设备标识、系统版本、测试日期与权限状态 |
-| APK 版本、构建 commit 与 SHA-256 | **待 A 提供** | 最终 release APK、versionName/versionCode、commit/tag、哈希 |
-| 网络/VPN 状态 | **待 A 提供** | 网络类型、VPN 启停、Usage Access、必要的无敏感日志 |
-| 真实采集结果 | **待 A 提供** | 脱敏 `NetworkEvent` / `PrivacyEvent`、归属/域名可用性与 unknown 降级记录 |
-| 失败日志与恢复结果 | **待 A 提供** | 可脱敏失败日志、复现步骤、恢复操作与结果 |
-| 真实 AI/处置测量（如启用） | **待 A 提供** | 固定模型/version 输出快照与人工标签；真人开始/结束时间，不用 observation window 代替 |
+| 真实观测 | `source=vpn`、`isDemo=false`、`Mode: 真实观测` | §6.2 / §6.3 真机结果 |
+| 受控 Demo/沙箱 | `source=demo`、`isDemo=true`、界面 `展示 Demo 标识` | 仅 §3 fixture 与 [Demo 场景](demo-scenarios.md)，**不作为真机采集结果** |
+| 离线 fixture | `docs/fixtures/*`、`FixtureEventAnalysisService` | §3 / §5 规则评测，**不代表设备采集** |
 
 ## 7. 与最终验收的映射
 
 | [验收清单](15-acceptance-checklist.md) 项 | 本附录提供的证据 | 最终仍需完成的工作 |
 |---|---|---|
-| §3：合理/不匹配场景、处置后的可观察复查、事实/推断/不可观测分离 | fixture、规则 oracle、unknown 降级与 synthetic recheck | 在最终 APK / 真机上按脚本复验，不能以 fixture 替代 |
-| §4：APK 可安装、核心流程、断网基础摘要、Demo/真实数据区分 | 软件层测试入口、Demo/fixture 标识规则 | A8-1 / A8-2 最终设备与 APK 核验 |
-| §5：测试结果与全生命周期材料 | 本附录、B6-5、B6-6、可复现命令 | 以最终 tag 重跑并填入实际证据 |
-| §7：源码可编译、APK/源码版本一致 | CI/Gradle 命令与 A7 历史基线 | A8-2 以最终 tag 重新构建、打包和记录哈希 |
-| §8：提交材料与 APK 实际功能一致 | 本文明确区分 fixture、Demo、历史 RC 与待 A 数据 | B8-5 对文案、截图、视频和最终 APK 逐项核对 |
+| §3：合理/不匹配场景、处置后的可观察复查、事实/推断/不可观测分离 | fixture、规则 oracle、unknown 降级与 synthetic recheck；真机 §6 因果链/建议/复查 | ✅ 已在 v1.0.0 真机按脚本复验（§6.2 S6） |
+| §4：APK 可安装、核心流程、断网基础摘要、Demo/真实数据区分 | 软件层测试入口、Demo/fixture 标识规则；真机 §6.1/§6.5 | ✅ A8-1/A8-2 最终设备与 APK 核验完成；断网项 F4 待补 |
+| §5：测试结果与全生命周期材料 | 本附录、B6-5、B6-6、可复现命令；§4.1 于 `6b1e222` 重跑 | ✅ 已重跑并填入（386 tests / 0 fail；lint 0 error / 4 warning） |
+| §7：源码可编译、APK/源码版本一致 | CI/Gradle 命令；§4.1；[A8-2 §8](a8-build-and-reproducibility.md) | ✅ A8-2 已以 tag `causalguard-v1.0.0` 构建、打包并记录哈希 |
+| §8：提交材料与 APK 实际功能一致 | 本文明确区分 fixture、Demo、真实观测；§6.5 | B8-5 对文案、截图、视频和最终 APK 逐项核对 |
 
 ## 8. 提交前更新规则
 
