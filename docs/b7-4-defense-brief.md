@@ -42,7 +42,7 @@ AI 只接收白名单结构化事实，输出经过本地事实校验；越界�
 
 | 第三方复用 | 团队原创 | 边界与责任 |
 |---|---|---|
-| TrackerControl / NetGuard 网络底座；GPL-3.0 | 统一 `PrivacyEvent`、`RiskAssessment` 等业务契约中的团队设计部分 | 网络底座能力归第三方，不声称自研；最终 GPL/submodule/corresponding source/tag 核验由 A8-4 独立完成，尚未完成 |
+| TrackerControl / NetGuard 网络底座；GPL-3.0 | 统一 `PrivacyEvent`、`RiskAssessment` 等业务契约中的团队设计部分 | 网络底座能力归第三方，不声称自研；最终 GPL/submodule/corresponding source/tag 核验已由 A8-4 完成，具体对应关系以 A8-4 的核对记录、固定 commit/tag 和最终源码包为准 |
 | Disconnect Tracking Protection 的 tracker/domain 分类数据；CC BY-NC-SA 4.0 | 场景知识、scenario consistency、规则组合与安全 unknown degradation | 数据作者和数据许可证独立于代码许可证；tracker 命中只表示公开分类，不表示隐私泄露 |
 | 其他依赖 | evidence chain、causal chain、Recommendation selection、mitigation/recheck orchestration | 具体版本、许可证和用途以 `THIRD_PARTY_NOTICES.md` 与 license report 为准 |
 |  | explanation constraints、UI / Demo 编排、evaluation/failure registry | 不声称自研第三方底座、协议栈或数据集 |
