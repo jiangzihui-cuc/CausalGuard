@@ -115,3 +115,34 @@ scripts/package-source.sh [revision] [输出目录]   # 默认 HEAD → build/so
 - [ ] 更新 `versionName`/`versionCode` 到最终版本；
 - [ ] 以最终 tag 重新运行 `scripts/package-source.sh <tag>` 与 `scripts/verify-gpl-compliance.sh --tag <tag>`；
 - [ ] 最终 APK SHA-256、源码包 SHA-256、构建 commit 记入最终检查表。
+
+---
+
+## 8. 最终产物记录（v1.0.0，2026-10-10）
+
+> 最终版本不再区分初版/最终版；以下为 A 侧冻结产物。B 侧材料随后收集，均以本版本为准。
+
+| 项 | 值 |
+|---|---|
+| versionName / versionCode | `1.0.0` / `3` |
+| 版本冻结 commit | `1e3bfad24c4a7883685197f28d1b9e24ab0148e2` |
+| 最终 tag | `causalguard-v1.0.0` → `c3dcc45784de04e50a66e8b5945d08df43b9486e`（`main`） |
+| release APK | `causalguard-1.0.0.apk`（归档于 `$HOME/causalguard-release/1.0.0/`） |
+| APK SHA-256 | `3a8519147166bb4ce1758ff0a59518fcf48a912a0d2662a88aad617fd158259d` |
+| 源码包 | `CausalGuard-src-1.0.0-90aff39cd5c9.tar.gz` |
+| 源码包 SHA-256 | `256e013556c239984c29e9d6a409e3c331aad8043e4b3c76e9573919d2ec91bb` |
+| 签名方案 | APK Signature Scheme v3；证书 SHA-256 `b3ed3f7d7d80a3c4c6276792f91dd76b968138945928bfe62cfe17f3673554ef` |
+
+**门禁复跑（均通过）：**
+
+```bash
+scripts/build-release-rc.sh <out>               # :app:assembleRelease → zipalign → apksigner sign（v1.0.0）
+scripts/package-source.sh causalguard-v1.0.0    # 源码包 + SOURCE_MANIFEST.txt
+scripts/verify-gpl-compliance.sh --tag causalguard-v1.0.0   # 全部 [ok]（tag 指向 HEAD、名称与 versionName 一致）
+scripts/verify-clean-submission.sh              # 四项全过
+```
+
+**真机 smoke（PJW110 / Android 16）**：安装 `1.0.0`，`versionName=1.0.0`、`versionCode=3`；首页 `运行模式：真实观测`，事件持续入库（2441）。行为与 A8-1 预演版一致（本次仅版本号变更，无代码差异）。
+
+> 说明：`package-source.sh` 的 `SOURCE_MANIFEST.txt` 中 `revision` 记录的是 annotated tag 对象 `90aff39…`；其指向的 commit 为 `c3dcc45`（与 APK 构建 commit 一致）。复现时 `git archive causalguard-v1.0.0` 等价。
+
