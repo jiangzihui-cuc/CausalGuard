@@ -2,9 +2,9 @@
 
 > 文档任务：B8-1（阶段 8：最终提交准备）
 > 文档形态：最终设计文档 PDF 的 Markdown 源稿；本轮不生成 PDF
-> 事实基线：本 worktree 基于 `origin/main`，HEAD 为 `54f37a983668dcb2621e810b738ca3a1d1303ce3`
-> 事实截止点：以当前仓库文件为准；文中日期沿用各事实来源文档的日期
-> 状态：源稿草案；截图、视频、最终评测汇编、最终设备回归和最终发布包仍需按阶段 8 计划补齐
+> 事实基线：本源稿根据当前 `origin/main` 已合并事实刷新（本次基线为 `9db5a7a0cb060bb729431ad97b49ccaec9349df2`）；最终 PDF 仍以最终冻结的 `main` / final tag 为准。
+> 事实截止点：以当前仓库文件为准；文中日期沿用各事实来源文档的日期。
+> 状态：源稿草案；B8-4 评测附录源稿已合入，截图、视频、最终设备回归、最终 APK/源码包和 final tag 仍需按阶段 8 计划补齐。
 
 ## 目录
 
@@ -39,7 +39,7 @@
 - 权限声明不等于权限刚刚被使用；拥有权限并建立网络连接也不等于发生了数据泄露。
 - 无法归属、缺少域名、缺少场景或证据等级为 E5 时，系统保留 `unknown`，不强行归因。
 - TrackerControl/NetGuard 提供的是第三方网络底座能力；团队原创内容位于事件契约、上下文关联、规则、证据解释、处置复查、UI、Demo 和评测等上层。
-- 当前 submodule 未初始化，因此本稿不把固定 commit 内的源码范围、实际 `LICENSE` 文件内容和补丁可应用性写成已经完成的现场核验；这些事项由 A8-4 最终核对。
+- B8-3 是第三方与原创边界的汇总来源；A8-4 已在当前 `main` 记录固定 commit、根 `LICENSE`、补丁可应用性和登记的自动核对通过。最终发布 tag 与对应源码、补丁和许可证的一致性仍待 A8-5 后复核，本稿不以自身 worktree 状态替代该核验。
 
 ## 2. 项目背景、问题定义与目标
 
@@ -296,6 +296,8 @@ Demo-A～D 的职责是提供前台位置、后台剪贴板 probe、后台最小
 
 这几类资产分别承载事件输入、上游上下文、规则输出 oracle、解释校验和复查 oracle，不能把 expected 字段写入正式 `PrivacyEvent`。
 
+B7-2 已形成三分钟演示脚本和 offline replay material；其中 canonical fixture 始终是 `Synthetic Evaluation Input`。clean-install 的 production App 不会自动把 `privacy-events` fixture seed 到 Room，`EventImporter` 或 `ReplayNetworkEventSource` 的存在也不等于普通用户启动流程会自动导入或回放；Demo App runtime event 同样不自动成为主 App Room 事件。
+
 ## 9. 处置建议与复查闭环
 
 ### 9.1 建议与执行分离
@@ -353,7 +355,7 @@ R-006 的 `lastUsedAgoMs` 语义缺口、R-009 缺少独立时间窗口等事项
 
 ### 11.3 日志与审计
 
-审计日志可以记录 AI 模型名/版本、输入字段白名单、输出状态和时间，但不得记录敏感原文、完整请求体或密钥。运行日志用于排查 VPN、授权、阻断和回放状态，不得将原始设备日志、真实账号或密钥打包进最终提交材料。A8-3 仍需完成最终清理核对。
+审计日志可以记录 AI 模型名/版本、输入字段白名单、输出状态和时间，但不得记录敏感原文、完整请求体或密钥。运行日志用于排查 VPN、授权、阻断和回放状态，不得将原始设备日志、真实账号或密钥打包进最终提交材料。A8-3 的提交前清理核对已在当前 `main` 记录为通过；最终 tag 冻结后仍须按其流程复跑。
 
 ## 12. 开源复用与团队原创边界
 
@@ -366,21 +368,13 @@ R-006 的 `lastUsedAgoMs` 语义缺口、R-009 缺少独立时间窗口等事项
 | 类别 | 当前仓库事实 | 许可证/边界 |
 |---|---|---|
 | TrackerControl Android | gitlink 路径 `third_party/tracker-control-android/`，固定 commit `9504d41b9f6fa1509d784e5503c084d4b428307d`，登记 tag `2026080501`；官方来源为 [TrackerControl/tracker-control-android](https://github.com/TrackerControl/tracker-control-android) | 登记为 GPL-3.0；网络 VPN/TUN、DNS、连接记录和阻断能力属于第三方底座 |
-| 团队补丁 | `third_party/patches/a4-3-serversinkhole-network-hook.patch` 与 `a5-1-domain-block-receiver.patch`；应用入口为 `scripts/apply-trackercontrol-hook.sh` | 属于对 GPL 底座的团队修改/适配，不改变底座原创归属；最终补丁适用性由 A8-4 核验 |
+| 团队补丁 | `third_party/patches/a4-3-serversinkhole-network-hook.patch` 与 `a5-1-domain-block-receiver.patch`；应用入口为 `scripts/apply-trackercontrol-hook.sh` | 属于对 GPL 底座的团队修改/适配，不改变底座原创归属；A8-4 自动核对已记录补丁适用性，最终 tag 对应关系仍待复核 |
 | AndroidX/Compose/Room/Kotlinx/Retrofit/OkHttp/测试依赖 | 已由构建文件和 [A7 许可证报告](a7-license-report.md)登记；主要为 Maven 依赖，未复制其源码 | 主要为 Apache-2.0；与 GPL 底座、数据许可证分开登记 |
 | NetGuard、官方 samples、其他候选 | `docs/20` 和 `THIRD_PARTY_NOTICES.md` 作为调研/候选登记；不把候选项目写成当前实际接入 | 具体项目是否使用以实际登记为准 |
 
 ### 12.3 TrackerControl submodule 的核验状态
 
-当前 worktree 的 `third_party/tracker-control-android` 是父仓库 gitlink，`.gitmodules` 指向官方仓库且固定到上述 commit；submodule 未初始化，因此本轮没有读取其源码或 `LICENSE`，也没有应用补丁、构建底座或修改 `third_party/`。仓库登记和 A7 文档已经记录补丁路径、用途、哈希和发布责任，但以下内容不能在本稿中提前宣称完成：
-
-- 固定 commit 内实际 `LICENSE` 和单文件头部声明的最终核对；
-- 固定 commit 内实际源码范围与最终 APK 对应关系；
-- 两个补丁在固定 commit 上的完整应用检查；
-- GPL 对应源码随最终提交材料提供的方式；
-- 最终发布包中第三方源码、补丁、许可证和修改说明的完整对应关系。
-
-以上事项属于 A8-4 的最终核验范围。
+`third_party/tracker-control-android` 以父仓库 gitlink 固定到上述 commit，`.gitmodules` 指向官方来源。当前 `main` 的 A8-4 核对记录已覆盖固定 commit/tag、根 `LICENSE`、两处补丁及其 `git apply --check`、`THIRD_PARTY_NOTICES.md` 登记和未跟踪发布敏感文件；该记录不等于已经生成最终发布包。A8-5 建立 final tag 后，仍须以该 tag 复核对应源码、补丁、许可证和发布材料的一致性。本源稿不自行初始化、应用补丁或替代 A8-4/A8-5 的发布责任。
 
 ### 12.4 Disconnect 数据边界
 
@@ -405,9 +399,9 @@ R-006 的 `lastUsedAgoMs` 语义缺口、R-009 缺少独立时间窗口等事项
 
 | 状态 | 当前可由仓库支持的事项 |
 |---|---|
-| 已完成/已合入事实 | 阶段 0～4 的设计、契约、Room/事件基础、规则和真实网络接入主链；B5-1～B5-7 场景/证据/因果/处置复查；B6-1～B6-6 本地解释、可选 AI 编排、评测与失败 registry；A7 RC 文档、构建记录、安装恢复说明和许可证报告；B7-1 Demo reset；B8-3 第三方与原创边界说明 |
-| 进行中 | 阶段 8 的最终材料准备；B8-4 评测结果与失败案例的最终材料汇编；本源稿 B8-1 尚需形成正式 PDF |
-| 待完成/待最终核验 | B7-2～B7-5 演示材料与独立运行验收；B8-2 截图和最终 MP4；B8-5 文案/媒体不夸大核对；A8-1～A8-5 最终设备回归、release 包、清理、GPL/submodule 核验与最终 tag |
+| 已完成/已合入事实 | 阶段 0～4 的设计、契约、Room/事件基础、规则和真实网络接入主链；B5-1～B5-7 场景/证据/因果/处置复查；B6-1～B6-6 本地解释、可选 AI 编排、评测与失败 registry；A7 RC 文档、构建记录、安装恢复说明和许可证报告；B7-1 Demo reset、B7-2 三分钟演示脚本与 offline replay material、B7-4 答辩核心页；B8-3 第三方与原创边界说明、B8-4 评测与失败案例附录源稿；A8-3 提交前清理核对和 A8-4 GPL/许可证自动核对 |
+| 进行中 | 阶段 8 最终材料准备；A8-2 构建说明、依赖版本和源码打包准备（最终 APK/源码包待冻结）；本源稿 B8-1 尚需形成正式 PDF；B8-4 仍需随最终 tag/真机材料完成最终汇编 |
+| 待完成/待最终核验 | B7-3 的最终媒体产出与 B8-2 的三张截图和 MP4 统一定稿；B7-5 的真机 RC 验收与 A8-1 最终设备回归合并处理；B8-5 文案/媒体不夸大核对；A8-1 最终设备回归、A8-2 最终 APK/源码包、A8-5 final tag，以及 final tag 后的 A8-3/A8-4 复核 |
 
 A7 文档记录过 `0.2.0-rc1` 的 RC 构建事实，但这不等于 A8 最终 release APK、最终源码包、最终演示视频或最终设备回归已经完成。
 
@@ -417,7 +411,7 @@ A7 文档记录过 `0.2.0-rc1` 的 RC 构建事实，但这不等于 A8 最终 r
 |---|---|
 | 输入 | README、docs/01～docs/21、A7 文档、第三方登记、当前 `app`/`core-model`/`rule-engine`/`demo-app` 结构、测试/fixture/构建配置 |
 | 输出 | 唯一新增文件 `docs/b8-1-formal-design-document.md`，作为最终 PDF 的源稿 |
-| 依赖 | 已合入 main 的设计/契约/实现事实；B8-3 仅作为边界说明来源；A8-1～A8-5、B8-2/B8-4/B8-5 的未完成结果不能被假定 |
+| 依赖 | 已合入 main 的设计/契约/实现事实；B8-3 作为第三方/原创边界来源，B8-4 作为评测附录源稿；A8-1、A8-2 最终产物、A8-5、B8-2/B8-5 的未完成结果不能被假定 |
 | 本轮不做 | 不生成 PDF，不处理截图/视频/最终评测统计，不修改代码/已有文档/任务看板/第三方目录，不新增开源内容 |
 | 验收 | 标题和章节完整；需求、架构、契约、数据流、规则、隐私、开源边界和状态可追溯；仓库内链接存在；`git diff --check` 通过；提交只含该源稿 |
 
@@ -449,11 +443,11 @@ DEMO-B 的平台限制、DEMO-C 的 VPN 连接尝试、DEMO-D 的撤权后 probe
 
 1. 完成并记录 A8-1 最终设备回归，包括冻结设备上的授权、VPN 生命周期、网络切换、Demo 场景、处置回执和复查结果；
 2. 完成 A8-2 release APK、源码包、构建说明、依赖版本和版本一致性核对；
-3. 完成 A8-3 密钥、账号、真实数据、原始日志和临时文件清理，并保留可审计的检查结果；
-4. 完成 A8-4 对固定 TrackerControl commit 的 submodule 内容、实际 `LICENSE`、源码范围、两处补丁应用、GPL 对应源码提供方式和最终发布材料对应关系的核验；
+3. 在 final tag 冻结后复跑 A8-3 的密钥、账号、真实数据、原始日志和临时文件清理核对，并保留可审计结果；
+4. 在 A8-5 建立 final tag 后复跑 A8-4 的 GPL 对应源码、许可证、补丁和发布材料一致性核验；
 5. 完成 A8-5 最终 tag，并让 PDF、源码、APK、截图、视频和文案指向同一发布事实；
 6. 完成 B8-2 三张核心截图和最终 MP4，并确认不含真实个人信息、密钥或未验证功能；
-7. 完成 B8-4 评测结果/失败案例附录的最终汇编，保持 rules-v0.1 与 rules-v0.2 分版本统计，并标注 curated/synthetic/N/A 限制；
+7. 在已合入的 B8-4 评测与失败案例附录源稿中补入最终冻结 tag 可证明的材料；保持 rules-v0.1 与 rules-v0.2 分版本统计，并标注 curated/synthetic/N/A 限制；
 8. 完成 B8-5 全部文案、截图和视频的能力边界核对，尤其是 unknown、Demo、连接尝试、权限状态和“数据泄露”措辞；
 9. 补齐正式提交要求中的平台、版本、工具、实际 AI 模型名称/版本、接口方式和 AI 辅助代码比例；当前仓库已有 AI 契约和可选 Provider，但最终材料仍需填入真实发布信息；
 10. 将本源稿排版为 PDF 后检查中文字体、目录、代码块、表格、链接、分页、图片清晰度和无敏感信息。
@@ -467,7 +461,7 @@ DEMO-B 的平台限制、DEMO-C 的 VPN 连接尝试、DEMO-D 的撤权后 probe
 - [系统架构](05-system-architecture.md)、[模块设计](06-module-design.md)、[数据模型](07-data-model.md)、[事件契约](09-event-contract.md)、[风险规则契约](10-risk-rule-contract.md)、[AI 解释契约](11-ai-explanation-contract.md)、[隐私安全设计](12-privacy-security-design.md)
 - [测试计划](13-test-plan.md)、[评测数据集](14-evaluation-dataset.md)、[验收清单](15-acceptance-checklist.md)、[演示与发布方案](16-demo-and-release-plan.md)
 - [任务看板](17-task-board.md)、[风险清单](18-risk-register.md)、[工作导引](19-work-guide.md)、[开源复用指南](20-open-source-reuse-guide.md)、[并行工作分工](21-parallel-work-allocation-plan.md)
-- [A7 安装·授权·清理·故障恢复](a7-install-auth-recovery.md)、[A7 发布候选记录](a7-release-candidate.md)、[A7 许可证报告](a7-license-report.md)、[第三方与原创边界说明](b8-3-third-party-original-boundary.md)
+- [A7 安装·授权·清理·故障恢复](a7-install-auth-recovery.md)、[A7 发布候选记录](a7-release-candidate.md)、[A7 许可证报告](a7-license-report.md)、[B7-2 三分钟主演示脚本](b7-2-demo-script.md)、[B7-4 答辩核心页](b7-4-defense-brief)、[第三方与原创边界说明](b8-3-third-party-original-boundary.md)、[B8-4 评测与失败案例附录](b8-4-evaluation-and-failure-appendix.md)
 - [第三方登记](../THIRD_PARTY_NOTICES.md)、[TrackerControl 适配边界](trackercontrol-adapter-boundary.md)、[Demo 场景](demo-scenarios.md)、[网络核心映射](network-core-map.md)
 - [Tracker 数据生成脚本](../scripts/generate-tracker-dataset.py)、[Tracker 精简资产](../app/src/main/assets/tracker-domains-v0.1.json)、[TrackerControl 补丁 1](../third_party/patches/a4-3-serversinkhole-network-hook.patch)、[TrackerControl 补丁 2](../third_party/patches/a5-1-domain-block-receiver.patch)
 
