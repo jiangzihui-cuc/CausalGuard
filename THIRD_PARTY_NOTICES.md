@@ -244,11 +244,11 @@
 | 项 | 内容 |
 |---|---|
 | 服务类型 | OpenAI 兼容 Chat Completions（`POST {AI_BASE_URL}/chat/completions`，`response_format=json_object`） |
-| 默认模型 | 通义千问 Qwen `qwen-plus`（DashScope 兼容端点 `https://dashscope.aliyuncs.com/compatible-mode/v1`） |
-| 可替换模型 | 任意 OpenAI 兼容服务（DeepSeek `deepseek-chat`、智谱 GLM、OpenAI 等），经 `AI_MODEL_NAME` / `AI_BASE_URL` 覆盖 |
-| 配置方式 | `secrets.properties` 或环境变量：`AI_MODEL_NAME`（默认 `qwen-plus`）、`AI_BASE_URL`、`AI_API_KEY`；**密钥不入库、不入日志** |
+| 默认模型 | DeepSeek `deepseek-chat`（OpenAI 兼容端点 `https://api.deepseek.com/v1`） |
+| 可替换模型 | 任意 OpenAI 兼容服务（通义千问 `qwen-plus`、智谱 GLM、OpenAI 等），经 `AI_MODEL_NAME` / `AI_BASE_URL` 覆盖 |
+| 配置方式 | `secrets.properties` 或环境变量：`AI_MODEL_NAME`（默认 `deepseek-chat`）、`AI_BASE_URL`、`AI_API_KEY`；**密钥不入库、不入日志** |
 | 是否 P0 | 否；未配置/断网/超时/校验不通过时回退本地模板（`ExplanationService` 兜底） |
 | 数据边界 | 仅发送 12 字段白名单（`AiExplanationRequest`），输出经 `ExplanationFactValidator` 本地事实校验 |
 | 团队原创边界 | 模型只做“表达改写”；事实、风险等级、证据与降级均由本地确定性规则/校验决定，不依赖模型自检 |
-| 许可证/合规 | 以实际选用模型服务的条款为准（如通义千问服务协议）；本文仅登记接入方式，不复制其条款正文 |
+| 许可证/合规 | 以实际选用模型服务的条款为准（如 DeepSeek 开放平台服务条款）；本文仅登记接入方式，不复制其条款正文 |
 | Registered by / date | 成员 A / 2026-10-14 |

@@ -62,7 +62,7 @@ class RetrofitAiExplanationProvider(
     }
 
     companion object {
-        const val DEFAULT_MODEL_NAME: String = "qwen-plus"
+        const val DEFAULT_MODEL_NAME: String = "deepseek-chat"
 
         /**
          * 按当前构建配置构造 Provider；未配置密钥/端点时返回 `null`，调用方直接走本地模板。
