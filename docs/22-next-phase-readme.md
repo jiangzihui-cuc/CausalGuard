@@ -80,6 +80,40 @@
 
 **验收**：真机断网走模板、联网走真实模型；模型输出被本地校验拦截时正确回退；文档里 model 名称/版本非占位符。
 
+#### 阶段 0 完成记录（2026-10-14）
+
+分支 `feature/v2-t0-ai-integration` 已完成阶段 0 代码，待真机/密钥验证后合入 `main`。
+
+| 交付物 | 状态 |
+|---|---|
+| `explain/` 直连 OpenAI 兼容大模型（`chat/completions`） | ✅ |
+| `AiPromptBuilder`：白名单 → 约束五段 JSON 提示词（rule-engine，纯函数） | ✅ |
+| `BearerAuthInterceptor` + `NoBodyLoggingInterceptor`：鉴权注入且不落日志 | ✅ |
+| 真实模型名 `deepseek-chat`（`AI_MODEL_NAME` 可覆盖为任意 OpenAI 兼容模型） | ✅ |
+| `RealAiFactConsistencyTest`：opt-in 真实事实一致性评测（无密钥自动跳过） | ✅ |
+| `THIRD_PARTY_NOTICES.md` 第 5 节 + `docs/b6-5` 登记模型服务与评测协议 | ✅ |
+
+**配置密钥（本地，不入库）：**
+
+```bash
+# 项目根目录新建 secrets.properties（已被 .gitignore 忽略）
+cat > secrets.properties <<'EOF'
+AI_BASE_URL=https://api.deepseek.com/v1
+AI_API_KEY=sk-xxxxxxxx
+# 可选：AI_MODEL_NAME=deepseek-chat（默认即此值）
+EOF
+```
+
+**验证命令：**
+
+```bash
+./gradlew :app:testDebugUnitTest --tests "com.causalguard.explain.*"   # 离线单测（无密钥时评测自动跳过）
+./gradlew :app:testDebugUnitTest --tests "com.causalguard.explain.RealAiFactConsistencyTest"  # 配密钥后跑真实 fact consistency
+```
+
+- 未配置密钥时 `AiHttpClient.isConfigured=false`，在线 AI 降级本地模板（P0 行为不变）。
+- 配置密钥后真机验证：断网走模板、联网走 `deepseek-chat`，模型输出被本地校验拦截时回退模板。
+
 ### 阶段 1（决赛后，约 2-4 周）：自研网络底座，去 GPL
 
 **目标**：让 app 不再依赖 TrackerControl，成为自包含实现，并整体转 Apache-2.0（D2/D5）。
