@@ -40,6 +40,7 @@
 | [19 工作导引](19-work-guide.md) | 仓库补充：打开仓库先看 |
 | [20 开源代码复用调研与接入建议](20-open-source-reuse-guide.md) | 阶段1起：开源选型、许可证与接入边界 |
 | [21 双人并行开发分工与 Git 协作规范](21-parallel-work-allocation-plan.md) | 阶段1起：分工、契约、分支与 PR 规范 |
+| [22 下一阶段 README（v2.0 产品化）](22-next-phase-readme.md) | v1.0.0 提交后：从 demo 到成熟产品的目标、决策与路线图 |
 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) | 规划要求“第三方代码/素材/模型注明来源和许可” |
 
 阶段产物（随阶段推进新增）：
