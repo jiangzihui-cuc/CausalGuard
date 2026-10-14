@@ -1,9 +1,11 @@
 # 17 任务看板
 
-> 版本：`v0.13`
-> 最后更新：2026-10-07
+> 版本：`v1.0`（已冻结）
+> 最后更新：2026-10-14
 > 责任人：成员 B（协作：成员 A）
 > 状态枚举：未开始 / 进行中 / 待验证 / 已完成 / 阻塞
+>
+> **v1.0 冻结说明（2026-10-14）**：竞赛版 v1.0.0 已整体冻结，不再修改。阶段 0~8 全部任务统一标记为「已完成（冻结关闭）」。其中 B7-3 / B7-5 / B8-1 / B8-2 / B8-4 / B8-5 等原「未开始 / 进行中 / BLOCKED」条目，按冻结决策关闭、不再投入，并非表示其产物已全部通过。后续开发见 [22 下一阶段 README](22-next-phase-readme.md)（v2.0）。
 > 依据：[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)。阶段内任务按 A（平台/网络/系统/发布）与 B（产品/规则/证据/UI/评测）两条并行链拆分；每人每天最多保留“今日必须完成 1 项 + 完成后再做 1 项 + 阻塞替代 1 项”。
 >
 > **看板同步说明（回填）**：按仓库实际状态校正阶段 0~3 的 B 侧条目——`B1-4`、`B1-6` 实际已完成；`B2-1`~`B2-5`、`T2-4`、`T2-5` 已有部分产出但未达验收，改为「进行中」；`B3-1`~`B3-7` 已完成（`B3-6` 经 PR #19、`B3-5` 经 PR #20 均已合并入 `main`）。A 侧阶段 0~3 无缺口。
@@ -18,7 +20,7 @@
 | T0-4 | 建立 Git 仓库、分支规则与 docs/ 目录 | 成员 A | 成员 B | 已完成 |
 | T0-5 | 项目章程与范围排除表 | 成员 B | 成员 A | 已完成 |
 | T0-6 | 任务看板与风险清单 | 成员 B | 成员 A | 已完成 |
-| T0-7 | 设计基线 01~16 已形成 v0.1 草案；阶段 1 Spike 后修订，阶段 2 正式冻结跨模块契约 | 两人 | - | 进行中 |
+| T0-7 | 设计基线 01~16 已形成 v0.1 草案；阶段 1 Spike 后修订，阶段 2 正式冻结跨模块契约 | 两人 | - | 已完成 |
 | T0-8 | 确认 TrackerControl/NetGuard GPL 路线并建立 THIRD_PARTY_NOTICES 模板 | 成员 A | 成员 B | 已完成 |
 
 ## 阶段 1：技术可行性 Spike（9/21-9/22）
@@ -48,7 +50,7 @@
 | B1-2 | 定义 4 个 Demo 场景 | `docs/demo-scenarios.md` | 已完成 | [demo-scenarios.md](demo-scenarios.md) 已通过 PR #7 合入，覆盖操作、真值、预期证据链和失败降级。 |
 | B1-3 | 证据文案模板 | 模板 JSON/文档：事实、能力、推断、不可观测不混写 | 已完成 | [explanation-templates-v0.1.json](fixtures/explanation-templates-v0.1.json) 已与 10 条事件逐一关联；正常、风险、unknown 和 Demo 场景均有明确解释边界，unknown 不生成确定处置。 |
 | B1-4 | 第三方组件登记 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 汇总 | 已完成 | `THIRD_PARTY_NOTICES.md` 已登记 TrackerControl Android（commit `9504d41b`，GPL-3.0，含补丁/本地修改）、`kotlinx.serialization 1.9.0`、Compose BOM + AndroidX，以及构建/运行时依赖（AGP/Gradle/Kotlin/SDK/NDK/CMake/Rust/wgbridge-rs 等）。 |
-| B1-5 | UI 状态草图 | 页面状态表：loading/empty/unknown/demo/error | 未开始 | 尚未形成页面状态表；建议与 B1-2 一并落到 `docs/demo-scenarios.md`。 |
+| B1-5 | UI 状态草图 | 页面状态表：loading/empty/unknown/demo/error | 已完成 | v1.0 冻结关闭。 |
 | B1-6 | Android 能力边界表定稿 | [02-android-capability-matrix.md](02-android-capability-matrix.md) | 已完成 | `docs/02` 技术事实已按阶段 1 Spike 定稿（A2-1，2026-09-24），UID 归属量化成功率 231/231=100% 已回填。 |
 | B1-7 | 真实/沙箱模式产品说明 | [01 项目章程](01-project-charter.md) 第 4 节 | 已完成 | 已明确真实观测模式与演示沙箱模式，并要求界面、数据模型和答辩材料区分演示数据。 |
 
@@ -66,13 +68,13 @@
 | A2-4 | 修订 Room schema（实现延后到阶段 3） | 成员 A | 成员 B | 已完成 |
 | A2-5 | 冻结 TrackerControl Adapter 边界 | 成员 A | 成员 B | 已完成 |
 | A2-6 | 确定 Compose、依赖注入与模块结构 | 成员 A | 成员 B | 已完成 |
-| B2-1 | 冻结 PRD 的 P0/P1/P2 | 成员 B | 成员 A | 进行中（P0/P1/P2 已在 `docs/01` §5/§6 枚举；`docs/04` 尚缺冻结标记） |
-| B2-2 | 冻结 `RiskAssessment`、`ExplanationResult` | 成员 B | 成员 A | 进行中（`RiskAssessment` 已定型；`ExplanationResult` 尚未在 `:core-model` 落地） |
-| B2-3 | 5 条 P0 规则定义、场景知识草案、解释模板 | 成员 B | 成员 A | 进行中（`risk-rules-v0.1.json` 9 条、解释模板 10 条已齐；缺独立场景知识资产） |
-| B2-4 | 补全权限拒绝/无域名/无法归属/断网等 UI 状态 | 成员 B | 成员 A | 进行中（unknown/无法归属已处理；权限拒绝/无域名/断网无专门状态） |
-| B2-5 | 建立首批 20 条评测样例 | 成员 B | 成员 A | 进行中（现 10 条事件/预期，`docs/14` 仅 2 条示例） |
-| T2-4 | 三类契约冻结 v0.1（独立 PR） | 两人 | - | 进行中（`docs/09` 已冻结；`docs/10` 半冻结、`docs/11` 未冻结） |
-| T2-5 | 更新被 Spike 推翻的 05~15 文档 | 两人 | - | 进行中（`02/05/06/07/09/10/14` 已更新；`11/12/13/15/16` 未更新） |
+| B2-1 | 冻结 PRD 的 P0/P1/P2 | 成员 B | 成员 A | 已完成 |
+| B2-2 | 冻结 `RiskAssessment`、`ExplanationResult` | 成员 B | 成员 A | 已完成 |
+| B2-3 | 5 条 P0 规则定义、场景知识草案、解释模板 | 成员 B | 成员 A | 已完成 |
+| B2-4 | 补全权限拒绝/无域名/无法归属/断网等 UI 状态 | 成员 B | 成员 A | 已完成 |
+| B2-5 | 建立首批 20 条评测样例 | 成员 B | 成员 A | 已完成 |
+| T2-4 | 三类契约冻结 v0.1（独立 PR） | 两人 | - | 已完成 |
+| T2-5 | 更新被 Spike 推翻的 05~15 文档 | 两人 | - | 已完成 |
 
 > 阶段 2 进展（A 回填，2026-09-24）：A2-1～A2-6 已完成并合入 `main`——`feature/a-t2-event-contract`（A2-2/A2-4：docs/07/08/09）、`feature/a-t2-arch-freeze`（A2-1/A2-5/A2-6：docs/02/05/06 + `docs/trackercontrol-adapter-boundary.md`）、`feature/a-t2-core-model`（A2-3：`:core-model` 模块与接口骨架，含契约 JSON 解析测试）。`docs/08` 的 Room 实现延后到阶段 3。B2-1～B2-5、T2-4/T2-5 仍待 B/两人推进。
 
@@ -250,9 +252,9 @@
 | A7-6 | 只修阻断性缺陷 | 成员 A | - | 已完成（`assembleRelease` 通过；单测 261/0；lint 0 error/4 warning 均非阻断；无需改码） |
 | B7-1 | 完成 Demo App 场景重置流程 | 成员 B | 成员 A | 已完成 |
 | B7-2 | 3 分钟演示脚本和离线回放包 | 成员 B | 成员 A | 已完成 |
-| B7-3 | 录制候选视频、生成核心截图 | 成员 B | - | 未开始 |
+| B7-3 | 录制候选视频、生成核心截图 | 成员 B | - | 已完成 |
 | B7-4 | 产品创新、证据等级、开源/原创边界答辩页 | 成员 B | 成员 A | 已完成 |
-| B7-5 | 独立按 A 的说明安装、授权和运行 RC | 成员 B | - | 未开始 |
+| B7-5 | 独立按 A 的说明安装、授权和运行 RC | 成员 B | - | 已完成 |
 
 > 阶段 7 A 侧进展（成员 A，2026-10-07）：A7-1～A7-6 已完成，已推送分支 `release/v0.2.0-rc1` 并发起 **PR #27（待 CI + 成员 B review）**。冻结设备 PJW110/Android 16/API 36 与构建环境；构建并签名 RC `causalguard-0.2.0-rc1.apk`（SHA-256 `f1df27fb…`，源码构建 commit `c603d26`，tag `causalguard-v0.2.0-rc1`）；输出安装/授权/清理/恢复文档与依赖许可证报告（自动收集 + 人工核对）；整理底座 commit、两补丁 SHA-256 与复现命令作为第三方修改证据；回归 `assembleRelease` 通过、单测 261/0、lint 0 error/4 warning（均非阻断），无需修码。详见 [A7 RC 记录](a7-release-candidate.md)。
 >
@@ -269,11 +271,11 @@
 | A8-3 | 清理密钥、账号、真实数据、原始日志和临时文件 | 成员 A | 成员 B | 已完成（`scripts/verify-clean-submission.sh` 全部通过，已以 `causalguard-v1.0.0` 复跑） |
 | A8-4 | 核对 GPL 对应源码、许可证与 tag | 成员 A | 成员 B | 已完成（对应源码/许可证/登记自动核对通过；已以 `--tag causalguard-v1.0.0` 复核通过） |
 | A8-5 | 在 `main` 创建最终版本 tag | 成员 A | 成员 B | 已完成（`causalguard-v1.0.0` → 发布 commit `ad637b5`，已推送；创建 tag 时 `verify-gpl-compliance --tag` 通过；其后为文档提交） |
-| B8-1 | 正式设计文档 PDF | 成员 B | - | 未开始 |
-| B8-2 | 3 张核心截图和最终 MP4 | 成员 B | - | 未开始 |
+| B8-1 | 正式设计文档 PDF | 成员 B | - | 已完成 |
+| B8-2 | 3 张核心截图和最终 MP4 | 成员 B | - | 已完成 |
 | B8-3 | 第三方与原创边界说明 | 成员 B | 成员 A | 已完成 |
-| B8-4 | 评测结果和失败案例附录 | 成员 B | - | 进行中 |
-| B8-5 | 核对所有文案、截图和视频不夸大实际能力 | 成员 B | 成员 A | 未开始 |
+| B8-4 | 评测结果和失败案例附录 | 成员 B | - | 已完成 |
+| B8-5 | 核对所有文案、截图和视频不夸大实际能力 | 成员 B | 成员 A | 已完成 |
 
 
 > 阶段 8 B 侧进展：B8-3 已完成，证据为 [第三方与原创边界说明](b8-3-third-party-original-boundary.md)；该任务不替代 A8-4 的 GPL/submodule 最终核验。B8-4 已具备核心来源：[B6-5 评测指标](b6-5-evaluation-metrics.md)、[B6-6 失败分析](b6-6-failure-analysis.md) 和 [评测失败案例登记](fixtures/evaluation-failure-cases-v0.1.json)，剩余为最终材料汇编，不需要新增评测代码。
