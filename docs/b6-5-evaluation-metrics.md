@@ -64,6 +64,8 @@ Rejected                  -> REJECT
 
 该指标只能称 `synthetic AI guardrail disposition agreement` 或 `synthetic validator disposition agreement`。真实 AI fact consistency 为 `N/A`，因为当前没有固定真实模型/version 输出快照，也没有独立人工事实标注。
 
+> v2 阶段 0（D1）起：真实 fact consistency 可通过 opt-in 测试 `app/src/test/.../explain/RealAiFactConsistencyTest` 测量——配置 `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL_NAME` 后运行，它对固定样例集发起真实模型调用，统计输出通过本地 `ExplanationFactValidator` 的比例。默认无密钥时自动跳过，不阻塞 CI；测量口径与本节第 3 节一致（`fact_consistency = accepted / total`）。
+
 ## 4. Recheck outcome 与频率变化
 
 复用既有 12 条 `recheck-cases-v0.1.json` 和 `recheck-expected-v0.1.json`，真实调用 `RecheckComparator`。预期 outcome 分布：

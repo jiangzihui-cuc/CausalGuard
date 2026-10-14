@@ -33,6 +33,7 @@ object AiHttpClient {
      */
     fun buildOkHttpClient(
         sink: (String) -> Unit,
+        bearerToken: String = BuildConfig.AI_API_KEY,
         connectTimeoutMs: Long = DEFAULT_CONNECT_TIMEOUT_MS,
         readTimeoutMs: Long = DEFAULT_READ_TIMEOUT_MS,
         writeTimeoutMs: Long = DEFAULT_WRITE_TIMEOUT_MS,
@@ -40,6 +41,7 @@ object AiHttpClient {
         .connectTimeout(connectTimeoutMs, TimeUnit.MILLISECONDS)
         .readTimeout(readTimeoutMs, TimeUnit.MILLISECONDS)
         .writeTimeout(writeTimeoutMs, TimeUnit.MILLISECONDS)
+        .addInterceptor(BearerAuthInterceptor(bearerToken))
         .addInterceptor(NoBodyLoggingInterceptor(sink))
         .build()
 

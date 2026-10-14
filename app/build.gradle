@@ -12,6 +12,7 @@ if (aiSecretsFile.exists()) {
 }
 def aiApiKey = aiSecrets.getProperty('AI_API_KEY', System.getenv('AI_API_KEY') ?: '')
 def aiBaseUrl = aiSecrets.getProperty('AI_BASE_URL', System.getenv('AI_BASE_URL') ?: '')
+def aiModelName = aiSecrets.getProperty('AI_MODEL_NAME', System.getenv('AI_MODEL_NAME') ?: 'qwen-plus')
 
 android {
     namespace 'com.causalguard'
@@ -26,6 +27,7 @@ android {
 
         buildConfigField 'String', 'AI_API_KEY', "\"${aiApiKey}\""
         buildConfigField 'String', 'AI_BASE_URL', "\"${aiBaseUrl}\""
+        buildConfigField 'String', 'AI_MODEL_NAME', "\"${aiModelName}\""
     }
 
     buildTypes {
