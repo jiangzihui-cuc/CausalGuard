@@ -38,7 +38,7 @@ class RealAiFactConsistencyTest {
     fun requiresConfiguration() {
         assumeTrue(
             "跳过：未配置 AI_API_KEY/AI_BASE_URL，无法发起真实模型调用",
-            AiHttpClient.isConfigured,
+            AiHttpClient.isConfigured(),
         )
     }
 

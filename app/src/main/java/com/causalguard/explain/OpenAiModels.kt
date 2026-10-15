@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 data class OpenAiChatRequest(
     val model: String,
     val messages: List<OpenAiMessage>,
-    val temperature: Double = 0.2,
+    val temperature: Double = 0.0,
     @SerialName("response_format") val responseFormat: OpenAiResponseFormat = OpenAiResponseFormat(),
 )
 

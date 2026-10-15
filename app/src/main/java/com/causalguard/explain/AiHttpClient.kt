@@ -20,9 +20,11 @@ object AiHttpClient {
     const val DEFAULT_READ_TIMEOUT_MS: Long = 15_000L
     const val DEFAULT_WRITE_TIMEOUT_MS: Long = 15_000L
 
-    /** 密钥是否已注入（`secrets.properties` 或环境变量），未注入则在线 AI 不可用。 */
-    val isConfigured: Boolean
-        get() = BuildConfig.AI_API_KEY.isNotBlank() && BuildConfig.AI_BASE_URL.isNotBlank()
+    /** 密钥是否已注入（`secrets.properties` 或环境变量），未注入则在线 AI 不可用。默认读 BuildConfig；测试可显式传参。 */
+    fun isConfigured(
+        apiKey: String = BuildConfig.AI_API_KEY,
+        baseUrl: String = BuildConfig.AI_BASE_URL,
+    ): Boolean = apiKey.isNotBlank() && baseUrl.isNotBlank()
 
     fun baseUrl(): String = BuildConfig.AI_BASE_URL
 

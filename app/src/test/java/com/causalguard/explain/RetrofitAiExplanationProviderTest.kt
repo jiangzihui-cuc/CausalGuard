@@ -100,10 +100,9 @@ class RetrofitAiExplanationProviderTest {
     }
 
     @Test
-    fun `does not create a provider when secrets are missing`() {
-        // 测试环境未注入 secrets，AiHttpClient.isConfigured=false，必须返回 null 走本地模板。
-        assertFalse(AiHttpClient.isConfigured)
-        assertNull(RetrofitAiExplanationProvider.create { })
+    fun `does not create a provider when not configured`() {
+        // 通过测试 seam 显式传 configured=false，独立于本地 secrets.properties 存在与否。
+        assertNull(RetrofitAiExplanationProvider.create({ }, configured = false, modelName = ""))
     }
 
     @Test

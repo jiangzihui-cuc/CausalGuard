@@ -69,15 +69,26 @@ class RetrofitAiExplanationProvider(
          *
          * @param sink 日志接收器，生产接 `android.util.Log`，测试注入内存收集器。
          */
-        fun create(sink: (String) -> Unit): AiExplanationProvider? {
-            if (!AiHttpClient.isConfigured) return null
+        fun create(sink: (String) -> Unit): AiExplanationProvider? =
+            create(sink, AiHttpClient.isConfigured(), BuildConfig.AI_MODEL_NAME)
+
+        /**
+         * 显式注入配置的构造入口（测试 seam）：[configured] 为 false 时返回 `null`，不读取 BuildConfig，
+         * 使「未配置 → 走本地模板」的语义可独立于本地 `secrets.properties` 存在与否测试。
+         */
+        fun create(
+            sink: (String) -> Unit,
+            configured: Boolean,
+            modelName: String,
+        ): AiExplanationProvider? {
+            if (!configured) return null
             val retrofit = AiHttpClient.buildRetrofit(
                 client = AiHttpClient.buildOkHttpClient(sink),
                 converterFactory = ContractJson.instance.asConverterFactory(APPLICATION_JSON),
             )
             return RetrofitAiExplanationProvider(
                 api = retrofit.create(AiExplanationApi::class.java),
-                modelName = BuildConfig.AI_MODEL_NAME.ifBlank { DEFAULT_MODEL_NAME },
+                modelName = modelName.ifBlank { DEFAULT_MODEL_NAME },
             )
         }
 
