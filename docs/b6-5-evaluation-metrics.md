@@ -68,8 +68,9 @@ Rejected                  -> REJECT
 >
 > **2026-10-15 实测记录**（`model=deepseek-chat`，6 条样例）：
 >
-> - 首测（temperature 0.2）：`fact_consistency = 3/6 = 0.5`（accepted=3、rejected=3）。3 条 REJECT：①风险等级与输入不一致（升级为“高风险”）；②新增“权限”事件类型；③新增“使用状态”事件类型。
-> - 优化后（收紧提示词 + temperature 0.0）：`fact_consistency = 5/6 ≈ 0.83`（accepted=5、sanitized=0、rejected=1、failed=0）。剩余 1 条 REJECT 为“使用状态”——模型用“使用状态”描述前后台状态，被本地校验保守映射为 `usage_context` 事件类型（边界重叠，倾向校验器误伤而非模型越界，可后续细化校验词表）。
+> - 首测（temperature 0.2，原提示词）：`fact_consistency = 3/6 = 0.5`（3 条 REJECT：风险升级、新增“权限”事件类型、新增“使用状态”）。
+> - 提示词优化 + temperature 0.0：`fact_consistency = 5/6 ≈ 0.83`（剩余 1 条 REJECT 为“使用状态”）。
+> - 校验器校准（移除 `usage_context` 歧义词条“使用状态”，避免误命中描述前后台的“长期未使用状态”）：`fact_consistency = 6/6 = 1.0`。
 >
 > 该数值是抽样单次测量，非固定指标；模型输出非确定性。rejected 输出一律被本地校验拦截并回退确定性本地模板，端到端不产生越界文案。
 

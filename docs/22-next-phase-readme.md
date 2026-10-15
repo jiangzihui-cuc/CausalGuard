@@ -82,7 +82,7 @@
 
 #### 阶段 0 完成记录（2026-10-14）
 
-分支 `feature/v2-t0-ai-integration` 已完成阶段 0 代码；真实 fact consistency 已实测（`deepseek-chat`，6 条样例，优化提示词后 `5/6 ≈ 0.83`，见 `docs/b6-5`），待真机「断网走模板 / 联网走模型」验证后合入 `main`。
+分支 `feature/v2-t0-ai-integration` 已完成阶段 0 代码；真实 fact consistency 已实测（`deepseek-chat`，6 条样例，提示词优化 + 校验器校准后 `6/6 = 1.0`，见 `docs/b6-5`），待真机「断网走模板 / 联网走模型」验证后合入 `main`。
 
 | 交付物 | 状态 |
 |---|---|

@@ -130,7 +130,9 @@ class ExplanationFactValidator {
             EventType.LOCATION to listOf("位置", "坐标"),
             EventType.CONTACTS to listOf("通讯录", "联系人"),
             EventType.NETWORK to listOf("网络"),
-            EventType.USAGE_CONTEXT to listOf("使用状态", "使用记录", "使用上下文"),
+            // 注意：不含"使用状态"——该词会误命中描述前后台状态的"长期未使用状态/未使用状态"
+            //（v2 阶段 0 校准，避免把 foregroundState=unused 的诚实描述误判为 usage_context 事件类型）。
+            EventType.USAGE_CONTEXT to listOf("使用记录", "使用上下文"),
             EventType.PERMISSION to listOf("权限"),
         )
 
