@@ -20,9 +20,11 @@ object AiHttpClient {
     const val DEFAULT_READ_TIMEOUT_MS: Long = 15_000L
     const val DEFAULT_WRITE_TIMEOUT_MS: Long = 15_000L
 
-    /** 密钥是否已注入（`secrets.properties` 或环境变量），未注入则在线 AI 不可用。 */
-    val isConfigured: Boolean
-        get() = BuildConfig.AI_API_KEY.isNotBlank() && BuildConfig.AI_BASE_URL.isNotBlank()
+    /** 密钥是否已注入（`secrets.properties` 或环境变量），未注入则在线 AI 不可用。默认读 BuildConfig；测试可显式传参。 */
+    fun isConfigured(
+        apiKey: String = BuildConfig.AI_API_KEY,
+        baseUrl: String = BuildConfig.AI_BASE_URL,
+    ): Boolean = apiKey.isNotBlank() && baseUrl.isNotBlank()
 
     fun baseUrl(): String = BuildConfig.AI_BASE_URL
 
@@ -33,6 +35,7 @@ object AiHttpClient {
      */
     fun buildOkHttpClient(
         sink: (String) -> Unit,
+        bearerToken: String = BuildConfig.AI_API_KEY,
         connectTimeoutMs: Long = DEFAULT_CONNECT_TIMEOUT_MS,
         readTimeoutMs: Long = DEFAULT_READ_TIMEOUT_MS,
         writeTimeoutMs: Long = DEFAULT_WRITE_TIMEOUT_MS,
@@ -40,6 +43,7 @@ object AiHttpClient {
         .connectTimeout(connectTimeoutMs, TimeUnit.MILLISECONDS)
         .readTimeout(readTimeoutMs, TimeUnit.MILLISECONDS)
         .writeTimeout(writeTimeoutMs, TimeUnit.MILLISECONDS)
+        .addInterceptor(BearerAuthInterceptor(bearerToken))
         .addInterceptor(NoBodyLoggingInterceptor(sink))
         .build()
 

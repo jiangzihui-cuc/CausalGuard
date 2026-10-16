@@ -5,6 +5,7 @@
 > 上一阶段产物：v1.0.0（竞赛提交版，P0 闭环 demo）
 > 决赛答辩：2026-11-14
 > 决策冻结：2026-10-14（见第 3 节，9 项决策已定）
+> 阶段 0 完成：2026-10-16（真机验证 A/B/C 通过，见下方阶段 0 完成记录）
 > 本文档回答一个问题：**从「竞赛 demo」到「成熟完整 app」，下一步做什么、先做什么、怎么验收。**
 
 ---
@@ -79,6 +80,40 @@
 4. 补真实 fact consistency 评测（现在文档里是 N/A，评审会盯）。
 
 **验收**：真机断网走模板、联网走真实模型；模型输出被本地校验拦截时正确回退；文档里 model 名称/版本非占位符。
+
+#### 阶段 0 完成记录（2026-10-14）
+
+分支 `feature/v2-t0-ai-integration` 已完成阶段 0 全部任务（代码 + 评测 + 真机验证）。真实 fact consistency 实测 `deepseek-chat` 6 条样例 `6/6 = 1.0`（见 `docs/b6-5`）；真机验证三项全部通过：**A** 设置页显示「已配置密钥」、**B** 联网调用 deepseek 返回 `POST .../chat/completions -> 200`、**C** 断网走本地模板不闪退。待 PR 合入 `main`。
+
+| 交付物 | 状态 |
+|---|---|
+| `explain/` 直连 OpenAI 兼容大模型（`chat/completions`） | ✅ |
+| `AiPromptBuilder`：白名单 → 约束五段 JSON 提示词（rule-engine，纯函数） | ✅ |
+| `BearerAuthInterceptor` + `NoBodyLoggingInterceptor`：鉴权注入且不落日志 | ✅ |
+| 真实模型名 `deepseek-chat`（`AI_MODEL_NAME` 可覆盖为任意 OpenAI 兼容模型） | ✅ |
+| `RealAiFactConsistencyTest`：opt-in 真实事实一致性评测（无密钥自动跳过） | ✅ |
+| `THIRD_PARTY_NOTICES.md` 第 5 节 + `docs/b6-5` 登记模型服务与评测协议 | ✅ |
+
+**配置密钥（本地，不入库）：**
+
+```bash
+# 项目根目录新建 secrets.properties（已被 .gitignore 忽略）
+cat > secrets.properties <<'EOF'
+AI_BASE_URL=https://api.deepseek.com/v1
+AI_API_KEY=sk-xxxxxxxx
+# 可选：AI_MODEL_NAME=deepseek-chat（默认即此值）
+EOF
+```
+
+**验证命令：**
+
+```bash
+./gradlew :app:testDebugUnitTest --tests "com.causalguard.explain.*"   # 离线单测（无密钥时评测自动跳过）
+./gradlew :app:testDebugUnitTest --tests "com.causalguard.explain.RealAiFactConsistencyTest"  # 配密钥后跑真实 fact consistency
+```
+
+- 未配置密钥时 `AiHttpClient.isConfigured=false`，在线 AI 降级本地模板（P0 行为不变）。
+- 配置密钥后真机验证：断网走模板、联网走 `deepseek-chat`，模型输出被本地校验拦截时回退模板。
 
 ### 阶段 1（决赛后，约 2-4 周）：自研网络底座，去 GPL
 

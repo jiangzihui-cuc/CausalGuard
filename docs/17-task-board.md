@@ -309,3 +309,29 @@
 - [ ] unknown、权限拒绝、断网和缺失数据有降级；
 - [ ] PR 已由另一人 review，CI 通过；
 - [ ] 合并后 `main` 可编译且主演示链未破坏。
+
+---
+
+## v2.0 下一阶段（2026-10-14 起，路线图见 [22 下一阶段 README](22-next-phase-readme.md)）
+
+> 决策 D0~D8 已冻结（见 docs/22 第 3 节）。本板记录 v2.0 各阶段完成状态，不再沿用 v1.0 的 A/B 双链编号。
+
+### v2.0 阶段 0：接真大模型（D1 / D8）
+
+| 编号 | 任务 | 主责 | 状态 |
+|---|---|---|---|
+| V0-1 | 选定真实模型并登记 `THIRD_PARTY_NOTICES`（默认 DeepSeek `deepseek-chat`，可配置） | 成员 A | 已完成 |
+| V0-2 | 打通 `explain/`：OpenAI 兼容 `chat/completions` + 真实模型名 + 密钥注入 + Bearer 鉴权 | 成员 A | 已完成 |
+| V0-3 | 提示词构建（`AiPromptBuilder`）与 JSON 解析，跑通 `explain → 本地事实校验 → 回退` 全链路 | 成员 A | 已完成 |
+| V0-4 | 真实 fact consistency 评测（`RealAiFactConsistencyTest`，`6/6 = 1.0`） | 成员 B | 已完成 |
+| V0-5 | 真机验证：配置 / 联网走 deepseek（200）/ 断网走本地模板 | 两人 | 已完成 |
+
+> 分支 `feature/v2-t0-ai-integration`，待 PR 合入 `main`。
+
+### v2.0 阶段 1~3（未开始）
+
+| 阶段 | 目标 | 状态 |
+|---|---|---|
+| 阶段 1 | 自研网络底座，去 GPL，整体转 Apache-2.0 | 未开始（决赛后） |
+| 阶段 2 | 端侧模型 + 最小后端（模型网关/密钥托管） | 未开始 |
+| 阶段 3 | 产品化（onboarding / 常驻服务 / 真实告警 / 摘要导出） | 未开始 |

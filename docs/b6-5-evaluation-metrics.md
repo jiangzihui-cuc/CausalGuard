@@ -64,6 +64,16 @@ Rejected                  -> REJECT
 
 该指标只能称 `synthetic AI guardrail disposition agreement` 或 `synthetic validator disposition agreement`。真实 AI fact consistency 为 `N/A`，因为当前没有固定真实模型/version 输出快照，也没有独立人工事实标注。
 
+> v2 阶段 0（D1）起：真实 fact consistency 可通过 opt-in 测试 `app/src/test/.../explain/RealAiFactConsistencyTest` 测量——配置 `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL_NAME` 后运行，它对固定样例集发起真实模型调用，统计输出通过本地 `ExplanationFactValidator` 的比例。默认无密钥时自动跳过，不阻塞 CI；测量口径与本节第 3 节一致（`fact_consistency = accepted / total`）。
+>
+> **2026-10-15 实测记录**（`model=deepseek-chat`，6 条样例）：
+>
+> - 首测（temperature 0.2，原提示词）：`fact_consistency = 3/6 = 0.5`（3 条 REJECT：风险升级、新增“权限”事件类型、新增“使用状态”）。
+> - 提示词优化 + temperature 0.0：`fact_consistency = 5/6 ≈ 0.83`（剩余 1 条 REJECT 为“使用状态”）。
+> - 校验器校准（移除 `usage_context` 歧义词条“使用状态”，避免误命中描述前后台的“长期未使用状态”）：`fact_consistency = 6/6 = 1.0`。
+>
+> 该数值是抽样单次测量，非固定指标；模型输出非确定性。rejected 输出一律被本地校验拦截并回退确定性本地模板，端到端不产生越界文案。
+
 ## 4. Recheck outcome 与频率变化
 
 复用既有 12 条 `recheck-cases-v0.1.json` 和 `recheck-expected-v0.1.json`，真实调用 `RecheckComparator`。预期 outcome 分布：

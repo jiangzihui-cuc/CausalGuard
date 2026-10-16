@@ -66,9 +66,15 @@ class AiHttpClientTest {
 
     @Test
     fun missingSecretMeansNotConfigured() {
-        // BuildConfig 字段在测试环境为空（未注入 secrets.properties），
-        // 应判定为未配置，从而走本地模板兜底，不误报“在线 AI 可用”。
-        assertFalse(AiHttpClient.isConfigured)
+        // 独立于本地 secrets.properties 存在与否：显式传空值，应判定为未配置，走本地模板兜底。
+        assertFalse(AiHttpClient.isConfigured(apiKey = "", baseUrl = ""))
+        assertFalse(AiHttpClient.isConfigured(apiKey = "key", baseUrl = ""))
+        assertFalse(AiHttpClient.isConfigured(apiKey = "", baseUrl = "https://x.example"))
+    }
+
+    @Test
+    fun configuredWhenBothPresent() {
+        assertTrue(AiHttpClient.isConfigured(apiKey = "key", baseUrl = "https://x.example"))
     }
 
     private class FakeChain(

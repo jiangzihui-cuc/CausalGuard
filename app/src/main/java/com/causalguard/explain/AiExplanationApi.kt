@@ -1,24 +1,26 @@
 package com.causalguard.explain
 
 import com.causalguard.rules.explain.AiExplanationRequest
-import com.causalguard.rules.explain.ExplanationText
 import retrofit2.http.Body
 import retrofit2.http.POST
 
 /**
- * B6-3：受约束的在线解释 API（docs/11 §2、§3、docs/20 §9.1）。
+ * v2 阶段 0（D1）：受约束的在线解释 API，改为直接对接 OpenAI 兼容 Chat Completions。
  *
- * - 请求体只能是白名单 DTO [AiExplanationRequest]，禁止直接序列化 Entity 或原始网络 payload；
- * - 响应体为五段 schema [ExplanationText]，随后由本地 [com.causalguard.rules.explain.ExplanationFactValidator] 校验；
- * - 端点相对路径 [EXPLAIN_PATH] 拼接到 `AI_BASE_URL` 之后（与 A6-1 网络层一致）。
+ * - 请求体为 [OpenAiChatRequest]，其 messages 只由 [com.causalguard.rules.explain.AiPromptBuilder]
+ *   从白名单 [AiExplanationRequest] 渲染，禁止直接序列化本地 Entity 或原始网络 payload；
+ * - 响应体 [OpenAiChatResponse] 随后由 [RetrofitAiExplanationProvider] 解析为
+ *   [com.causalguard.rules.explain.ExplanationText]，再经
+ *   [com.causalguard.rules.explain.ExplanationFactValidator] 本地校验；
+ * - 端点相对路径 [CHAT_COMPLETIONS_PATH] 拼接到 `AI_BASE_URL` 之后（`AI_BASE_URL` 需含 `/v1`）。
  */
 interface AiExplanationApi {
 
-    @POST(EXPLAIN_PATH)
-    suspend fun explain(@Body request: AiExplanationRequest): ExplanationText
+    @POST(CHAT_COMPLETIONS_PATH)
+    suspend fun chat(@Body request: OpenAiChatRequest): OpenAiChatResponse
 
     companion object {
-        /** 相对 `AI_BASE_URL` 的解释端点路径。 */
-        const val EXPLAIN_PATH: String = "v1/explain"
+        /** 相对 `AI_BASE_URL` 的 OpenAI 兼容 chat completions 端点路径。 */
+        const val CHAT_COMPLETIONS_PATH: String = "chat/completions"
     }
 }

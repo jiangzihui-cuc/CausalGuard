@@ -46,6 +46,18 @@ class ExplanationFactValidatorTest {
     }
 
     @Test
+    fun `does not reject foreground state wording that contains 使用状态`() {
+        // v2 阶段 0 校准：描述 unused 前后台状态的"长期未使用状态"包含子串"使用状态"，
+        // 不应被误判为 usage_context 事件类型。
+        val result = validate(
+            TestContexts.calculator(),
+            response(whyCare = "该应用处于长期未使用状态，却出现了剪贴板访问。"),
+        )
+
+        assertIs<ExplanationValidation.Accepted>(result)
+    }
+
+    @Test
     fun `rejects risk escalation above the input level`() {
         val context = TestContexts.calculator(riskLevel = RiskLevel.LOW)
         val result = validate(context, response(whyCare = "这是高风险行为。"))
