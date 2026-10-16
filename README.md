@@ -61,7 +61,6 @@ export JAVA_HOME=$HOME/tools/jdk-17.0.13+11     # JDK 17
 export ANDROID_HOME=$HOME/android-sdk          # Android SDK platform 37 / build-tools 37.0.0
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
 
-git submodule update --init --recursive        # 拉取网络底座（GPL-3.0）
 echo "sdk.dir=$ANDROID_HOME" > local.properties
 
 ./gradlew :app:assembleDebug                   # 构建
@@ -99,9 +98,9 @@ scripts/build-release-rc.sh                     # 签名 release APK（需 keyst
 
 ## 第三方与许可
 
-本项目采用“成熟开源底座 + 上层原创”的策略：
+> 许可证：**Apache-2.0**（见根 `LICENSE`）。v2.0 阶段 1 起网络底座为团队自研（`net-core`），已移除 TrackerControl/NetGuard（GPL-3.0）submodule 及相关补丁。
 
-- **网络底座**优先采用 TrackerControl / NetGuard（GPL-3.0），解决 VPN/TUN、DNS 和阻断等高风险基础设施；接受 GPL 路线并明确开源与原创边界。构建链持续失败时评估 MIT 的 hev-socks5-tunnel / tun2socks 备选。
+- **网络底座（自研）**：`net-core`（`VpnService` + L3/L4 报文解析 + `/proc/net` UID 归属 + DNS 代理与域名阻断，Apache-2.0），不再依赖第三方底座。
 - **通用能力**使用 Android 官方模板/示例与宽松许可证库（Room、Compose、kotlinx.serialization、Retrofit/OkHttp、AndroidX Test、Turbine 等）。
 - **团队原创**：统一事件模型、使用上下文关联、场景知识库、证据等级、因果解释、处置复查、UI、Demo 与评测集。
 

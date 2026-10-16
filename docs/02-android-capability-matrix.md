@@ -79,14 +79,16 @@
 | VPN 被系统回收 | 授权被撤销/断开 | 停止采集并提示 | 显示“监测已暂停” |
 | 断网 | 无外网 | 核心功能本地运行 | 显示离线可用的功能范围 |
 
-## 6.1 网络底座选型（阶段 1 决策）
+## 6.1 网络底座选型（v1.0 阶段 1 决策 → v2.0 阶段 1 自研）
 
-真实网络能力优先复用成熟开源底座，不从零实现 TCP/IP 栈：
+> **v2.0 阶段 1（2026-10-16）更新**：网络底座已改为**团队自研**（`net-core` + `app/.../data/network/selfhosted/`），去掉 GPL-3.0 依赖。下列 v1.0 选型为历史决策；自研底座同样遵守本节降级规则（UID 归属失败、域名不可见 → unknown）。
 
-- 方案 A（推荐）：TrackerControl / NetGuard（GPL-3.0），解决 VPN/TUN、TCP/UDP、DNS、连接记录与阻断；
+v1.0 真实网络能力优先复用成熟开源底座，不从零实现 TCP/IP 栈：
+
+- 方案 A（v1.0 采用，v2.0 已弃用）：TrackerControl / NetGuard（GPL-3.0）；
 - 方案 B（备选）：hev-socks5-tunnel / 固定 MIT 版本的 tun2socks + 自建观测与阻断。
 
-选型、许可证判定和止损条件见 [20 开源代码复用调研与接入建议](20-open-source-reuse-guide.md) 第 4、13 节；引入后必须在 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 登记。无论哪条路线，UID 归属失败、域名不可见仍按第 6 节降级为 unknown。
+**v2.0 自研范围**：`net-core` 实现 IPv4/IPv6 + TCP/UDP 报文解析、DNS 解析/构造、`/proc/net` UID 归属与域名阻断；`VpnService` 观测优先（先路由 DNS，阻断经 DNS 代理生效）。**通用 TCP 数据面转发（用户态 TCP 栈）尚未实现**，见 [22 下一阶段 README](22-next-phase-readme.md) 阶段 1 进展记录。选型与止损条件见 [20 开源代码复用调研与接入建议](20-open-source-reuse-guide.md) 第 4、13 节；引入任何第三方组件须在 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 登记。无论哪条路线，UID 归属失败、域名不可见仍按第 6 节降级为 unknown。
 
 ## 7. 验收检查
 

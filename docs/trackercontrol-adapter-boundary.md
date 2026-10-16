@@ -1,5 +1,11 @@
 # TrackerControl Adapter 边界（阶段 2 冻结）
 
+> **v2.0 阶段 1（2026-10-16）更新**：第三方底座已移除，边界改由**自研实现**承载——
+> `net-core`（报文/DNS/`/proc` 归属/域名阻断）+ `app/.../data/network/selfhosted/`
+> （`SelfHostedVpnService` + `SelfHostedNetworkEventSource` + `SelfHostedNetworkAdapter`）。
+> 冻结的接口（`NetworkEventSource`、`EventSink`，`TrackerControlAdapter` 已更名 `VpnAdapter`）
+> 与事件映射契约不变。本文保留为**历史设计与被替换底座的边界记录**。
+
 > 版本：`v0.3`
 > 最后更新：2026-09-28
 > 责任人：成员 A

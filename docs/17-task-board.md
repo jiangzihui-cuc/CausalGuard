@@ -328,10 +328,24 @@
 
 > 分支 `feature/v2-t0-ai-integration`，待 PR 合入 `main`。
 
-### v2.0 阶段 1~3（未开始）
+### v2.0 阶段 1：自研网络底座，去 GPL（D2 / D5）
+
+> 分支 `feature/v2-t1-selfhosted-net-core`。详细进展与未完成项见 [22 下一阶段 README](22-next-phase-readme.md) 阶段 1 进展记录。
+
+| 编号 | 任务 | 主责 | 状态 |
+|---|---|---|---|
+| V1-1 | `net-core`：L3/L4 报文解析（IPv4/IPv6 + TCP/UDP，含扩展首部/分片） | 成员 A | 已完成（单测） |
+| V1-2 | `net-core`：DNS 解析（含压缩指针）与 IPv4/UDP 报文构造（校验和） | 成员 A | 已完成（单测） |
+| V1-3 | `net-core`：`/proc/net/*` 解析 + UID 归属索引 + 域名阻断判定 | 成员 A | 已完成（单测） |
+| V1-4 | `app`：自研 `VpnService` + DNS 代理 + `SelfHostedNetworkEventSource` 接入 DI | 成员 A | 已完成（待真机） |
+| V1-5 | 去 GPL：移除 submodule/补丁/脚本，运行时代码无底座引用 | 成员 A | 已完成（`verify-no-gpl-residue.sh`） |
+| V1-6 | 许可证整体转 Apache-2.0 并更新 NOTICES/原创说明/README | 两人 | 已完成 |
+| V1-7 | **通用 TCP 数据面转发**（用户态 TCP 栈，观测任意 TCP 连接元数据） | 成员 A | 未开始（待真机里程碑） |
+| V1-8 | 真机端到端验收（TUN 建立 → DNS 阻断 → `PrivacyEvent` 入库） | 两人 | 未开始（本环境无设备） |
+
+### v2.0 阶段 2~3（未开始）
 
 | 阶段 | 目标 | 状态 |
 |---|---|---|
-| 阶段 1 | 自研网络底座，去 GPL，整体转 Apache-2.0 | 未开始（决赛后） |
 | 阶段 2 | 端侧模型 + 最小后端（模型网关/密钥托管） | 未开始 |
 | 阶段 3 | 产品化（onboarding / 常驻服务 / 真实告警 / 摘要导出） | 未开始 |

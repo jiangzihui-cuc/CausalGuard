@@ -1,9 +1,10 @@
 # THIRD_PARTY_NOTICES 第三方开源与数据来源登记
 
-> 版本：`v0.2`
-> 最后更新：2026-10-07
+> 版本：`v0.3`
+> 最后更新：2026-10-16
 > 责任人：成员 A（生成）／成员 B（汇总与复核）
 > 目的：登记所有引入本仓库的第三方源码、二进制、数据与素材的来源、版本、许可证、使用范围和团队修改，保证竞赛提交与发布时许可证合规、原创边界清晰。
+> **v2.0 阶段 1（2026-10-16）**：网络底座改为团队自研 `net-core`（`VpnService` + L3/L4 报文解析 + `/proc/net` UID 归属 + DNS 代理），已移除 TrackerControl/NetGuard submodule 与相关补丁；随之本仓库整体许可证由 GPL-3.0 转为 **Apache-2.0**（见根 `LICENSE`）。历史 GPL 登记见本文“已移除组件”。
 
 ## 0. 使用规则
 
@@ -20,7 +21,7 @@
 
 ## 1. 已导入的第三方组件
 
-> 当前仓库以 git submodule 引入 TrackerControl Android 网络底座（见下），其余为通过构建系统引入的第三方依赖；团队对底座的修改以补丁形式交付并登记。
+> 当前仓库已**不再以 git submodule 引入**第三方网络底座：v2.0 阶段 1 起网络能力为团队自研（`net-core` + `app/.../data/network/selfhosted/`），其余为通过构建系统引入的第三方依赖。历史 GPL 底座登记保留在“已移除组件”以供追溯。
 
 <!-- 模板：
 ## <组件名称>
@@ -37,7 +38,9 @@
 - Registered by / date: <成员 / 日期>
 -->
 
-## TrackerControl Android
+## （已移除组件）TrackerControl Android
+
+> **状态：v2.0 阶段 1（2026-10-16）已移除。** 网络底座改为团队自研 `net-core`，submodule `.gitmodules`、`third_party/tracker-control-android/`、`third_party/patches/*.patch` 与 `scripts/apply-trackercontrol-hook.sh` 均已删除，运行时代码不再引用任何 TrackerControl/NetGuard 组件。以下为历史登记（仅作追溯）：
 
 - Repository: https://github.com/TrackerControl/tracker-control-android
 - Commit/Tag: tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（2026-08-05）
@@ -163,9 +166,9 @@
 
 | 组件 | 仓库 | 许可证（需按具体版本复核） | 计划用途 | 主责 |
 |---|---|---|---|---|
-| TrackerControl Android | https://github.com/TrackerControl/tracker-control-android | GPL-3.0（部分第三方组件/数据另有许可） | VPN/TUN、DNS、连接记录、域名阻断底座 | 成员 A |
-| ↳ 已固定版本 | tag `2026080501`，commit `9504d41b9f6fa1509d784e5503c084d4b428307d`（2026-08-05），根 `LICENSE` 为 GPL-3.0 | 构建链：AGP 9.3.1 / Gradle 9.6.1 / compileSdk 37 / NDK / 可选 Rust 1.95.0 | 已作为 submodule 导入 `third_party/tracker-control-android/`（见第 1 节），见 `docs/network-core-map.md` | 成员 A |
-| NetGuard | https://github.com/M66B/NetGuard | GPL-3.0 | TrackerControl 上游参考；本地网络转发研究 | 成员 A |
+| ~~TrackerControl Android~~ | https://github.com/TrackerControl/tracker-control-android | GPL-3.0 | **v2.0 阶段 1 已弃用**：网络底座改为团队自研 `net-core`，不再引入 | 成员 A |
+| ~~↳ 已固定版本~~ | tag `2026080501`，commit `9504d41b...` | — | **已移除**（历史登记见“已移除组件”） | 成员 A |
+| ~~NetGuard~~ | https://github.com/M66B/NetGuard | GPL-3.0 | **v2.0 阶段 1 已弃用**：仅早期研究参考，不再引入 | 成员 A |
 | android/architecture-templates | https://github.com/android/architecture-templates | Apache-2.0 | 工程分层骨架参考 | 成员 A |
 | android/architecture-samples | https://github.com/android/architecture-samples | Apache-2.0 | Repository/ViewModel/UI State 参考 | 成员 A |
 | android/platform-samples | https://github.com/android/platform-samples | Apache-2.0 | 平台 API 与权限用法参考 | 成员 A |

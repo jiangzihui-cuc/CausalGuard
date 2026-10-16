@@ -5,7 +5,7 @@
 #   - 已安装 JDK 17、Android SDK（build-tools 含 apksigner/zipalign）
 #   - release keystore 与密码（默认读取 $HOME/causalguard-release/ 下的 keystore.properties）
 #     可用环境变量覆盖：KEYSTORE_FILE / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD
-#   - 第三方底座 submodule：git submodule update --init --recursive
+#   - v2.0 阶段 1 起网络底座为自研实现（net-core），无需再初始化第三方 submodule
 #
 # 用法：
 #   scripts/build-release-rc.sh [输出目录]
