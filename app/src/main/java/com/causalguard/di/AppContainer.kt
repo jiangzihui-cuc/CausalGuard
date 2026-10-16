@@ -27,9 +27,7 @@ import com.causalguard.data.ingest.NetworkCollector
 import com.causalguard.data.ingest.NetworkEventCollector
 import com.causalguard.data.ingest.NetworkEventIngestor
 import com.causalguard.data.ingest.NetworkMonitorController
-import com.causalguard.data.network.trackercontrol.AndroidPackageNameResolver
-import com.causalguard.data.network.trackercontrol.TrackerControlEventSource
-import com.causalguard.data.network.trackercontrol.TrackerControlNetworkAdapter
+import com.causalguard.data.network.selfhosted.SelfHostedNetworkEventSource
 import com.causalguard.data.local.CausalGuardDatabase
 import com.causalguard.data.provider.PackageManagerProfileProvider
 import com.causalguard.data.provider.UsageStatsContextProvider
@@ -47,7 +45,7 @@ import com.causalguard.data.repository.RoomUsageContextRepository
 import com.causalguard.explain.RetrofitAiExplanationProvider
 import com.causalguard.mitigation.AndroidAppSettingsLauncher
 import com.causalguard.mitigation.DeviceMitigationExecutor
-import com.causalguard.mitigation.TrackerControlDomainBlockController
+import com.causalguard.data.network.selfhosted.SelfHostedDomainBlockController
 import com.causalguard.rules.explain.AiExplanationProvider
 
 /**
@@ -111,13 +109,11 @@ class AppContainer(
     override val eventSink: EventSink = RoomEventSink(privacyEventRepository)
 
     /**
-     * A4-3：真实网络事件源（底座广播桥接）。未授权 VPN 或无底座时 `isAvailable=false`，
-     * 事件流为空，绝不伪造连接；无 VPN 场景用 `ReplayNetworkEventSource` 替代。
+     * v2.0 阶段 1：真实网络事件源改为自研底座（[SelfHostedVpnService] + 进程内事件桥）。
+     * 未授权 VPN 或自研底座未运行时 `isAvailable=false`，事件流为空，绝不伪造连接；
+     * 无 VPN 场景用 `ReplayNetworkEventSource` 替代。
      */
-    val networkEventSource: NetworkEventSource = TrackerControlEventSource(
-        context = context,
-        adapter = TrackerControlNetworkAdapter(AndroidPackageNameResolver(context)),
-    )
+    val networkEventSource: NetworkEventSource = SelfHostedNetworkEventSource(context)
 
     /** A4-4：source → `NetworkEventIngestor` → Room 的端到端采集器（A4-5 起由 `NetworkMonitorController` 驱动生命周期）。 */
     val networkEventCollector: NetworkCollector by lazy {
@@ -155,7 +151,7 @@ class AppContainer(
         DeviceMitigationExecutor(
             observationRepository = networkObservationRepository,
             mitigationRepository = mitigationRepository,
-            domainBlockController = TrackerControlDomainBlockController(context),
+            domainBlockController = SelfHostedDomainBlockController(),
             appSettingsLauncher = AndroidAppSettingsLauncher(context),
         )
     }

@@ -21,10 +21,6 @@
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
 
-    <!-- A5-1：持有底座定义的 signature 权限，才能向底座投递 BLOCK_DOMAIN 控制广播。
-         底座（fdroid debug 变体）applicationId = net.kollnig.missioncontrol.fdroid.test。 -->
-    <uses-permission android:name="net.kollnig.missioncontrol.fdroid.test.permission.CAUSALGUARD_BLOCK_DOMAIN" />
-
     <application
         android:allowBackup="false"
         android:label="@string/app_name"
@@ -44,5 +40,15 @@
             android:name=".service.NetworkMonitorService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <!-- v2.0 阶段 1：自研网络底座（VpnService），去 GPL，替代 TrackerControl/NetGuard -->
+        <service
+            android:name=".data.network.selfhosted.SelfHostedVpnService"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>
