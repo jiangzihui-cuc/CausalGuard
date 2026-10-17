@@ -79,7 +79,12 @@ class SelfHostedVpnService : VpnService() {
     }
 
     private fun establishAndRun() {
-        if (readJob?.isActive == true) return
+        if (readJob?.isActive == true) {
+            // 已建立：仍幂等地重新打开事件桥（网络切换触发 restart 时，
+            // collector.stop() 会先关闭 adapter；再次 start 需要恢复）。
+            scope.launch { adapter.start() }
+            return
+        }
         val descriptor = try {
             buildTunnel()
         } catch (throwable: Throwable) {
@@ -132,6 +137,9 @@ class SelfHostedVpnService : VpnService() {
             }
             if (length <= 0) continue
             val packet = IpPacketParser.parse(buffer, 0, length) ?: continue
+            // 过滤 TUN 自身产生的 IPv6 链路本地/组播、IPv4 组播/广播噪声，
+            // 它们不是应用网络行为，写入事件库只会污染时间线。
+            if (!shouldObserve(packet)) continue
             val isDnsQuery = packet.protocol == TransportProtocol.UDP &&
                 packet.destinationPort == DNS_PORT &&
                 packet.destinationAddress == VPN_DNS
@@ -166,8 +174,19 @@ class SelfHostedVpnService : VpnService() {
         return blocked
     }
 
-    private fun toObserved(packet: IpPacket, allowed: Boolean): ObservedPacket {
-        val uid = uidResolver.resolveUid(packet)
+    /** 过滤 TUN 自身产生的 IPv6 链路本地/组播、IPv4 组播/广播噪声。 */
+    private fun shouldObserve(packet: IpPacket): Boolean {
+        val source = packet.sourceAddress
+        val destination = packet.destinationAddress
+        if (source.startsWith("fe80:") || destination.startsWith("fe80:")) return false
+        if (destination.startsWith("ff")) return false
+        if (destination.startsWith("224.") || destination.startsWith("239.")) return false
+        if (destination == "255.255.255.255") return false
+        if (source == "0.0.0.0" || source == "::") return false
+        return true
+    }
+
+    private fun toObserved(packet: IpPacket, allowed: Boolean): ObservedPacket {        val uid = uidResolver.resolveUid(packet)
         val packageName = if (uid >= 0) packageNameResolver.resolve(uid) else null
         return ObservedPacket(
             time = System.currentTimeMillis(),

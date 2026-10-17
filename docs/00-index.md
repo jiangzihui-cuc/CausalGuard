@@ -55,6 +55,7 @@
 | `app/schemas/`（代码产物） | 阶段3/4 A3-1/A4-4：Room schema 导出（v2 补 RiskAssessment `category`/`matchedRules`，迁移与迁移测试依据） | 成员 A |
 | `core-model/`、`app/.../data/`（代码产物） | 阶段2/3/4 A2-3/A3-1～A3-5/A4-4：契约模块、Room 事件库、Repository/Provider/DI、网络事件关联入库（`data/ingest`、`data/network`） | 成员 A |
 | `net-core/` + `app/.../data/network/selfhosted/`（代码产物） | v2.0 阶段1：自研网络底座（L3/L4 解析、DNS、`/proc` UID 归属、域名阻断、`VpnService`）；替代已移除的 `third_party/tracker-control-android/` | 成员 A |
+| [v2-t1-real-device-verification](v2-t1-real-device-verification.md) | v2.0 阶段1 V1-8：自研底座真机验证（TUN / DNS 转发 / UID 归属 / 域名阻断 / 事件入库） | 成员 A |
 | ~~`third_party/tracker-control-android/`（submodule，v2.0 阶段1 已移除）~~ | ~~阶段4 A4-3：TrackerControl 网络底座，固定 commit `9504d41b`~~（历史登记见 THIRD_PARTY_NOTICES） | 成员 A |
 | [a7-release-candidate](a7-release-candidate.md) | 阶段7 A7-1/A7-2/A7-5/A7-6：发布候选冻结环境、RC 构建与签名记录、真实数据与第三方修改证据、阻断性缺陷排查 | 成员 A |
 | [a7-install-auth-recovery](a7-install-auth-recovery.md) | 阶段7 A7-3：安装、授权、清理与故障恢复步骤 | 成员 A |
