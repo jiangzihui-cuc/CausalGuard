@@ -1,5 +1,9 @@
 # network-core-map（网络底座核心地图）
 
+> **v2.0 阶段 1（2026-10-16）更新**：本图描述的 TrackerControl/NetGuard 底座已被**自研实现**替代
+> （`net-core` + `app/.../data/network/selfhosted/`）。本文保留为**历史底座分析与选型依据**；
+> 自研底座的数据流与未完成项见 [22 下一阶段 README](22-next-phase-readme.md) 阶段 1 进展记录。
+
 > 版本：`v0.1`（阶段 1 Spike 产物）
 > 最后更新：2026-09-21
 > 责任人：成员 A

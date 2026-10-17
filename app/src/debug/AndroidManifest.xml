@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 仅 debug 构建：真机验收用的调试入口（不进入 release APK）。 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <receiver
+            android:name=".debug.DebugDomainBlockReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.causalguard.debug.BLOCK_DOMAIN" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".debug.DebugStatusReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.causalguard.debug.STATUS" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

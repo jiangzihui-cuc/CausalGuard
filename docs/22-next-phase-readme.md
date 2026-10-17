@@ -6,6 +6,7 @@
 > 决赛答辩：2026-11-14
 > 决策冻结：2026-10-14（见第 3 节，9 项决策已定）
 > 阶段 0 完成：2026-10-16（真机验证 A/B/C 通过，见下方阶段 0 完成记录）
+> 阶段 1 进展：2026-10-16 自研底座核心 + 去 GPL + Apache-2.0 完成；2026-10-17 真机完成 DNS 观测面端到端验证（TUN/DNS 转发/UID 归属/域名阻断/事件入库）。TCP 数据面待续，见下方阶段 1 进展记录。
 > 本文档回答一个问题：**从「竞赛 demo」到「成熟完整 app」，下一步做什么、先做什么、怎么验收。**
 
 ---
@@ -127,6 +128,27 @@ EOF
 4. 移除 submodule 依赖，更新 `THIRD_PARTY_NOTICES.md`、`SOURCE_ORIGINALITY.md`、`docs/20-open-source-reuse-guide.md`，并将许可证整体转为 Apache-2.0。
 
 **验收**：真实设备上能观测到连接元数据并生成 `PrivacyEvent`；域名阻断能力可用；`git grep tracker-control` 只剩历史文档引用，无运行时依赖。
+
+#### 阶段 1 进展记录（2026-10-16，分支 `feature/v2-t1-selfhosted-net-core`）
+
+已完成（代码 + 单测，可离线验证）：
+
+| 交付物 | 说明 |
+|---|---|
+| `net-core/` 自研网络核心模块 | IPv4/IPv6 + TCP/UDP 报文解析（含 IPv6 扩展首部/分片）、IPv4/UDP 报文构造（校验和）、DNS 解析（含压缩指针）与 NXDOMAIN 构造、`/proc/net/*` 解析与 UID 归属索引、域名阻断判定；JVM 单测 27 项全绿 |
+| `app/.../data/network/selfhosted/` | 自研 `VpnService`（观测优先：只路由 DNS 子网，DNS 代理转发 + 域名阻断 + NXDOMAIN，不改 TCP 连通性）、`/proc`+`ConnectivityManager` UID 归属、事件桥 `SelfHostedNetworkAdapter`、`SelfHostedDomainBlockController` |
+| 事件链打通 | `SelfHostedNetworkEventSource → NetworkEventCollector → NetworkEventIngestor → PrivacyEventRepository`，DI（`AppContainer`）已切换，契约（`NetworkEventSource`）不变 |
+| 去 GPL | 移除 `.gitmodules`、`third_party/tracker-control-android`、`third_party/patches/*`、`apply-trackercontrol-hook.sh`；运行时代码无 tracker-control 引用（`scripts/verify-no-gpl-residue.sh` 校验） |
+| 许可证 | 整体转为 **Apache-2.0**（根 `LICENSE`），`THIRD_PARTY_NOTICES.md`、`SOURCE_ORIGINALITY.md`、`README.md` 已更新 |
+
+**真机验证（2026-10-17，PJW110 / Android 16）**：已完成 DNS 观测面端到端验证——TUN 建立、DNS 转发、`PrivacyEvent` 入库、UID 归属、域名阻断（NXDOMAIN）全部通过。设备、命令与原始证据见 [v2-t1 真机验证记录](v2-t1-real-device-verification.md)。
+
+**明确未完成（诚实标注）**：
+
+1. **通用 TCP 数据面转发**——要观测任意 TCP 连接元数据必须路由全网卡并把 TCP 转发出去，需要用户态 TCP 栈（NetGuard 用 native 实现）；本轮未做，因此 TCP 不经 TUN、不受影响，但也**尚未被观测**（V1-7）。
+2. **TCP 观测面真机验证**——依赖 V1-7；本轮真机验证只覆盖 DNS 观测面。
+
+> 结论：阶段 1 的**自研底座核心、DNS 观测面真机闭环、去 GPL / 转 Apache-2.0 已完成**；「真实设备上观测任意 TCP 连接元数据」这一验收项依赖后续 TCP 数据面里程碑。
 
 ### 阶段 2（与阶段 1 同步推进）：端侧模型 + 最小后端
 

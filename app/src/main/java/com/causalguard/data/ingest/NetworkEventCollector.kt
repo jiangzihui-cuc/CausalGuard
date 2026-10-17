@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
  * NetworkEventSource.events() → NetworkEventIngestor.ingest() → PrivacyEventRepository
  * ```
  *
- * 与具体来源解耦：真实底座用 [com.causalguard.data.network.trackercontrol.TrackerControlEventSource]，
+ * 与具体来源解耦：真实底座用 [com.causalguard.data.network.selfhosted.SelfHostedNetworkEventSource]，
  * 无 VPN 时用 [com.causalguard.data.network.ReplayNetworkEventSource]（fixture 回放），下游规则与 UI 不变。
  *
  * [start]/[stop] 成对调用；重复 [start] 不重复订阅，[stop] 先取消收集再停来源，避免泄漏。

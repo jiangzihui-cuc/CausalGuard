@@ -1,0 +1,28 @@
+apply plugin: 'com.android.library'
+
+// net-core：自研网络底座核心（v2.0 阶段 1，去 GPL）。
+//
+// 约束（对应 docs/network-core-map.md 与 docs/trackercontrol-adapter-boundary.md）：
+// - 纯 Kotlin 逻辑：L3/L4 报文解析、DNS 解析、/proc/net UID 归属、域名阻断判定；
+// - 不依赖任何第三方网络底座（TrackerControl/NetGuard），不含 GPL 代码；
+// - 不直接读写 Android 采集 API：真实 I/O（/proc、VpnService、PackageManager）
+//   留在 :app 的适配层注入，保证本模块可在纯 JVM 下单测。
+//
+// 数据流：TUN 原始字节 → IpPacketParser/DnsParser → UID 归属 → :app 适配为 NetworkEvent。
+android {
+    namespace 'com.causalguard.net.core'
+    compileSdk 37
+
+    defaultConfig {
+        minSdk 29
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
