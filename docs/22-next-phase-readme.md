@@ -229,3 +229,5 @@ EOF
 4. 最小后端（模型网关 + 密钥托管）上线，密钥不再构建期注入。
 5. 完整 onboarding + 常驻服务 + 真实告警，断网/拒绝授权/VPN 被回收不闪退。
 6. 无 fixture 也能演示完整闭环，`docs/15-acceptance-checklist.md` 全项通过。
+
+> **阶段 1 状态（2026-10-18）**：第 2 项已完成——自研 `net-core` + 自研 `VpnService` 替代 TrackerControl，运行时无 GPL 依赖，许可证转为 Apache-2.0；真机验证见 [v2-t1 真机验证记录](v2-t1-real-device-verification.md)。第 1 项（真实模型）在阶段 0 完成。第 3–6 项仍属阶段 2/3。
