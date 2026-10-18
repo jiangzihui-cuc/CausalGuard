@@ -340,7 +340,10 @@
 | V1-4 | `app`：自研 `VpnService` + DNS 代理 + `SelfHostedNetworkEventSource` 接入 DI | 成员 A | 已完成（待真机） |
 | V1-5 | 去 GPL：移除 submodule/补丁/脚本，运行时代码无底座引用 | 成员 A | 已完成（`verify-no-gpl-residue.sh`） |
 | V1-6 | 许可证整体转 Apache-2.0 并更新 NOTICES/原创说明/README | 两人 | 已完成 |
-| V1-7 | **通用 TCP 数据面转发**（用户态 TCP 栈，观测任意 TCP 连接元数据） | 成员 A | 未开始（待后续里程碑） |
+| V1-7a | **UDP 用户态转发**（`net-core` `UdpRelay` + 可配置捕获路由，默认不改变现网行为） | 成员 A | 代码+单测完成；真机验证待设备重连 |
+| V1-7b | **TCP 数据面**（握手/双向 relay/FIN-RST，就绪后才可切 `0.0.0.0/0`） | 成员 A | 未开始 |
+| V1-7c | 健壮性（IPv6 UDP、分片、重传/窗口、并发/耗电） | 成员 A | 未开始 |
+| V1-7d | TCP 观测面真机验收 + DNS-only 回退开关 | 两人 | 未开始 |
 | V1-8 | 真机端到端验收（TUN 建立 → DNS 阻断 → `PrivacyEvent` 入库） | 两人 | 已完成（DNS 观测面，2026-10-17；见 [真机验证记录](v2-t1-real-device-verification.md)） |
 
 ### v2.0 阶段 2~3（未开始）

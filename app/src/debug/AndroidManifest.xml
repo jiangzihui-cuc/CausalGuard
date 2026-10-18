@@ -16,5 +16,19 @@
                 <action android:name="com.causalguard.debug.STATUS" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".debug.DebugRouteReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.causalguard.debug.ADD_ROUTE" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".debug.DebugUdpProbeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.causalguard.debug.UDP_PROBE" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

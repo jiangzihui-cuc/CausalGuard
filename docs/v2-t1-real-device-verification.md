@@ -154,3 +154,46 @@ adb exec-out run-as com.causalguard cat databases/causalguard.db-wal > cg.db-wal
    保持诚实降级，不猜测。
 3. **首页加载**：真机上首页在已有事件时可能长期停在“正在加载当前数据集...”（既有问题，
    与本阶段底座改造无关），验收通过调试面板与事件库完成。
+
+---
+
+## 5. V1-7a：UDP 用户态转发（代码完成，真机验证待设备重连）
+
+实现：
+
+- `net-core` 新增 `relay/UdpRelay`：按五元组复用 `protected DatagramSocket`，把 TUN 收到的
+  UDP 报文转发到远端，并把响应重新封装为 IPv4/UDP 包写回 TUN；带空闲流回收与流数上限；
+  V1-7a 只支持 IPv4（IPv6 留待 V1-7c）。
+- `SelfHostedVpnService`：非 DNS 的 UDP 报文交给 `UdpRelay`；新增
+  `SelfHostedVpnRuntime.dataPlaneRoutes`（默认空）用于分阶段注入捕获路由；
+  `ACTION_REBUILD` 支持重建 TUN。
+- debug-only：`DebugRouteReceiver`（注入捕获路由）、`DebugUdpProbeReceiver`（发 UDP 探针）。
+
+单测：`UdpRelayTest` 3 项（响应回写报文、拒绝非 UDP/IPv6、流数上限），`net-core` 共 29 项全绿。
+
+真机步骤（设备恢复后执行）：
+
+```bash
+# 启动监测（调试面板 Start Network Monitor）后，注入一条测试捕获路由
+adb shell am broadcast -a com.causalguard.debug.ADD_ROUTE \
+  -n com.causalguard/.debug.DebugRouteReceiver --es route 114.114.114.114/32
+
+# 发 UDP 探针（DNS 查询），若数据面可用会收到响应
+adb shell am broadcast -a com.causalguard.debug.UDP_PROBE \
+  -n com.causalguard/.debug.DebugUdpProbeReceiver \
+  --es host 114.114.114.114 --ei port 53
+
+adb logcat -s CausalGuardDebug CausalGuardVpn CausalGuardNet
+```
+
+预期证据：
+
+```text
+CausalGuardDebug: add route=114.114.114.114/32 added=true routes=[114.114.114.114/32]
+CausalGuardVpn  : causalguard self-hosted vpn started (routes=[114.114.114.114/32])
+CausalGuardDebug: udp probe ok host=114.114.114.114 port=53 responseLength=...
+CausalGuardNet  : ingested ... app=com.causalguard blocked=false   # remoteIp=114.114.114.114:53
+```
+
+> 注意：测试路由只用于验证数据面，验证完应重启应用（`dataPlaneRoutes` 为进程内状态）恢复默认 DNS-only。
+> **在 V1-7b TCP 数据面就绪前，禁止注入 `0.0.0.0/0`。**
