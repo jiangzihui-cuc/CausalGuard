@@ -330,7 +330,8 @@
 
 ### v2.0 阶段 1：自研网络底座，去 GPL（D2 / D5）
 
-> 分支 `feature/v2-t1-selfhosted-net-core`。详细进展与未完成项见 [22 下一阶段 README](22-next-phase-readme.md) 阶段 1 进展记录。
+> 分支 `feature/v2-t1-selfhosted-net-core`，**已合并 `main`（2026-10-18，merge commit `5d2e653`，PR #48）**。
+> 详细进展与未完成项见 [22 下一阶段 README](22-next-phase-readme.md) 阶段 1 进展记录。
 
 | 编号 | 任务 | 主责 | 状态 |
 |---|---|---|---|
