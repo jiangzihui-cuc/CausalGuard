@@ -11,6 +11,7 @@ import com.causalguard.net.core.packet.IpPacket
 import com.causalguard.net.core.packet.IpPacketBuilder
 import com.causalguard.net.core.packet.IpPacketParser
 import com.causalguard.net.core.packet.TransportProtocol
+import com.causalguard.net.core.relay.TcpRelay
 import com.causalguard.net.core.relay.UdpRelay
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -33,11 +34,12 @@ import kotlinx.coroutines.launch
  * - **V1-7a**：UDP 用户态转发（[UdpRelay]）——凡被路由进 TUN 的 UDP 报文，都会按五元组
  *   用 `protect()` 的上游 socket 转发并把响应写回 TUN；捕获范围由
  *   [SelfHostedVpnRuntime.dataPlaneRoutes] 控制（默认空 → 行为与之前一致）。
+ * - **V1-7b**：TCP 用户态中继（[TcpRelay]）——完成三次握手、双向数据、ACK/重传与 FIN/RST；
+ *   同样受捕获路由控制（默认空）。
  *
  * 明确未完成（诚实标注）：
- * - **通用 TCP 数据面**（V1-7b）尚未实现；在 TCP 转发就绪前，**不得**把路由切到 `0.0.0.0/0`，
- *   否则 TCP 会断网。
- * - IPv6 UDP 转发（V1-7c）与分片重组尚未实现，遇到时如实跳过。
+ * - IPv6 数据面、分片重组、乱序缓存、SACK/窗口缩放（V1-7c）。
+ * - **在真机充分验证前，默认仍不把路由切到 `0.0.0.0/0`**；分阶段由调试路由验证。
  */
 class SelfHostedVpnService : VpnService() {
 
@@ -49,6 +51,7 @@ class SelfHostedVpnService : VpnService() {
     private lateinit var uidResolver: SelfHostedUidResolver
     private lateinit var dnsProxy: DnsProxy
     private lateinit var udpRelay: UdpRelay
+    private lateinit var tcpRelay: TcpRelay
     private lateinit var packageNameResolver: PackageNameResolver
 
     private val adapter: SelfHostedNetworkAdapter
@@ -85,6 +88,7 @@ class SelfHostedVpnService : VpnService() {
         readJob?.cancel()
         readJob = null
         if (::udpRelay.isInitialized) runCatching { udpRelay.closeAll() }
+        if (::tcpRelay.isInitialized) runCatching { tcpRelay.closeAll() }
         runCatching { tunnel?.close() }
         tunnel = null
         tunOutput = null
@@ -124,6 +128,7 @@ class SelfHostedVpnService : VpnService() {
                 SelfHostedVpnRuntime.running = false
                 adapter.stop()
                 runCatching { udpRelay.closeAll() }
+                runCatching { tcpRelay.closeAll() }
                 tunOutput = null
                 runCatching { descriptor.close() }
                 if (tunnel === descriptor) tunnel = null
@@ -151,6 +156,12 @@ class SelfHostedVpnService : VpnService() {
             scope = scope,
             protect = { socket -> this.protect(socket) },
             writeToTun = ::writeTunPacket,
+        )
+        tcpRelay = TcpRelay(
+            scope = scope,
+            protect = { socket -> this.protect(socket) },
+            writeToTun = ::writeTunPacket,
+            onEvent = { message -> Log.i(TAG, "tcp $message") },
         )
         val builder = Builder()
             .setSession(SESSION_NAME)
@@ -183,6 +194,9 @@ class SelfHostedVpnService : VpnService() {
             // 过滤 TUN 自身产生的 IPv6 链路本地/组播、IPv4 组播/广播噪声，
             // 它们不是应用网络行为，写入事件库只会污染时间线。
             if (!shouldObserve(packet)) continue
+            if (packet.protocol == TransportProtocol.TCP && packet.tcpFlags and IpPacket.TCP_SYN != 0) {
+                Log.i(TAG, "tcp syn -> ${packet.destinationAddress}:${packet.destinationPort}")
+            }
 
             val isDnsQuery = packet.protocol == TransportProtocol.UDP &&
                 packet.destinationPort == DNS_PORT &&
@@ -190,16 +204,23 @@ class SelfHostedVpnService : VpnService() {
             val blocked = if (isDnsQuery) {
                 handleDnsQuery(packet, buffer)
             } else {
-                if (packet.protocol == TransportProtocol.UDP) {
-                    val payload = buffer.copyOfRange(
-                        packet.payloadOffset,
-                        packet.payloadOffset + packet.payloadLength,
-                    )
-                    udpRelay.handle(packet, payload)
+                val payload = buffer.copyOfRange(
+                    packet.payloadOffset,
+                    packet.payloadOffset + packet.payloadLength,
+                )
+                when (packet.protocol) {
+                    TransportProtocol.UDP -> udpRelay.handle(packet, payload)
+                    TransportProtocol.TCP -> tcpRelay.handle(packet, payload)
+                    else -> Unit
                 }
                 false
             }
-            adapter.submit(toObserved(packet, allowed = !blocked))
+            // TCP 只为连接建立（SYN）产出一条事件；数据/ACK 不应污染时间线。
+            val shouldEmit = packet.protocol != TransportProtocol.TCP ||
+                packet.tcpFlags and IpPacket.TCP_SYN != 0
+            if (shouldEmit) {
+                adapter.submit(toObserved(packet, allowed = !blocked))
+            }
         }
     }
 

@@ -203,3 +203,50 @@ DB              : ('...-114.114.114.114:53','com.causalguard',10450,'UDP','114.1
 
 > 注意：测试路由只用于验证数据面，验证完应重启应用（`dataPlaneRoutes` 为进程内状态）恢复默认 DNS-only。
 > **在 V1-7b TCP 数据面就绪前，禁止注入 `0.0.0.0/0`。**
+
+---
+
+## 6. V1-7b：TCP 用户态中继（2026-10-18 真机通过，IPv4 MVP）
+
+实现：
+
+- `net-core` 扩展 `IpPacket` / `IpPacketParser`：解析 TCP seq/ack/window 与 options（MSS、window scale）。
+- 新增 `TcpPacketBuilder`：构造 IPv4/TCP 报文（含 IP/TCP 校验和、MSS/window scale 选项）。
+- 新增 `relay/TcpRelay`：SYN → protected Socket 连接远端 → SYN-ACK；双向数据；
+  ACK 释放发送缓冲；固定 RTO 的 Go-Back-N 重传；FIN/RST；空闲流回收与流数上限。
+- `SelfHostedVpnService` 接入 `TcpRelay`；TCP 只在 SYN 时产出一条事件，数据/ACK 不入库。
+
+真机问题与修复：
+
+- `VpnService.protect(java.net.Socket)` 在 socket 尚未 bind/connect、内核 fd 未创建时返回
+  `false`（UDP 的 `DatagramSocket` 构造时即绑定，所以 V1-7a 正常）。修复：先
+  `socket.bind(InetSocketAddress(0))` 创建 fd，再 `protect`，最后 `connect`。
+
+实测证据（PJW110 / Android 16）：
+
+```text
+CausalGuardVpn  : tcp syn -> 220.181.111.232:80
+CausalGuardVpn  : tcp connected 220.181.111.232:80
+CausalGuardDebug: tcp probe connected host=220.181.111.232 port=80
+CausalGuardDebug: tcp probe request sent host=220.181.111.232 port=80
+CausalGuardDebug: tcp probe ok host=220.181.111.232 port=80 firstLine=HTTP/1.1 200 OK
+DB              : ('...-10450-220.181.111.232:80','com.causalguard',10450,'TCP','220.181.111.232',80,0,'vpn')
+```
+
+DNS 对照组仍正常（`www.qq.com` 解析并 ping 通）。
+
+复现步骤：
+
+```bash
+adb shell am broadcast -a com.causalguard.debug.ADD_ROUTE \
+  -n com.causalguard/.debug.DebugRouteReceiver --es route 220.181.111.232/32
+adb shell am broadcast -a com.causalguard.debug.TCP_PROBE \
+  -n com.causalguard/.debug.DebugTcpProbeReceiver --es host 220.181.111.232 --ei port 80
+adb logcat -s CausalGuardDebug CausalGuardVpn CausalGuardNet
+```
+
+范围与限制（V1-7c / 7d）：
+
+- 仅 IPv4；IPv6、分片重组、乱序缓存、SACK/窗口缩放、序列号回绕未实现。
+- 发送端为 MVP（固定 RTO Go-Back-N），弱网吞吐/重传效率需 7c 验证。
+- 默认路由仍只含 DNS 子网；`0.0.0.0/0` 需在 7c/7d 完成并真机验证后再切换。

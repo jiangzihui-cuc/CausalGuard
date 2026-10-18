@@ -3,6 +3,7 @@ package com.causalguard.net.core.packet
 import com.causalguard.net.core.formatIpv4
 import com.causalguard.net.core.formatIpv6
 import com.causalguard.net.core.u16
+import com.causalguard.net.core.u32
 import com.causalguard.net.core.u8
 
 /**
@@ -19,7 +20,7 @@ object IpPacketParser {
     private const val TCP_MIN_HEADER = 20
     private const val UDP_HEADER = 8
 
-    /** IPv4 扩展首部：Hop-by-Hop，Routing，Destination Options。 */
+    /** IPv6 扩展首部：Hop-by-Hop，Routing，Destination Options。 */
     private val IPV6_OPTIONS_HEADERS = intArrayOf(0, 43, 60)
 
     fun parse(buffer: ByteArray, offset: Int = 0, length: Int = buffer.size - offset): IpPacket? {
@@ -58,6 +59,12 @@ object IpPacketParser {
             moreFragments = moreFragments,
             payloadOffset = offset + headerLength + transport.headerLength,
             payloadLength = (available - transport.headerLength).coerceAtLeast(0),
+            tcpSequence = transport.sequence,
+            tcpAcknowledgment = transport.acknowledgment,
+            tcpWindow = transport.window,
+            tcpHeaderLength = transport.headerLength,
+            tcpMss = transport.mss,
+            tcpWindowScale = transport.windowScale,
         )
     }
 
@@ -114,6 +121,12 @@ object IpPacketParser {
             moreFragments = moreFragments,
             payloadOffset = cursor + transport.headerLength,
             payloadLength = (available - transport.headerLength).coerceAtLeast(0),
+            tcpSequence = transport.sequence,
+            tcpAcknowledgment = transport.acknowledgment,
+            tcpWindow = transport.window,
+            tcpHeaderLength = transport.headerLength,
+            tcpMss = transport.mss,
+            tcpWindowScale = transport.windowScale,
         )
     }
 
@@ -125,30 +138,83 @@ object IpPacketParser {
         firstFragment: Boolean,
     ): Transport {
         val protocol = TransportProtocol.fromIpNumber(protocolNumber)
-        if (!firstFragment || available <= 0) return Transport(protocol, 0, 0, 0, 0)
+        if (!firstFragment || available <= 0) return Transport(protocol)
         return when (protocol) {
             TransportProtocol.TCP -> {
-                if (available < TCP_MIN_HEADER) Transport(protocol, 0, 0, 0, 0)
-                else {
+                if (available < TCP_MIN_HEADER) {
+                    Transport(protocol)
+                } else {
                     val dataOffset = ((buffer.u8(offset + 12) ushr 4) and 0xF) * 4
                     val headerLength = if (dataOffset in TCP_MIN_HEADER..available) dataOffset else TCP_MIN_HEADER
-                    Transport(protocol, buffer.u16(offset), buffer.u16(offset + 2), buffer.u8(offset + 13), headerLength)
+                    val options = parseTcpOptions(buffer, offset + TCP_MIN_HEADER, offset + headerLength)
+                    Transport(
+                        protocol = protocol,
+                        sourcePort = buffer.u16(offset),
+                        destinationPort = buffer.u16(offset + 2),
+                        tcpFlags = buffer.u8(offset + 13),
+                        headerLength = headerLength,
+                        sequence = buffer.u32(offset + 4),
+                        acknowledgment = buffer.u32(offset + 8),
+                        window = buffer.u16(offset + 14),
+                        mss = options.mss,
+                        windowScale = options.windowScale,
+                    )
                 }
             }
             TransportProtocol.UDP -> {
-                if (available < UDP_HEADER) Transport(protocol, 0, 0, 0, 0)
-                else Transport(protocol, buffer.u16(offset), buffer.u16(offset + 2), 0, UDP_HEADER)
+                if (available < UDP_HEADER) Transport(protocol)
+                else Transport(
+                    protocol = protocol,
+                    sourcePort = buffer.u16(offset),
+                    destinationPort = buffer.u16(offset + 2),
+                    headerLength = UDP_HEADER,
+                )
             }
-            else -> Transport(protocol, 0, 0, 0, 0)
+            else -> Transport(protocol)
         }
     }
 
+    /** 解析 SYN 里的 MSS(2) 与 window scale(3) 选项；其他选项跳过。 */
+    private fun parseTcpOptions(buffer: ByteArray, start: Int, end: Int): TcpOptions {
+        var mss: Int? = null
+        var windowScale: Int? = null
+        var index = start
+        while (index < end) {
+            val kind = buffer.u8(index)
+            when (kind) {
+                0 -> break
+                1 -> {
+                    index += 1
+                    continue
+                }
+                else -> {
+                    if (index + 1 >= end) break
+                    val length = buffer.u8(index + 1)
+                    if (length < 2 || index + length > end) break
+                    when (kind) {
+                        2 -> if (length == 4) mss = buffer.u16(index + 2)
+                        3 -> if (length == 3) windowScale = buffer.u8(index + 2)
+                    }
+                    index += length
+                }
+            }
+        }
+        return TcpOptions(mss, windowScale)
+    }
+
+    private data class TcpOptions(val mss: Int?, val windowScale: Int?)
+
     private data class Transport(
         val protocol: TransportProtocol,
-        val sourcePort: Int,
-        val destinationPort: Int,
-        val tcpFlags: Int,
-        val headerLength: Int,
+        val sourcePort: Int = 0,
+        val destinationPort: Int = 0,
+        val tcpFlags: Int = 0,
+        val headerLength: Int = 0,
+        val sequence: Long = 0L,
+        val acknowledgment: Long = 0L,
+        val window: Int = 0,
+        val mss: Int? = null,
+        val windowScale: Int? = null,
     )
 
     private const val MAX_HEADER_HOPS = 8

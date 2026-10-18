@@ -6,7 +6,7 @@
 > 决赛答辩：2026-11-14
 > 决策冻结：2026-10-14（见第 3 节，9 项决策已定）
 > 阶段 0 完成：2026-10-16（真机验证 A/B/C 通过，见下方阶段 0 完成记录）
-> 阶段 1 进展：2026-10-16 自研底座核心 + 去 GPL + Apache-2.0 完成；2026-10-17 真机完成 DNS 观测面端到端验证；2026-10-18 V1-7a UDP 用户态转发真机通过。TCP 数据面（V1-7b）待续，见下方阶段 1 进展记录。
+> 阶段 1 进展：2026-10-16 自研底座核心 + 去 GPL + Apache-2.0 完成；2026-10-17 真机完成 DNS 观测面端到端验证；2026-10-18 V1-7a UDP 与 V1-7b TCP（IPv4 MVP）数据面真机通过。V1-7c/7d 待续，见下方阶段 1 进展记录。
 > 本文档回答一个问题：**从「竞赛 demo」到「成熟完整 app」，下一步做什么、先做什么、怎么验收。**
 
 ---
@@ -138,6 +138,7 @@ EOF
 | `net-core/` 自研网络核心模块 | IPv4/IPv6 + TCP/UDP 报文解析（含 IPv6 扩展首部/分片）、IPv4/UDP 报文构造（校验和）、DNS 解析（含压缩指针）与 NXDOMAIN 构造、`/proc/net/*` 解析与 UID 归属索引、域名阻断判定；JVM 单测 27 项全绿 |
 | `app/.../data/network/selfhosted/` | 自研 `VpnService`（观测优先：只路由 DNS 子网，DNS 代理转发 + 域名阻断 + NXDOMAIN，不改 TCP 连通性）、`/proc`+`ConnectivityManager` UID 归属、事件桥 `SelfHostedNetworkAdapter`、`SelfHostedDomainBlockController` |
 | 事件链打通 | `SelfHostedNetworkEventSource → NetworkEventCollector → NetworkEventIngestor → PrivacyEventRepository`，DI（`AppContainer`）已切换，契约（`NetworkEventSource`）不变 |
+| 数据面 | `net-core` `UdpRelay`（V1-7a）+ `TcpRelay`（V1-7b，IPv4 MVP）：握手、双向转发、ACK/重传、FIN/RST；2026-10-18 真机 UDP 回环与 TCP HTTP 200 通过 |
 | 去 GPL | 移除 `.gitmodules`、`third_party/tracker-control-android`、`third_party/patches/*`、`apply-trackercontrol-hook.sh`；运行时代码无 tracker-control 引用（`scripts/verify-no-gpl-residue.sh` 校验） |
 | 许可证 | 整体转为 **Apache-2.0**（根 `LICENSE`），`THIRD_PARTY_NOTICES.md`、`SOURCE_ORIGINALITY.md`、`README.md` 已更新 |
 
@@ -146,8 +147,10 @@ EOF
 **明确未完成（诚实标注）**：
 
 1. **V1-7a UDP 用户态转发已完成**（2026-10-18 真机通过：捕获路由 → `UdpRelay` 转发 → 响应回写 → UID 归属入库）。
-2. **通用 TCP 数据面转发（V1-7b）**：要观测任意 TCP 连接元数据必须路由全网卡并把 TCP 转发出去，需要用户态 TCP 栈；在 TCP 就绪前**不得**把路由切到 `0.0.0.0/0`。
-3. **TCP 观测面真机验证**：依赖 V1-7b/7d；当前真机验证覆盖 DNS 观测面与 V1-7a UDP 转发。
+2. **V1-7b TCP 数据面已完成 IPv4 MVP**（2026-10-18 真机通过：握手 → 双向数据 → HTTP 200 → TCP 事件 UID 归属入库）。
+3. **剩余 V1-7c**：IPv6、分片重组、乱序缓存、SACK/窗口缩放、序列号回绕、弱网重传效率。
+4. **剩余 V1-7d**：把默认路由切到 `0.0.0.0/0` 前，需要真机吞吐/切换/耗电验证，并提供 DNS-only 回退开关。
+   **当前默认路由仍只含 DNS 子网**；`0.0.0.0/0` 需 7c/7d 完成后再切。
 
 > 结论：阶段 1 的**自研底座核心、DNS 观测面真机闭环、去 GPL / 转 Apache-2.0 已完成**；「真实设备上观测任意 TCP 连接元数据」这一验收项依赖后续 TCP 数据面里程碑。
 

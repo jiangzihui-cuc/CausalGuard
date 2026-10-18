@@ -30,5 +30,12 @@
                 <action android:name="com.causalguard.debug.UDP_PROBE" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".debug.DebugTcpProbeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.causalguard.debug.TCP_PROBE" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
