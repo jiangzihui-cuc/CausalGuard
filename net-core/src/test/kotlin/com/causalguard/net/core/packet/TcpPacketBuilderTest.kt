@@ -87,4 +87,34 @@ class TcpPacketBuilderTest {
         assertEquals(null, packet.tcpMss)
         assertEquals(44, packet.payloadOffset) // 20 + 24（TCP 20 + 4 options）
     }
+
+    @Test
+    fun `builds ipv6 tcp with mss that parses back`() {
+        val bytes = TcpPacketBuilder.buildIpv6Tcp(
+            sourceAddress = "2001:db8::2",
+            sourcePort = 443,
+            destinationAddress = "2001:db8::1",
+            destinationPort = 40000,
+            sequence = 1_000L,
+            acknowledgment = 5_001L,
+            flags = IpPacket.TCP_SYN or IpPacket.TCP_ACK,
+            window = 65_535,
+            mss = 1_440,
+        )
+
+        val packet = IpPacketParser.parse(bytes)!!
+        assertEquals(6, packet.ipVersion)
+        assertEquals("2001:db8::2", packet.sourceAddress)
+        assertEquals("2001:db8::1", packet.destinationAddress)
+        assertEquals(443, packet.sourcePort)
+        assertEquals(40000, packet.destinationPort)
+        assertEquals(1_000L, packet.tcpSequence)
+        assertEquals(5_001L, packet.tcpAcknowledgment)
+        assertEquals(1_440, packet.tcpMss)
+        assertEquals(64, packet.payloadOffset) // 40 + 24（TCP 20 + MSS 4 字节 options）
+
+        val source6 = IpPacketBuilder.parseIpv6("2001:db8::2")
+        val destination6 = IpPacketBuilder.parseIpv6("2001:db8::1")
+        assertEquals(0, TcpPacketBuilder.tcpChecksum6(source6, destination6, bytes, 40, bytes.size - 40))
+    }
 }

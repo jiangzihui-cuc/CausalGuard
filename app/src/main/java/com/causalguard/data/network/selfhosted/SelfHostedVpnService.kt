@@ -36,10 +36,11 @@ import kotlinx.coroutines.launch
  *   [SelfHostedVpnRuntime.dataPlaneRoutes] 控制（默认空 → 行为与之前一致）。
  * - **V1-7b**：TCP 用户态中继（[TcpRelay]）——完成三次握手、双向数据、ACK/重传与 FIN/RST；
  *   同样受捕获路由控制（默认空）。
+ * - **V1-7c**：IPv4/IPv6 数据面、客户端乱序缓存、快速重传、RTT-RTO、序列号回绕；
+ *   UDP/TCP 均支持 IPv6。
  *
  * 明确未完成（诚实标注）：
- * - IPv6 数据面、分片重组、乱序缓存、SACK/窗口缩放（V1-7c）。
- * - **在真机充分验证前，默认仍不把路由切到 `0.0.0.0/0`**；分阶段由调试路由验证。
+ * - 分片重组、SACK、窗口缩放协商（后续里程碑）。
  */
 class SelfHostedVpnService : VpnService() {
 
@@ -167,7 +168,9 @@ class SelfHostedVpnService : VpnService() {
             .setSession(SESSION_NAME)
             .setMtu(MTU)
             .addAddress(VPN_ADDRESS, VPN_PREFIX_LENGTH)
+            .addAddress(VPN_ADDRESS_V6, VPN_PREFIX_LENGTH_V6)
             .addRoute(VPN_ROUTE, VPN_PREFIX_LENGTH)
+            .addRoute(VPN_ROUTE_V6, VPN_PREFIX_LENGTH_V6)
             .addDnsServer(VPN_DNS)
         // V1-7a：可配置的捕获路由（默认空）。TCP 数据面就绪前不要放 0.0.0.0/0。
         for (cidr in SelfHostedVpnRuntime.dataPlaneRoutes) {
@@ -299,6 +302,11 @@ class SelfHostedVpnService : VpnService() {
         const val VPN_ROUTE = "10.111.222.0"
         const val VPN_PREFIX_LENGTH = 24
         const val VPN_DNS = "10.111.222.2"
+
+        /** IPv6 接口地址（ULA）；IPv6 捕获路由由 [SelfHostedVpnRuntime.dataPlaneRoutes] 注入。 */
+        const val VPN_ADDRESS_V6 = "fd00:cafe:1::1"
+        const val VPN_ROUTE_V6 = "fd00:cafe:1::"
+        const val VPN_PREFIX_LENGTH_V6 = 64
 
         const val ACTION_START = "com.causalguard.action.VPN_START"
         const val ACTION_STOP = "com.causalguard.action.VPN_STOP"

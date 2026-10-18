@@ -108,8 +108,68 @@ class TcpRelayTest {
     }
 
     @Test
-    fun `unknown non-syn flow gets reset`() = runBlocking {
+    fun `buffers out-of-order data and delivers it in order`() = runBlocking {
+        val server = ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))
+        val serverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        serverScope.launch { echoOnce(server) }
         val relayScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val outgoing = Channel<ByteArray>(Channel.UNLIMITED)
+        val relay = TcpRelay(
+            scope = relayScope,
+            protect = { true },
+            writeToTun = { bytes -> outgoing.trySend(bytes) },
+            initialSequence = { 7_000L },
+        )
+        val destinationPort = server.localPort
+        val clientIsn = 1_000L
+        try {
+            relay.handle(clientPacket(destinationPort, IpPacket.TCP_SYN, clientIsn, 0), ByteArray(0))
+            val synAck = await(outgoing) { it.packet.tcpFlags == (IpPacket.TCP_SYN or IpPacket.TCP_ACK) }
+            val serverNext = synAck.packet.tcpSequence + 1
+            relay.handle(
+                clientPacket(destinationPort, IpPacket.TCP_ACK, clientIsn + 1, serverNext),
+                ByteArray(0),
+            )
+
+            // 先发后半段（seq=1006 "world"），再发前半段（seq=1001 "hello"）。
+            relay.handle(
+                clientPacket(destinationPort, IpPacket.TCP_ACK or IpPacket.TCP_PSH, clientIsn + 6, serverNext),
+                "world".toByteArray(),
+            )
+            relay.handle(
+                clientPacket(destinationPort, IpPacket.TCP_ACK or IpPacket.TCP_PSH, clientIsn + 1, serverNext),
+                "hello".toByteArray(),
+            )
+
+            val received = ByteArray("helloworld".length)
+            var offset = 0
+            withTimeout(5_000) {
+                while (offset < received.size) {
+                    val data = await(outgoing) { it.packet.payloadLength > 0 }
+                    val payload = data.payload()
+                    payload.copyInto(received, offset)
+                    offset += payload.size
+                }
+            }
+            assertArrayEquals("helloworld".toByteArray(), received)
+        } finally {
+            relay.closeAll()
+            relayScope.cancel()
+            serverScope.cancel()
+            runCatching { server.close() }
+        }
+    }
+
+    @Test
+    fun `sequence diff is wrap aware`() {
+        assertEquals(0L, TcpRelay.seqDiff(5, 5))
+        assertEquals(10L, TcpRelay.seqDiff(10, 0))
+        assertEquals(1L, TcpRelay.seqDiff(0, 0xFFFFFFFFL))
+        assertEquals(0xFFFFFFFFL, TcpRelay.seqDiff(0xFFFFFFFFL, 0))
+    }
+
+    @Test
+    fun `unknown non-syn flow gets reset`() = runBlocking {        val relayScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val outgoing = Channel<ByteArray>(Channel.UNLIMITED)
         val relay = TcpRelay(
             scope = relayScope,

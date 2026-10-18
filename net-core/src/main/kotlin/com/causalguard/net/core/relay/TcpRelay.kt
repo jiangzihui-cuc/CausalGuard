@@ -1,13 +1,13 @@
 package com.causalguard.net.core.relay
 
 import com.causalguard.net.core.packet.IpPacket
-import com.causalguard.net.core.packet.IpPacketBuilder
 import com.causalguard.net.core.packet.TcpPacketBuilder
 import com.causalguard.net.core.packet.TransportProtocol
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.coroutineContext
 
 /**
- * TCP 用户态中继（V1-7b）。
+ * TCP 用户态中继（V1-7b/7c）。
  *
  * 对客户端扮演“服务器”，对真实服务器扮演“客户端”：
  *
@@ -27,15 +27,15 @@ import kotlin.coroutines.coroutineContext
  *                     └──── 数据/ACK/FIN 封装回 TUN ←────────┘
  * ```
  *
- * 已实现（MVP）：
- * - SYN → 连接远端 → SYN-ACK；客户端 ACK/数据；
- * - 双向数据中继（服务端→客户端按 MSS 分段、受客户端窗口限制）；
- * - ACK 释放发送缓冲；固定 RTO 的 Go-Back-N 重传；
- * - 客户端 FIN → `shutdownOutput`；服务端 EOF → FIN；RST 关闭；
- * - 空闲流回收、流数上限。
+ * 已实现：
+ * - IPv4 / IPv6；SYN → 连接远端 → SYN-ACK；双向数据；
+ * - 服务端→客户端按 MSS 分段、受客户端窗口限制；
+ * - 客户端→服务端**乱序缓存 + 重叠重传裁剪**；
+ * - ACK 释放发送缓冲；3 次重复 ACK 快速重传；RTT 估算自适应 RTO + Go-Back-N；
+ * - 客户端 FIN → `shutdownOutput`；服务端 EOF → FIN；RST 关闭；空闲回收到流数上限；
+ * - 32 位序列号回绕比较（`seqDiff`）。
  *
- * 未实现（留给 V1-7c，诚实标注）：IPv6、分片重组、乱序缓存、SACK/窗口缩放、
- * 序列号回绕处理。遇到时不猜测，按当前能力降级。
+ * 未实现（诚实标注）：分片重组、SACK、窗口缩放协商。
  */
 class TcpRelay(
     private val scope: CoroutineScope,
@@ -49,7 +49,7 @@ class TcpRelay(
     private val idleTimeoutMs: Long = DEFAULT_IDLE_TIMEOUT_MS,
     private val retransmitTimeoutMs: Long = DEFAULT_RETRANSMIT_MS,
     private val maxFlows: Int = DEFAULT_MAX_FLOWS,
-    private val initialSequence: () -> Long = { System.nanoTime() and 0xFFFFFFFFL },
+    private val initialSequence: () -> Long = { System.nanoTime() and MASK },
     private val onEvent: (String) -> Unit = {},
 ) {
 
@@ -65,6 +65,7 @@ class TcpRelay(
         val clientNextInitial: Long,
         val serverIsn: Long,
         var clientWindow: Int,
+        initialRtoMs: Long,
     ) {
         @Volatile var lastActive: Long = 0L
         @Volatile var closed: Boolean = false
@@ -72,9 +73,9 @@ class TcpRelay(
         var socket: Socket? = null
         var readerJob: Job? = null
         var writerJob: Job? = null
-        var reaperJob: Job? = null
 
         val toServer = Channel<ByteArray>(capacity = 64)
+        val outOfOrder = HashMap<Long, ByteArray>()
 
         var established: Boolean = false
         var clientNext: Long = clientNextInitial
@@ -86,6 +87,12 @@ class TcpRelay(
         var serverFin: Boolean = false
         var clientFin: Boolean = false
         var lastAckAt: Long = 0L
+
+        var dupAckCount: Int = 0
+        var srttMs: Double = 0.0
+        var rttVarMs: Double = 0.0
+        var rttSampleStart: Long = 0L
+        var rtoMs: Long = initialRtoMs
 
         val sendBuffer = SendBuffer()
     }
@@ -112,8 +119,6 @@ class TcpRelay(
         if (packet.protocol != TransportProtocol.TCP) return false
         if (!packet.isFirstFragment) return false
         if (packet.sourcePort <= 0 || packet.destinationPort <= 0) return false
-        // V1-7b 只支持 IPv4；IPv6 留待 V1-7c。
-        if (packet.sourceAddress.contains(':') || packet.destinationAddress.contains(':')) return false
 
         val key = FlowKey(
             sourceAddress = packet.sourceAddress,
@@ -168,9 +173,10 @@ class TcpRelay(
     private fun startConnection(key: FlowKey, syn: IpPacket) {
         val flow = Flow(
             key = key,
-            clientNextInitial = (syn.tcpSequence + 1) and 0xFFFFFFFFL,
-            serverIsn = initialSequence() and 0xFFFFFFFFL,
+            clientNextInitial = (syn.tcpSequence + 1) and MASK,
+            serverIsn = initialSequence() and MASK,
             clientWindow = syn.tcpWindow,
+            initialRtoMs = retransmitTimeoutMs,
         )
         flow.lastActive = clock()
         flows[key] = flow
@@ -214,18 +220,14 @@ class TcpRelay(
                 flow.socket = socket
                 flow.established = true
                 flow.lastAckAt = clock()
-                flow.sendUna = flow.serverIsn + 1
-                flow.sendNxt = flow.serverIsn + 1
+                flow.sendUna = (flow.serverIsn + 1) and MASK
+                flow.sendNxt = (flow.serverIsn + 1) and MASK
                 writePacket(
-                    TcpPacketBuilder.buildIpv4Tcp(
-                        sourceAddress = key.destinationAddress,
-                        sourcePort = key.destinationPort,
-                        destinationAddress = key.sourceAddress,
-                        destinationPort = key.sourcePort,
+                    buildTcp(
+                        flow = flow,
                         sequence = flow.serverIsn,
                         acknowledgment = flow.clientNext,
                         flags = IpPacket.TCP_SYN or IpPacket.TCP_ACK,
-                        window = receiveWindow,
                         mss = mss,
                     ),
                 )
@@ -272,7 +274,6 @@ class TcpRelay(
                 maybeCloseFlow(key, flow)
             }
         } catch (throwable: Throwable) {
-            // 服务端关闭/网络错误：尽力发 FIN，然后回收。
             synchronized(flow) {
                 if (!flow.closed) {
                     flow.serverFin = true
@@ -284,23 +285,34 @@ class TcpRelay(
     }
 
     private fun handleAck(flow: Flow, acknowledgment: Long) {
-        val ack = acknowledgment and 0xFFFFFFFFL
-        if (ack == flow.sendUna) {
-            flow.lastAckAt = clock()
-            sendMore(flow)
+        val ack = acknowledgment and MASK
+        val diff = seqDiff(ack, flow.sendUna)
+        if (diff == 0L) {
+            // 重复 ACK：3 次触发快速重传（RFC 5681 简化版）。
+            if (flow.sendBuffer.size > 0) {
+                flow.dupAckCount += 1
+                if (flow.dupAckCount >= 3) {
+                    flow.dupAckCount = 0
+                    flow.sendNxt = flow.sendUna
+                    flow.lastAckAt = clock()
+                    sendMore(flow)
+                }
+            }
             return
         }
-        if (ack < flow.sendUna) return // 旧 ACK
+        if (diff > Int.MAX_VALUE.toLong()) return // 旧 ACK（序列号回绕比较）
+        flow.dupAckCount = 0
+        updateRtt(flow)
 
-        var remaining = ack - flow.sendUna
+        var remaining = diff
         val dataAcked = minOf(remaining, flow.sendBuffer.size.toLong())
         if (dataAcked > 0) {
             flow.sendBuffer.ack(dataAcked.toInt())
-            flow.sendUna += dataAcked
+            flow.sendUna = (flow.sendUna + dataAcked) and MASK
             remaining -= dataAcked
         }
         if (remaining > 0 && flow.finSent && !flow.finAcked && flow.finSeq == flow.sendUna) {
-            flow.sendUna = (flow.sendUna + 1) and 0xFFFFFFFFL
+            flow.sendUna = (flow.sendUna + 1) and MASK
             flow.finAcked = true
             remaining -= 1
         }
@@ -310,29 +322,76 @@ class TcpRelay(
         maybeSendFin(flow)
     }
 
-    private fun handleClientData(key: FlowKey, flow: Flow, packet: IpPacket, payload: ByteArray) {
-        val seq = packet.tcpSequence and 0xFFFFFFFFL
-        if (seq != flow.clientNext) {
-            // 重传（seq < next）或乱序缺口（seq > next）：回当前 ACK，让对端重传。
-            sendAck(flow)
-            return
+    private fun updateRtt(flow: Flow) {
+        if (flow.rttSampleStart <= 0L) return
+        val sample = clock() - flow.rttSampleStart
+        flow.rttSampleStart = 0L
+        if (sample <= 0L || sample > 10_000L) return
+        if (flow.srttMs == 0.0) {
+            flow.srttMs = sample.toDouble()
+            flow.rttVarMs = sample / 2.0
+        } else {
+            flow.rttVarMs = 0.75 * flow.rttVarMs + 0.25 * abs(flow.srttMs - sample)
+            flow.srttMs = 0.875 * flow.srttMs + 0.125 * sample
         }
-        flow.clientNext = (seq + payload.size) and 0xFFFFFFFFL
+        flow.rtoMs = (flow.srttMs + 4 * flow.rttVarMs).toLong().coerceIn(200L, 5_000L)
+    }
+
+    private fun handleClientData(key: FlowKey, flow: Flow, packet: IpPacket, payload: ByteArray) {
+        val seq = packet.tcpSequence and MASK
+        val diff = seqDiff(seq, flow.clientNext)
+        when {
+            diff == 0L -> {
+                flow.clientNext = (seq + payload.size) and MASK
+                deliver(flow, payload)
+                drainOutOfOrder(flow)
+                sendAck(flow)
+            }
+            diff > Int.MAX_VALUE.toLong() -> {
+                // 重传/重叠：裁掉已确认前缀，剩余部分按序投递。
+                val overlap = seqDiff(flow.clientNext, seq)
+                if (overlap < payload.size) {
+                    val trimmed = payload.copyOfRange(overlap.toInt(), payload.size)
+                    flow.clientNext = (flow.clientNext + trimmed.size) and MASK
+                    deliver(flow, trimmed)
+                    drainOutOfOrder(flow)
+                }
+                sendAck(flow)
+            }
+            else -> {
+                // 乱序：在接收窗口内缓存，回重复 ACK 触发对端快速重传。
+                if (diff <= receiveWindow) {
+                    flow.outOfOrder.putIfAbsent(seq, payload.copyOf())
+                }
+                sendAck(flow)
+            }
+        }
+    }
+
+    /** 按序投递到服务端；失败则 RST 并关闭。 */
+    private fun deliver(flow: Flow, payload: ByteArray) {
+        if (payload.isEmpty() || flow.closed) return
         if (flow.toServer.trySend(payload).isFailure) {
             sendReset(flow)
-            closeFlow(key, flow)
-            return
+            closeFlow(flow.key, flow)
         }
-        sendAck(flow)
+    }
+
+    private fun drainOutOfOrder(flow: Flow) {
+        while (!flow.closed) {
+            val chunk = flow.outOfOrder.remove(flow.clientNext) ?: break
+            flow.clientNext = (flow.clientNext + chunk.size) and MASK
+            deliver(flow, chunk)
+        }
     }
 
     private fun handleClientFin(flow: Flow, packet: IpPacket, payloadLength: Int) {
-        val finSeq = (packet.tcpSequence + payloadLength) and 0xFFFFFFFFL
-        if (finSeq != flow.clientNext) {
+        val finSeq = (packet.tcpSequence + payloadLength) and MASK
+        if (seqDiff(finSeq, flow.clientNext) != 0L) {
             sendAck(flow)
             return
         }
-        flow.clientNext = (flow.clientNext + 1) and 0xFFFFFFFFL
+        flow.clientNext = (flow.clientNext + 1) and MASK
         flow.clientFin = true
         sendAck(flow)
         runCatching { flow.socket?.shutdownOutput() }
@@ -342,29 +401,26 @@ class TcpRelay(
     /** 把发送缓冲里的数据按 MSS 和客户端窗口发出去（调用方持有 flow 锁）。 */
     private fun sendMore(flow: Flow) {
         if (!flow.established || flow.closed) return
-        var inflight = (flow.sendNxt - flow.sendUna).coerceAtLeast(0L)
+        var inflight = seqDiff(flow.sendNxt, flow.sendUna)
+        if (inflight == 0L) flow.rttSampleStart = clock()
         val window = flow.clientWindow.toLong().coerceAtLeast(0L)
-        while (flow.sendBuffer.size > inflight && inflight < window) {
-            val offset = (flow.sendNxt - flow.sendUna).toInt()
+        while (flow.sendBuffer.size.toLong() > inflight && inflight < window) {
+            val offset = inflight.toInt()
             val availableToSend = (flow.sendBuffer.size - offset).coerceAtLeast(0)
             val windowLeft = (window - inflight).toInt()
             val length = minOf(mss, availableToSend, windowLeft)
             if (length <= 0) break
             val payload = flow.sendBuffer.copy(offset, length)
             writePacket(
-                TcpPacketBuilder.buildIpv4Tcp(
-                    sourceAddress = flow.key.destinationAddress,
-                    sourcePort = flow.key.destinationPort,
-                    destinationAddress = flow.key.sourceAddress,
-                    destinationPort = flow.key.sourcePort,
+                buildTcp(
+                    flow = flow,
                     sequence = flow.sendNxt,
                     acknowledgment = flow.clientNext,
                     flags = IpPacket.TCP_ACK or IpPacket.TCP_PSH,
-                    window = receiveWindow,
                     payload = payload,
                 ),
             )
-            flow.sendNxt = (flow.sendNxt + length) and 0xFFFFFFFFL
+            flow.sendNxt = (flow.sendNxt + length) and MASK
             inflight += length
         }
     }
@@ -375,18 +431,14 @@ class TcpRelay(
         flow.finSeq = flow.sendNxt
         flow.finSent = true
         writePacket(
-            TcpPacketBuilder.buildIpv4Tcp(
-                sourceAddress = flow.key.destinationAddress,
-                sourcePort = flow.key.destinationPort,
-                destinationAddress = flow.key.sourceAddress,
-                destinationPort = flow.key.sourcePort,
+            buildTcp(
+                flow = flow,
                 sequence = flow.finSeq,
                 acknowledgment = flow.clientNext,
                 flags = IpPacket.TCP_FIN or IpPacket.TCP_ACK,
-                window = receiveWindow,
             ),
         )
-        flow.sendNxt = (flow.sendNxt + 1) and 0xFFFFFFFFL
+        flow.sendNxt = (flow.sendNxt + 1) and MASK
     }
 
     private fun maybeCloseFlow(key: FlowKey, flow: Flow) {
@@ -397,46 +449,20 @@ class TcpRelay(
     private fun sendAck(flow: Flow) {
         if (!flow.established || flow.closed) return
         writePacket(
-            TcpPacketBuilder.buildIpv4Tcp(
-                sourceAddress = flow.key.destinationAddress,
-                sourcePort = flow.key.destinationPort,
-                destinationAddress = flow.key.sourceAddress,
-                destinationPort = flow.key.sourcePort,
+            buildTcp(
+                flow = flow,
                 sequence = flow.sendNxt,
                 acknowledgment = flow.clientNext,
                 flags = IpPacket.TCP_ACK,
-                window = receiveWindow,
             ),
         )
     }
 
     private fun sendReset(flow: Flow) {
-        if (!flow.established) {
-            sendResetFor(
-                IpPacket(
-                    ipVersion = 4,
-                    protocol = TransportProtocol.TCP,
-                    sourceAddress = flow.key.sourceAddress,
-                    destinationAddress = flow.key.destinationAddress,
-                    sourcePort = flow.key.sourcePort,
-                    destinationPort = flow.key.destinationPort,
-                    tcpFlags = IpPacket.TCP_SYN,
-                    totalLength = 40,
-                    fragmentOffset = 0,
-                    moreFragments = false,
-                    payloadOffset = 40,
-                    payloadLength = 0,
-                    tcpSequence = (flow.clientNextInitial - 1) and 0xFFFFFFFFL,
-                ),
-            )
-            return
-        }
+        if (flow.closed) return
         writePacket(
-            TcpPacketBuilder.buildIpv4Tcp(
-                sourceAddress = flow.key.destinationAddress,
-                sourcePort = flow.key.destinationPort,
-                destinationAddress = flow.key.sourceAddress,
-                destinationPort = flow.key.sourcePort,
+            buildTcp(
+                flow = flow,
                 sequence = flow.sendNxt,
                 acknowledgment = flow.clientNext,
                 flags = IpPacket.TCP_RST or IpPacket.TCP_ACK,
@@ -445,21 +471,70 @@ class TcpRelay(
         )
     }
 
-    /** 对未知流回 RST，避免客户端一直重试（RFC 793 语义）。 */
+    /** 对未知流回 RST，避免客户端一直重试（RFC 793 语义）；IPv4/IPv6 自适应。 */
     private fun sendResetFor(packet: IpPacket) {
         if (packet.tcpFlags and IpPacket.TCP_RST != 0) return
         val synConsumed = if (packet.tcpFlags and IpPacket.TCP_SYN != 0) 1 else 0
-        writePacket(
+        val ipv6 = packet.destinationAddress.contains(':')
+        val bytes = if (ipv6) {
+            TcpPacketBuilder.buildIpv6Tcp(
+                sourceAddress = packet.destinationAddress,
+                sourcePort = packet.destinationPort,
+                destinationAddress = packet.sourceAddress,
+                destinationPort = packet.sourcePort,
+                sequence = packet.tcpAcknowledgment and MASK,
+                acknowledgment = (packet.tcpSequence + packet.payloadLength + synConsumed) and MASK,
+                flags = IpPacket.TCP_RST or IpPacket.TCP_ACK,
+                window = 0,
+            )
+        } else {
             TcpPacketBuilder.buildIpv4Tcp(
                 sourceAddress = packet.destinationAddress,
                 sourcePort = packet.destinationPort,
                 destinationAddress = packet.sourceAddress,
                 destinationPort = packet.sourcePort,
-                sequence = packet.tcpAcknowledgment and 0xFFFFFFFFL,
-                acknowledgment = (packet.tcpSequence + packet.payloadLength + synConsumed) and 0xFFFFFFFFL,
+                sequence = packet.tcpAcknowledgment and MASK,
+                acknowledgment = (packet.tcpSequence + packet.payloadLength + synConsumed) and MASK,
                 flags = IpPacket.TCP_RST or IpPacket.TCP_ACK,
                 window = 0,
-            ),
+            )
+        }
+        writePacket(bytes)
+    }
+
+    private fun buildTcp(
+        flow: Flow,
+        sequence: Long,
+        acknowledgment: Long,
+        flags: Int,
+        window: Int = receiveWindow,
+        payload: ByteArray = ByteArray(0),
+        mss: Int? = null,
+    ): ByteArray = if (flow.key.destinationAddress.contains(':')) {
+        TcpPacketBuilder.buildIpv6Tcp(
+            sourceAddress = flow.key.destinationAddress,
+            sourcePort = flow.key.destinationPort,
+            destinationAddress = flow.key.sourceAddress,
+            destinationPort = flow.key.sourcePort,
+            sequence = sequence,
+            acknowledgment = acknowledgment,
+            flags = flags,
+            window = window,
+            payload = payload,
+            mss = mss,
+        )
+    } else {
+        TcpPacketBuilder.buildIpv4Tcp(
+            sourceAddress = flow.key.destinationAddress,
+            sourcePort = flow.key.destinationPort,
+            destinationAddress = flow.key.sourceAddress,
+            destinationPort = flow.key.sourcePort,
+            sequence = sequence,
+            acknowledgment = acknowledgment,
+            flags = flags,
+            window = window,
+            payload = payload,
+            mss = mss,
         )
     }
 
@@ -479,25 +554,21 @@ class TcpRelay(
             }
             synchronized(flow) {
                 if (flow.closed || !flow.established) return@forEach
-                if (now - flow.lastAckAt < retransmitTimeoutMs) return@forEach
+                if (now - flow.lastAckAt < flow.rtoMs) return@forEach
                 val unackedData = flow.sendBuffer.size > 0
                 if (unackedData) {
-                    // Go-Back-N：从最老的未确认字节开始重发。
+                    // 超时重传：从最老的未确认字节开始（Go-Back-N）。
                     flow.sendNxt = flow.sendUna
                     flow.lastAckAt = now
                     sendMore(flow)
                 } else if (flow.finSent && !flow.finAcked) {
                     flow.lastAckAt = now
                     writePacket(
-                        TcpPacketBuilder.buildIpv4Tcp(
-                            sourceAddress = flow.key.destinationAddress,
-                            sourcePort = flow.key.destinationPort,
-                            destinationAddress = flow.key.sourceAddress,
-                            destinationPort = flow.key.sourcePort,
+                        buildTcp(
+                            flow = flow,
                             sequence = flow.finSeq,
                             acknowledgment = flow.clientNext,
                             flags = IpPacket.TCP_FIN or IpPacket.TCP_ACK,
-                            window = receiveWindow,
                         ),
                     )
                 }
@@ -513,6 +584,7 @@ class TcpRelay(
         if (flow.closed) return
         flow.closed = true
         flows.remove(key, flow)
+        flow.outOfOrder.clear()
         runCatching { flow.toServer.close() }
         flow.readerJob?.cancel()
         flow.writerJob?.cancel()
@@ -563,5 +635,9 @@ class TcpRelay(
         const val DEFAULT_RETRANSMIT_MS: Long = 1_000L
         const val DEFAULT_MAX_FLOWS: Int = 256
         private const val REAP_INTERVAL_MS: Long = 250L
+        private const val MASK: Long = 0xFFFFFFFFL
+
+        /** 32 位序列号的回绕安全差值：a 在 b 之后多少字节（0..2^32-1）。 */
+        internal fun seqDiff(a: Long, b: Long): Long = (a - b) and MASK
     }
 }

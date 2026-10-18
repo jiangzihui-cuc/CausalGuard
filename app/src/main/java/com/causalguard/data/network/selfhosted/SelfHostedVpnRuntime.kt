@@ -46,5 +46,5 @@ object SelfHostedVpnRuntime {
     var running: Boolean = false
         internal set
 
-    private val ROUTE_PATTERN = Regex("""\d{1,3}(\.\d{1,3}){3}/\d{1,2}""")
+    private val ROUTE_PATTERN = Regex("""[0-9a-fA-F:.]+/\d{1,3}""")
 }

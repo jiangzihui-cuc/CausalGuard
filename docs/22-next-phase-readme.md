@@ -6,7 +6,7 @@
 > 决赛答辩：2026-11-14
 > 决策冻结：2026-10-14（见第 3 节，9 项决策已定）
 > 阶段 0 完成：2026-10-16（真机验证 A/B/C 通过，见下方阶段 0 完成记录）
-> 阶段 1 进展：2026-10-16 自研底座核心 + 去 GPL + Apache-2.0 完成；2026-10-17 真机完成 DNS 观测面端到端验证；2026-10-18 V1-7a UDP 与 V1-7b TCP（IPv4 MVP）数据面真机通过。V1-7c/7d 待续，见下方阶段 1 进展记录。
+> 阶段 1 进展：2026-10-16 自研底座核心 + 去 GPL + Apache-2.0 完成；2026-10-17 真机完成 DNS 观测面端到端验证；2026-10-18 V1-7a UDP、V1-7b TCP、V1-7c IPv6/健壮性完成（TCP/UDP IPv4 真机通过，IPv6 真机待可用网络）。V1-7d 待续，见下方阶段 1 进展记录。
 > 本文档回答一个问题：**从「竞赛 demo」到「成熟完整 app」，下一步做什么、先做什么、怎么验收。**
 
 ---
@@ -138,7 +138,7 @@ EOF
 | `net-core/` 自研网络核心模块 | IPv4/IPv6 + TCP/UDP 报文解析（含 IPv6 扩展首部/分片）、IPv4/UDP 报文构造（校验和）、DNS 解析（含压缩指针）与 NXDOMAIN 构造、`/proc/net/*` 解析与 UID 归属索引、域名阻断判定；JVM 单测 27 项全绿 |
 | `app/.../data/network/selfhosted/` | 自研 `VpnService`（观测优先：只路由 DNS 子网，DNS 代理转发 + 域名阻断 + NXDOMAIN，不改 TCP 连通性）、`/proc`+`ConnectivityManager` UID 归属、事件桥 `SelfHostedNetworkAdapter`、`SelfHostedDomainBlockController` |
 | 事件链打通 | `SelfHostedNetworkEventSource → NetworkEventCollector → NetworkEventIngestor → PrivacyEventRepository`，DI（`AppContainer`）已切换，契约（`NetworkEventSource`）不变 |
-| 数据面 | `net-core` `UdpRelay`（V1-7a）+ `TcpRelay`（V1-7b，IPv4 MVP）：握手、双向转发、ACK/重传、FIN/RST；2026-10-18 真机 UDP 回环与 TCP HTTP 200 通过 |
+| 数据面 | `net-core` `UdpRelay`（V1-7a）+ `TcpRelay`（V1-7b/7c，IPv4+IPv6、乱序/快速重传/RTT-RTO/回绕）：2026-10-18 真机 UDP 回环、TCP HTTP 200 通过 |
 | 去 GPL | 移除 `.gitmodules`、`third_party/tracker-control-android`、`third_party/patches/*`、`apply-trackercontrol-hook.sh`；运行时代码无 tracker-control 引用（`scripts/verify-no-gpl-residue.sh` 校验） |
 | 许可证 | 整体转为 **Apache-2.0**（根 `LICENSE`），`THIRD_PARTY_NOTICES.md`、`SOURCE_ORIGINALITY.md`、`README.md` 已更新 |
 
@@ -148,9 +148,10 @@ EOF
 
 1. **V1-7a UDP 用户态转发已完成**（2026-10-18 真机通过：捕获路由 → `UdpRelay` 转发 → 响应回写 → UID 归属入库）。
 2. **V1-7b TCP 数据面已完成 IPv4 MVP**（2026-10-18 真机通过：握手 → 双向数据 → HTTP 200 → TCP 事件 UID 归属入库）。
-3. **剩余 V1-7c**：IPv6、分片重组、乱序缓存、SACK/窗口缩放、序列号回绕、弱网重传效率。
+3. **V1-7c 已完成核心项**：IPv6 构造/中继、客户端乱序缓存、快速重传、RTT-RTO、序列号回绕；未实现分片重组、SACK、窗口缩放（已标注）。
 4. **剩余 V1-7d**：把默认路由切到 `0.0.0.0/0` 前，需要真机吞吐/切换/耗电验证，并提供 DNS-only 回退开关。
-   **当前默认路由仍只含 DNS 子网**；`0.0.0.0/0` 需 7c/7d 完成后再切。
+   **当前默认路由仍只含 DNS 子网**；`0.0.0.0/0` 需 7d 完成后再切。
+5. **IPv6 真机验证**：实现与单测已通过，但测试设备 Wi-Fi 无可用全球 IPv6，端到端待补测。
 
 > 结论：阶段 1 的**自研底座核心、DNS 观测面真机闭环、去 GPL / 转 Apache-2.0 已完成**；「真实设备上观测任意 TCP 连接元数据」这一验收项依赖后续 TCP 数据面里程碑。
 

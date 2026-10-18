@@ -247,6 +247,38 @@ adb logcat -s CausalGuardDebug CausalGuardVpn CausalGuardNet
 
 范围与限制（V1-7c / 7d）：
 
-- 仅 IPv4；IPv6、分片重组、乱序缓存、SACK/窗口缩放、序列号回绕未实现。
-- 发送端为 MVP（固定 RTO Go-Back-N），弱网吞吐/重传效率需 7c 验证。
+- 仅 IPv4（V1-7b 当时）；IPv6、乱序缓存、快速重传、RTT-RTO、序列号回绕已在 V1-7c 补齐。
+- 分片重组、SACK、窗口缩放协商仍未实现（见第 7 节）。
+- 发送端在 V1-7c 已升级为 RTT 自适应 RTO + 3 次重复 ACK 快速重传（见第 7 节）。
 - 默认路由仍只含 DNS 子网；`0.0.0.0/0` 需在 7c/7d 完成并真机验证后再切换。
+
+---
+
+## 7. V1-7c：IPv6 + TCP 健壮性（2026-10-18）
+
+实现：
+
+- **IPv6 数据面**：新增 `IpPacketBuilder.buildUdpIpv6`、`TcpPacketBuilder.buildIpv6Tcp`
+  （IPv6 伪首部校验和）；`UdpRelay`/`TcpRelay` 按地址族自动选择构造器；
+  TUN 增加 ULA 地址 `fd00:cafe:1::1/64` 与对应路由；捕获路由校验支持 IPv6 CIDR。
+- **TCP 健壮性**：客户端乱序缓存 + 重叠重传裁剪；3 次重复 ACK 快速重传；
+  RTT/SRTT/RTTVAR 自适应 RTO；32 位序列号回绕比较（`seqDiff`）。
+
+未实现（诚实标注）：分片重组、SACK、窗口缩放协商。MSS 已 clamp（1460），
+TCP 不会产生分片；64KB 接收窗口对手机中继足够，窗口缩放暂不协商。
+
+单测：`net-core` **38 项**（新增 IPv6 UDP/TCP 构造、乱序投递、序列号回绕），全绿。
+
+真机回归（PJW110 / Android 16）：
+
+```text
+tun0: inet6 fd00:cafe:1::1/64 scope global
+CausalGuardDebug: tcp probe ok host=220.181.111.232 port=80 firstLine=HTTP/1.1 200 OK
+CausalGuardDebug: udp probe ok host=114.114.114.114 port=53 responseLength=61
+DB: ('...-10450-220.181.111.232:80','com.causalguard',10450,'TCP','220.181.111.232',80,0,'vpn')
+DB: ('...-10450-114.114.114.114:53','com.causalguard',10450,'UDP','114.114.114.114',53,0,'vpn')
+```
+
+**IPv6 真机验证受限**：设备 Wi-Fi 只有链路本地地址，global IPv6 在蜂窝口
+`ccmni1`；当前默认网络下 `ping6 2400:3200::1` 100% 丢包。因此 IPv6 为
+**实现 + 单测通过**，端到端真机验证待有可用 IPv6 网络时补测。

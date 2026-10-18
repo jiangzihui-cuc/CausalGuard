@@ -29,7 +29,7 @@ import kotlin.coroutines.coroutineContext
  * - **按五元组复用 socket**：同一流后续报文复用同一上游源端口（QUIC 等依赖五元组稳定）；
  * - `protect` 由调用方注入（Android 上是 `VpnService.protect`），避免上游流量再次进入 VPN；
  * - 空闲流按 [idleTimeoutMs] 回收，流数上限 [maxFlows] 防止资源耗尽；
- * - 只处理 IPv4 UDP 首片；IPv6 转发留待 V1-7c（诚实返回 false，不猜测）。
+ * - 只处理 UDP 首片；支持 IPv4/IPv6（分片重组留待后续里程碑）。
  *
  * 纯 JVM（`java.net` + coroutines），可在无 Android 环境下单测。
  */
@@ -73,8 +73,6 @@ class UdpRelay(
         if (packet.protocol != TransportProtocol.UDP) return false
         if (!packet.isFirstFragment) return false
         if (packet.sourcePort <= 0 || packet.destinationPort <= 0) return false
-        // V1-7a 只支持 IPv4；IPv6 留待 V1-7c。
-        if (packet.sourceAddress.contains(':') || packet.destinationAddress.contains(':')) return false
 
         maybeReap()
         val key = FlowKey(
@@ -140,13 +138,23 @@ class UdpRelay(
                 socket.receive(response)
                 val payload = response.data.copyOfRange(response.offset, response.offset + response.length)
                 flows[key]?.lastActive = clock()
-                val outbound = IpPacketBuilder.buildUdpIpv4(
-                    sourceAddress = key.destinationAddress,
-                    sourcePort = key.destinationPort,
-                    destinationAddress = key.sourceAddress,
-                    destinationPort = key.sourcePort,
-                    payload = payload,
-                )
+                val outbound = if (key.destinationAddress.contains(':')) {
+                    IpPacketBuilder.buildUdpIpv6(
+                        sourceAddress = key.destinationAddress,
+                        sourcePort = key.destinationPort,
+                        destinationAddress = key.sourceAddress,
+                        destinationPort = key.sourcePort,
+                        payload = payload,
+                    )
+                } else {
+                    IpPacketBuilder.buildUdpIpv4(
+                        sourceAddress = key.destinationAddress,
+                        sourcePort = key.destinationPort,
+                        destinationAddress = key.sourceAddress,
+                        destinationPort = key.sourcePort,
+                        payload = payload,
+                    )
+                }
                 writeToTun(outbound)
             }
         } catch (throwable: Throwable) {
