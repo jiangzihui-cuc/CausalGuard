@@ -3,6 +3,7 @@ package com.causalguard
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -48,6 +49,20 @@ class MainActivity : ComponentActivity() {
             show("=== 通知权限：${if (granted) "已授权" else "未授权（服务仍运行，无通知）"} ===")
         }
 
+    /**
+     * v2.0 阶段 1：自研网络底座需要应用自己申请 VPN 授权（旧版由第三方底座 APK 申请）。
+     * 授权通过后再启动前台监测服务；拒绝则诚实提示，不伪装已开始监测。
+     */
+    private val vpnPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                show("=== VPN 授权已通过（自研网络底座）===")
+                startNetworkCollectInternal()
+            } else {
+                show("=== VPN 授权被拒绝，无法启动自研网络底座 ===")
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         appDependencies = container
@@ -58,6 +73,7 @@ class MainActivity : ComponentActivity() {
                 mitigationExecutor = appDependencies.mitigationExecutor,
                 mitigationRepository = appDependencies.mitigationRepository,
                 networkObservationRepository = appDependencies.networkObservationRepository,
+                vpnTunnelController = appDependencies.vpnTunnelController,
                 output = outputText,
                 onOpenUsageSettings = {
                     startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
@@ -73,17 +89,28 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * A4-5：启动前台监测服务（内部注册底座广播并持续入库，网络切换/VPN 回收时自动恢复）。
+     * A4-5：启动前台监测服务（持续入库，网络切换/VPN 回收时自动恢复）。
+     * v2.0 阶段 1 起先申请自研网络底座的 VPN 授权，未授权不启动（诚实降级）。
      * Android 13+ 顺带申请通知权限，以便展示常驻通知；未授权不影响服务运行。
      */
     private fun startNetworkCollect() {
+        val consent = runCatching { VpnService.prepare(this) }.getOrNull()
+        if (consent != null) {
+            show("=== 需要 VPN 授权（自研网络底座）===")
+            vpnPermissionLauncher.launch(consent)
+            return
+        }
+        startNetworkCollectInternal()
+    }
+
+    private fun startNetworkCollectInternal() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         runCatching { NetworkMonitorService.start(applicationContext) }
-            .onSuccess { show("=== A4-5 网络监测前台服务已启动（网络切换自动恢复）===") }
+            .onSuccess { show("=== A4-5 网络监测前台服务已启动（自研底座，网络切换自动恢复）===") }
             .onFailure { show("=== A4-5 启动服务失败：${it.message ?: it} ===") }
     }
 

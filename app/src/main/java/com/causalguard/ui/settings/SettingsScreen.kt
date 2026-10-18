@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 fun SettingsScreen(
     state: SettingsUiState,
     onBack: () -> Unit,
+    onEnableFullTunnel: (Boolean) -> Unit,
+    onRevertToDnsOnly: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -42,6 +44,32 @@ fun SettingsScreen(
                 title = "实时监测",
                 description = state.monitoringDescription,
             )
+        }
+
+        SettingsSection(title = "网络底座（验证）") {
+            Text("当前模式：${state.fullTunnelMode}")
+            Text(state.fullTunnelDescription, style = MaterialTheme.typography.bodyMedium)
+            if (state.fullTunnelEnabled) {
+                Button(
+                    onClick = onRevertToDnsOnly,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("回退到仅 DNS")
+                }
+            } else {
+                Button(
+                    onClick = { onEnableFullTunnel(true) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("开启全隧道（仅本应用，安全验证）")
+                }
+                Button(
+                    onClick = { onEnableFullTunnel(false) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("开启全隧道（全部应用，60 秒自动回退）")
+                }
+            }
         }
 
         SettingsSection(title = "数据保留") {

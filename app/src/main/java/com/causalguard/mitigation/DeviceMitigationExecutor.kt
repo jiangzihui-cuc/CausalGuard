@@ -103,7 +103,7 @@ class DeviceMitigationExecutor(
         }
         val recordId = persist(request, now, target = domain, preSnapshot, observationEnd, status)
         val message = when (status) {
-            MitigationStatus.EXECUTED -> "底座已确认阻断域名 $domain"
+            MitigationStatus.EXECUTED -> "自研底座已确认阻断域名 $domain"
             MitigationStatus.FAILED -> "域名阻断执行失败: $domain"
             else -> "域名阻断能力不可用，未执行: $domain"
         }

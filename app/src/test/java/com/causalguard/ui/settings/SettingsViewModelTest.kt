@@ -5,6 +5,7 @@ import com.causalguard.core.model.ContractJson
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.data.fixture.ExplanationTemplateAsset
 import com.causalguard.data.fixture.RuleInputContextAsset
+import com.causalguard.data.network.selfhosted.VpnTunnelController
 import com.causalguard.data.repository.FakePrivacyEventRepository
 import com.causalguard.rules.RuleAssetLoadResult
 import com.causalguard.rules.RuleAssetLoader
@@ -28,10 +29,16 @@ class SettingsViewModelTest {
 
     @Test
     fun fixtureSettingsExposeOnlyAvailableCapabilities() = runTest {
-        val viewModel = SettingsViewModel(fixtureAnalysisService(), FakePrivacyEventRepository(fixtureEvents()))
+        val viewModel = SettingsViewModel(
+            fixtureAnalysisService(),
+            FakePrivacyEventRepository(fixtureEvents()),
+            FakeVpnTunnelController(),
+        )
         val state = viewModel.uiState.first { it.runtimeMode == HybridRuntimeMode }
 
         assertEquals(HybridRuntimeMode, state.runtimeMode)
+        assertFalse(state.fullTunnelEnabled)
+        assertEquals("仅 DNS（默认）", state.fullTunnelMode)
         assertFalse(state.monitoringAvailable)
         assertFalse(state.monitoringEnabled)
         assertFalse(state.retentionAvailable)
@@ -76,5 +83,22 @@ class SettingsViewModelTest {
             directory = directory.parentFile ?: break
         }
         error("fixture not found: $relative (cwd=${File(".").absolutePath})")
+    }
+
+    private class FakeVpnTunnelController : VpnTunnelController {
+        override var fullTunnelEnabled: Boolean = false
+            private set
+        override var fullTunnelOnlyOwnApp: Boolean = true
+            private set
+
+        override fun enableFullTunnel(onlyOwnApp: Boolean) {
+            fullTunnelEnabled = true
+            fullTunnelOnlyOwnApp = onlyOwnApp
+        }
+
+        override fun revertToDnsOnly() {
+            fullTunnelEnabled = false
+            fullTunnelOnlyOwnApp = true
+        }
     }
 }

@@ -67,3 +67,30 @@
 ## 8. 最终一致性
 
 - [ ] 任何提交材料与 APK 实际功能不一致，都不提交。
+
+---
+
+## 9. v2.0 阶段 1（自研网络底座）验收记录（2026-10-18）
+
+> 结论：**阶段 1 可合并**。全隧道保持**默认关闭**（设置页可手动开启，全部应用模式带 60 秒自动回退），
+> 长时间 soak / 弱网 / 耗电作为后续产品化验证项，不阻断本次合并。
+
+### 9.1 已完成
+
+- [x] 自研 `net-core`：IPv4/IPv6 + TCP/UDP 解析、DNS 解析/构造、`/proc` UID 归属、域名阻断（单测 38 项）
+- [x] 自研 `VpnService` + DNS 代理 + UDP/TCP 用户态中继；`NetworkEventSource → Ingestor → Room` 打通
+- [x] 真机 DNS 观测：域名阻断（NXDOMAIN）、事件入库、UID 归属（2026-10-17）
+- [x] 真机 UDP 转发（V1-7a）与 TCP 转发（V1-7b，HTTP 200）
+- [x] TCP 健壮性（V1-7c）：乱序缓存、快速重传、RTT-RTO、序列号回绕；IPv6 构造与单测
+- [x] 全隧道 + 回退（V1-7d）：设置页开关、仅本应用 / 全部应用（60 秒自动回退）；
+      真机捕获 Chrome 等其它 App 流量并按时回退（2026-10-18）
+- [x] 去 GPL：移除 submodule / 补丁 / 脚本；`scripts/verify-no-gpl-residue.sh` 通过
+- [x] 许可证整体转 Apache-2.0；`THIRD_PARTY_NOTICES.md` / `SOURCE_ORIGINALITY.md` / README 更新
+- [x] 单测：`net-core` 38 项、`app` 141 项；`./gradlew test`、`:app:assembleDebug` 通过
+
+### 9.2 已知限制（不阻断合并，已在文档中诚实标注）
+
+- [ ] 分钟级长时间全应用全隧道 soak、弱网切换、耗电未量化
+- [ ] IPv6 真机端到端（测试设备 Wi-Fi 无可用全球 IPv6；实现与单测已通过）
+- [ ] ICMP 不转发（`ping` 失败）、IPv6 全隧道、分片重组 / SACK / 窗口缩放
+- [ ] 首页在已有事件时可能长期“正在加载”（既有问题，与本阶段底座改造无关）

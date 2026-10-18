@@ -22,8 +22,8 @@ interface NetworkEventSource {
     suspend fun stop()
 }
 
-/** TrackerControl/NetGuard 适配层边界。 */
-interface TrackerControlAdapter : NetworkEventSource {
+/** VPN 网络底座适配层边界（v2.0 阶段 1 起为自研实现）。 */
+interface VpnAdapter : NetworkEventSource {
     /** 底座是否可用（已授权 VPN 且前台服务存活）。 */
     val isAvailable: Boolean
 }

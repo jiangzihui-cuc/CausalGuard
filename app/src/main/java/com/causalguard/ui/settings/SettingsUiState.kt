@@ -16,4 +16,8 @@ data class SettingsUiState(
     val dataSource: String,
     val footerNote: String,
     val ruleVersion: String,
+    // V1-7d：全隧道开关/回退
+    val fullTunnelEnabled: Boolean,
+    val fullTunnelMode: String,
+    val fullTunnelDescription: String,
 )

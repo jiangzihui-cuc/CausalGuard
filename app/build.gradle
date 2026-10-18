@@ -64,6 +64,8 @@ ksp {
 dependencies {
     implementation project(':core-model')
     implementation project(':rule-engine')
+    // v2.0 阶段 1：自研网络底座核心（去 GPL）。
+    implementation project(':net-core')
     implementation 'androidx.activity:activity-compose:1.13.0'
     implementation 'androidx.navigation:navigation-compose:2.10.2'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0'

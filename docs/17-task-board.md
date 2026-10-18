@@ -328,10 +328,27 @@
 
 > 分支 `feature/v2-t0-ai-integration`，待 PR 合入 `main`。
 
-### v2.0 阶段 1~3（未开始）
+### v2.0 阶段 1：自研网络底座，去 GPL（D2 / D5）
+
+> 分支 `feature/v2-t1-selfhosted-net-core`。详细进展与未完成项见 [22 下一阶段 README](22-next-phase-readme.md) 阶段 1 进展记录。
+
+| 编号 | 任务 | 主责 | 状态 |
+|---|---|---|---|
+| V1-1 | `net-core`：L3/L4 报文解析（IPv4/IPv6 + TCP/UDP，含扩展首部/分片） | 成员 A | 已完成（单测） |
+| V1-2 | `net-core`：DNS 解析（含压缩指针）与 IPv4/UDP 报文构造（校验和） | 成员 A | 已完成（单测） |
+| V1-3 | `net-core`：`/proc/net/*` 解析 + UID 归属索引 + 域名阻断判定 | 成员 A | 已完成（单测） |
+| V1-4 | `app`：自研 `VpnService` + DNS 代理 + `SelfHostedNetworkEventSource` 接入 DI | 成员 A | 已完成（待真机） |
+| V1-5 | 去 GPL：移除 submodule/补丁/脚本，运行时代码无底座引用 | 成员 A | 已完成（`verify-no-gpl-residue.sh`） |
+| V1-6 | 许可证整体转 Apache-2.0 并更新 NOTICES/原创说明/README | 两人 | 已完成 |
+| V1-7a | **UDP 用户态转发**（`net-core` `UdpRelay` + 可配置捕获路由，默认不改变现网行为） | 成员 A | 已完成（2026-10-18 真机通过） |
+| V1-7b | **TCP 数据面**（握手/双向 relay/FIN-RST，就绪后才可切 `0.0.0.0/0`） | 成员 A | 已完成 IPv4 MVP（2026-10-18 真机 HTTP 200） |
+| V1-7c | 健壮性（IPv6、乱序缓存、快速重传、RTT-RTO、序列号回绕；分片/SACK/窗口缩放未实现） | 成员 A | 已完成核心项（2026-10-18；IPv6 真机待可用网络） |
+| V1-7d | 全隧道 + 回退开关（设置页） | 两人 | 已完成（设置页开关 + 仅本应用/全应用 60s 看门狗真机通过；长时间/弱网/耗电待验） |
+| V1-8 | 真机端到端验收（TUN 建立 → DNS 阻断 → `PrivacyEvent` 入库） | 两人 | 已完成（DNS 观测面，2026-10-17；见 [真机验证记录](v2-t1-real-device-verification.md)） |
+
+### v2.0 阶段 2~3（未开始）
 
 | 阶段 | 目标 | 状态 |
 |---|---|---|
-| 阶段 1 | 自研网络底座，去 GPL，整体转 Apache-2.0 | 未开始（决赛后） |
 | 阶段 2 | 端侧模型 + 最小后端（模型网关/密钥托管） | 未开始 |
 | 阶段 3 | 产品化（onboarding / 常驻服务 / 真实告警 / 摘要导出） | 未开始 |

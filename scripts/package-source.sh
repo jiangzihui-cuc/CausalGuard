@@ -3,14 +3,12 @@
 #
 # 内容：
 #   CausalGuard-src-<version>/
-#     <主仓库指定 revision 的全部受控文件：app/core-model/rule-engine/demo-app/docs/scripts/...>
-#     third_party/tracker-control-android/   网络底座对应源码（submodule 固定 commit 的归档）
-#     third_party/patches/*.patch            团队对底座的补丁（对应源码 = 固定 commit + 补丁）
-#     SOURCE_MANIFEST.txt                    commit / 版本 / 补丁与许可证校验和
+#     <主仓库指定 revision 的全部受控文件：app/core-model/rule-engine/net-core/demo-app/docs/scripts/...>
+#     SOURCE_MANIFEST.txt                    commit / 版本 / 校验和
 #
 # 说明：
 # - 使用 `git archive` 只打包**受控文件**，密钥/真实数据/临时文件因 `.gitignore` 不在其中；
-# - 底座源码以“固定 commit + 补丁”交付，复现对应源码见 scripts/apply-trackercontrol-hook.sh；
+# - v2.0 阶段 1 起网络底座为自研实现（net-core），不再打包任何第三方底座源码；
 # - 最终提交包应在最终 tag（A8-5）建立后，以该 tag 为 revision 重新生成一次。
 #
 # 用法：
@@ -33,18 +31,11 @@ STAGE_NAME="CausalGuard-src-${VERSION_NAME}-${SHORT_SHA}"
 STAGE="$OUT_DIR/$STAGE_NAME"
 ARCHIVE="$OUT_DIR/$STAGE_NAME.tar.gz"
 
-SUBMODULE_REL="third_party/tracker-control-android"
-SUBMODULE_COMMIT="$(git -C "$SUBMODULE_REL" rev-parse HEAD)"
-
 rm -rf "$STAGE"
 mkdir -p "$STAGE"
 
 echo "==> 导出主仓库受控文件 @ $REV ($REV_SHA)"
 git archive "$REV" | tar -x -C "$STAGE"
-
-echo "==> 导出网络底座对应源码 @ $SUBMODULE_COMMIT"
-mkdir -p "$STAGE/$SUBMODULE_REL"
-git -C "$SUBMODULE_REL" archive "$SUBMODULE_COMMIT" | tar -x -C "$STAGE/$SUBMODULE_REL"
 
 echo "==> 写 SOURCE_MANIFEST.txt"
 {
@@ -52,21 +43,7 @@ echo "==> 写 SOURCE_MANIFEST.txt"
   echo "生成时间: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "versionName: $VERSION_NAME"
   echo "revision: $REV_SHA (input: $REV)"
-  echo "submodule: $SUBMODULE_REL"
-  echo "submodule commit: $SUBMODULE_COMMIT"
-  echo "submodule tag: $(git -C "$SUBMODULE_REL" describe --tags --always 2>/dev/null || echo unknown)"
-  echo
-  echo "# 团队补丁 SHA-256（对应源码 = 底座固定 commit + 以下补丁）"
-  (cd "$STAGE" && sha256sum third_party/patches/*.patch scripts/apply-trackercontrol-hook.sh)
-  echo
-  echo "# 第三方许可证文件存在性"
-  for f in "$SUBMODULE_REL/LICENSE"; do
-    if [ -f "$STAGE/$f" ]; then echo "present: $f"; else echo "MISSING: $f"; fi
-  done
-  echo
-  echo "# 复现对应源码"
-  echo "git submodule update --init --recursive"
-  echo "scripts/apply-trackercontrol-hook.sh"
+  echo "网络底座: 自研实现（net-core），无第三方底座源码"
 } > "$STAGE/SOURCE_MANIFEST.txt"
 
 echo "==> 生成归档 $ARCHIVE"
