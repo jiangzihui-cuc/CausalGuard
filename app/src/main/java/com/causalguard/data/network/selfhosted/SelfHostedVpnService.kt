@@ -180,6 +180,18 @@ class SelfHostedVpnService : VpnService() {
             runCatching { builder.addRoute(address, prefix) }
                 .onFailure { Log.w(TAG, "invalid route $cidr: ${it.message}") }
         }
+        // V1-7d：全隧道（默认关闭）。验证阶段只允许本应用，避免影响其它 App / adb。
+        if (SelfHostedVpnRuntime.fullTunnelEnabled) {
+            builder.addRoute("0.0.0.0", 0)
+            if (SelfHostedVpnRuntime.fullTunnelOnlyOwnApp) {
+                runCatching { builder.addAllowedApplication(packageName) }
+                    .onFailure { Log.w(TAG, "addAllowedApplication failed: ${it.message}") }
+            }
+            Log.i(
+                TAG,
+                "full tunnel enabled: 0.0.0.0/0 onlyOwnApp=${SelfHostedVpnRuntime.fullTunnelOnlyOwnApp}",
+            )
+        }
         return builder.establish()
     }
 

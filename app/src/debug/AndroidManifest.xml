@@ -37,5 +37,19 @@
                 <action android:name="com.causalguard.debug.TCP_PROBE" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".debug.DebugFullTunnelReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.causalguard.debug.FULL_TUNNEL" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".debug.DebugHttpsProbeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.causalguard.debug.HTTPS_PROBE" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

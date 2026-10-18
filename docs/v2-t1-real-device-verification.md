@@ -282,3 +282,47 @@ DB: ('...-10450-114.114.114.114:53','com.causalguard',10450,'UDP','114.114.114.1
 **IPv6 真机验证受限**：设备 Wi-Fi 只有链路本地地址，global IPv6 在蜂窝口
 `ccmni1`；当前默认网络下 `ping6 2400:3200::1` 100% 丢包。因此 IPv6 为
 **实现 + 单测通过**，端到端真机验证待有可用 IPv6 网络时补测。
+
+---
+
+## 8. V1-7d：全隧道 + 回退开关（2026-10-18 安全验证）
+
+实现：
+
+- `SelfHostedVpnRuntime.fullTunnelEnabled`（默认 **false**）与 `fullTunnelOnlyOwnApp`
+  （验证默认 **true**）；开启时 `Builder.addRoute("0.0.0.0/0", 0)`。
+- **安全验证模式**：`addAllowedApplication("com.causalguard")`，只让本应用走 VPN，
+  **不影响其它 App 与 adb 连接**，避免数据面缺陷导致整机断网。
+- debug `DebugFullTunnelReceiver` 一键开关；关闭后重建 TUN 回到 DNS-only。
+- 新增 `DebugHttpsProbeReceiver` 做真实 HTTPS 吞吐（TLS 由 App 与服务器端到端完成，
+  验证“不做 TLS 中间人”）。
+
+真机证据（PJW110 / Android 16）：
+
+```text
+ip route        : default dev tun0 table 1086
+CausalGuardVpn  : full tunnel enabled: 0.0.0.0/0 onlyOwnApp=true
+CausalGuardDebug: tcp probe ok ... firstLine=HTTP/1.1 200 OK
+CausalGuardDebug: udp probe ok ... responseLength=61
+CausalGuardDebug: https probe ok code=200 bytes=129059 elapsedMs=206 kbps=5012 url=https://www.qq.com/
+DB              : TCP 42.81.179.153:443 uid=10450 com.causalguard
+```
+
+回退验证：
+
+```text
+CausalGuardDebug: full tunnel enabled=false
+CausalGuardVpn  : causalguard self-hosted vpn started (routes=[])
+ip route        : （无 default dev tun0）
+https probe     : code=200（直连，无 tcp syn 日志 → 不再经过中继）
+```
+
+镜像站 `mirrors.aliyun.com` / `mirrors.tuna.tsinghua.edu.cn` 与 Cloudflare 在 Java TLS
+下被 reset，而百度/QQ HTTPS 正常；判断为服务端 WAF/网络策略，非中继缺陷。
+
+安全边界与未验证项：
+
+- 目前只验证了**仅本应用全隧道**；**全应用全隧道未开启**，避免数据面缺陷导致整机断网。
+- ICMP 未转发（`ping` 会失败）；IPv6 未做全隧道；分片重组/SACK/窗口缩放未实现。
+- 弱网切换、长时间耗电、吞吐稳定性未做量化；需在放开全应用前完成。
+- 生产启用前必须：全应用全隧道 + 回退开关接入 UI/守护逻辑 + 断网/切网/耗电验收。
