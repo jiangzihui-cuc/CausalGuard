@@ -6,7 +6,7 @@
 > 决赛答辩：2026-11-14
 > 决策冻结：2026-10-14（见第 3 节，9 项决策已定）
 > 阶段 0 完成：2026-10-16（真机验证 A/B/C 通过，见下方阶段 0 完成记录）
-> 阶段 1 进展：2026-10-16 自研底座核心 + 去 GPL + Apache-2.0 完成；2026-10-17 真机完成 DNS 观测面端到端验证；2026-10-18 V1-7a UDP、V1-7b TCP、V1-7c IPv6/健壮性完成，V1-7d 全隧道（仅本应用安全验证）通过。全应用/弱网/耗电待验，见下方阶段 1 进展记录。
+> 阶段 1 进展：2026-10-16 自研底座核心 + 去 GPL + Apache-2.0 完成；2026-10-17 真机完成 DNS 观测面端到端验证；2026-10-18 V1-7a UDP、V1-7b TCP、V1-7c IPv6/健壮性完成，V1-7d 全隧道（设置页开关 + 仅本应用/全应用 60s 看门狗）真机通过。长时间/弱网/耗电待验，见下方阶段 1 进展记录。
 > 本文档回答一个问题：**从「竞赛 demo」到「成熟完整 app」，下一步做什么、先做什么、怎么验收。**
 
 ---
@@ -139,7 +139,7 @@ EOF
 | `app/.../data/network/selfhosted/` | 自研 `VpnService`（观测优先：只路由 DNS 子网，DNS 代理转发 + 域名阻断 + NXDOMAIN，不改 TCP 连通性）、`/proc`+`ConnectivityManager` UID 归属、事件桥 `SelfHostedNetworkAdapter`、`SelfHostedDomainBlockController` |
 | 事件链打通 | `SelfHostedNetworkEventSource → NetworkEventCollector → NetworkEventIngestor → PrivacyEventRepository`，DI（`AppContainer`）已切换，契约（`NetworkEventSource`）不变 |
 | 数据面 | `net-core` `UdpRelay`（V1-7a）+ `TcpRelay`（V1-7b/7c，IPv4+IPv6、乱序/快速重传/RTT-RTO/回绕）：2026-10-18 真机 UDP 回环、TCP HTTP 200 通过 |
-| 全隧道 | V1-7d：`0.0.0.0/0` + 仅本应用安全验证 + 一键回退；真机 HTTPS 129KB ≈ 5Mbps，回退后直连正常 |
+| 全隧道 | V1-7d：设置页开关（仅本应用 / 全部应用 60s 自动回退 / 回退到仅 DNS）；真机捕获 Chrome 等其它 App 流量，看门狗按时回退 |
 | 去 GPL | 移除 `.gitmodules`、`third_party/tracker-control-android`、`third_party/patches/*`、`apply-trackercontrol-hook.sh`；运行时代码无 tracker-control 引用（`scripts/verify-no-gpl-residue.sh` 校验） |
 | 许可证 | 整体转为 **Apache-2.0**（根 `LICENSE`），`THIRD_PARTY_NOTICES.md`、`SOURCE_ORIGINALITY.md`、`README.md` 已更新 |
 
@@ -150,8 +150,8 @@ EOF
 1. **V1-7a UDP 用户态转发已完成**（2026-10-18 真机通过：捕获路由 → `UdpRelay` 转发 → 响应回写 → UID 归属入库）。
 2. **V1-7b TCP 数据面已完成 IPv4 MVP**（2026-10-18 真机通过：握手 → 双向数据 → HTTP 200 → TCP 事件 UID 归属入库）。
 3. **V1-7c 已完成核心项**：IPv6 构造/中继、客户端乱序缓存、快速重传、RTT-RTO、序列号回绕；未实现分片重组、SACK、窗口缩放（已标注）。
-4. **剩余 V1-7d 收尾**：仅本应用全隧道 + 回退已验证（HTTPS ≈5Mbps）；**全应用全隧道、弱网切换、长时间耗电、吞吐稳定性**未验证，生产启用前需补。
-   **当前默认仍关闭全隧道**；`0.0.0.0/0` 只在调试开关开启时生效。
+4. **V1-7d 收尾**：设置页开关、仅本应用 / 全部应用（60s 自动回退）与回退均已真机验证；**长时间稳定性、弱网切换、耗电**未量化，生产启用前需补。
+   **当前默认仍关闭全隧道**；`0.0.0.0/0` 只在设置页/调试开关开启时生效。
 5. **IPv6 真机验证**：实现与单测已通过，但测试设备 Wi-Fi 无可用全球 IPv6，端到端待补测。
 
 > 结论：阶段 1 的**自研底座核心、DNS 观测面真机闭环、去 GPL / 转 Apache-2.0 已完成**；「真实设备上观测任意 TCP 连接元数据」这一验收项依赖后续 TCP 数据面里程碑。

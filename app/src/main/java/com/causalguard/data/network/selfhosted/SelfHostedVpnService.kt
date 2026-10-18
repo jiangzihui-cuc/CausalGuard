@@ -22,6 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -46,6 +47,7 @@ class SelfHostedVpnService : VpnService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var readJob: Job? = null
+    private var fullTunnelWatchdogJob: Job? = null
     private var tunnel: ParcelFileDescriptor? = null
     private var tunOutput: FileOutputStream? = null
     private val tunWriteLock = Any()
@@ -88,6 +90,8 @@ class SelfHostedVpnService : VpnService() {
     override fun onDestroy() {
         readJob?.cancel()
         readJob = null
+        fullTunnelWatchdogJob?.cancel()
+        fullTunnelWatchdogJob = null
         if (::udpRelay.isInitialized) runCatching { udpRelay.closeAll() }
         if (::tcpRelay.isInitialized) runCatching { tcpRelay.closeAll() }
         runCatching { tunnel?.close() }
@@ -117,6 +121,7 @@ class SelfHostedVpnService : VpnService() {
             return
         }
         tunnel = descriptor
+        scheduleFullTunnelWatchdog()
         tunOutput = FileOutputStream(descriptor.fileDescriptor)
         val input = FileInputStream(descriptor.fileDescriptor)
         readJob = scope.launch {
@@ -138,9 +143,28 @@ class SelfHostedVpnService : VpnService() {
         }
     }
 
+    /**
+     * 全应用全隧道安全看门狗：60 秒后自动回退到 DNS-only。
+     * 防止数据面缺陷导致整机断网时用户无法操作（adb/设置页都可能不可用）。
+     * 仅本应用模式（onlyOwnApp=true）不启用看门狗。
+     */
+    private fun scheduleFullTunnelWatchdog() {
+        fullTunnelWatchdogJob?.cancel()
+        fullTunnelWatchdogJob = null
+        if (!SelfHostedVpnRuntime.fullTunnelEnabled || SelfHostedVpnRuntime.fullTunnelOnlyOwnApp) return
+        fullTunnelWatchdogJob = scope.launch {
+            Log.i(TAG, "full tunnel safety watchdog armed: ${FULL_TUNNEL_SAFETY_MS}ms")
+            delay(FULL_TUNNEL_SAFETY_MS)
+            if (SelfHostedVpnRuntime.fullTunnelEnabled && !SelfHostedVpnRuntime.fullTunnelOnlyOwnApp) {
+                Log.w(TAG, "full tunnel safety timeout; reverting to DNS-only")
+                SelfHostedVpnRuntime.setFullTunnel(enabled = false, onlyOwnApp = true)
+                rebuildTunnel()
+            }
+        }
+    }
+
     /** 重建 TUN（例如调试注入新的捕获路由后）。 */
-    private fun rebuildTunnel() {
-        scope.launch {
+    private fun rebuildTunnel() {        scope.launch {
             readJob?.cancel()
             runCatching { tunnel?.close() }
             readJob?.join()
@@ -308,6 +332,7 @@ class SelfHostedVpnService : VpnService() {
         private const val MTU = 1500
         private const val MAX_PACKET_SIZE = 32_767
         private const val DNS_PORT = 53
+        private const val FULL_TUNNEL_SAFETY_MS = 60_000L
 
         /** TUN 接口地址与默认路由（只路由到 DNS 代理的子网）。 */
         const val VPN_ADDRESS = "10.111.222.1"

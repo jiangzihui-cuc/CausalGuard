@@ -6,30 +6,65 @@ import androidx.lifecycle.viewModelScope
 import com.causalguard.analysis.EventAnalysisService
 import com.causalguard.core.model.PrivacyEvent
 import com.causalguard.core.model.PrivacyEventRepository
+import com.causalguard.data.network.selfhosted.VpnTunnelController
 import com.causalguard.ui.LocalExplanationMode
 import com.causalguard.ui.dataSourceFor
 import com.causalguard.ui.runtimeFooterFor
 import com.causalguard.ui.runtimeModeFor
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 class SettingsViewModel(
     private val analysisService: EventAnalysisService,
     repository: PrivacyEventRepository,
+    private val vpnTunnelController: VpnTunnelController,
 ) : ViewModel() {
 
-    val uiState: StateFlow<SettingsUiState> = repository.observeAll()
-        .map { events -> buildState(events) }
+    /** 全隧道开关变更后手动触发一次重新构建（运行时状态不在数据库里）。 */
+    private val refresh = MutableStateFlow(0L)
+
+    val uiState: StateFlow<SettingsUiState> = combine(
+        repository.observeAll(),
+        refresh,
+    ) { events, _ -> buildState(events) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = buildState(emptyList()),
         )
 
+    /** 开启全隧道；[onlyOwnApp] 为 true 时只让本应用走 VPN（安全验证）。 */
+    fun enableFullTunnel(onlyOwnApp: Boolean) {
+        vpnTunnelController.enableFullTunnel(onlyOwnApp)
+        refresh.value += 1
+    }
+
+    /** 回退到仅 DNS（默认安全状态）。 */
+    fun revertToDnsOnly() {
+        vpnTunnelController.revertToDnsOnly()
+        refresh.value += 1
+    }
+
     private fun buildState(events: List<PrivacyEvent>): SettingsUiState {
         val runtimeMode = runtimeModeFor(events)
+        val fullTunnelEnabled = vpnTunnelController.fullTunnelEnabled
+        val onlyOwnApp = vpnTunnelController.fullTunnelOnlyOwnApp
+        val fullTunnelMode = when {
+            !fullTunnelEnabled -> "仅 DNS（默认）"
+            onlyOwnApp -> "全隧道（仅本应用，验证模式）"
+            else -> "全隧道（全部应用）"
+        }
+        val fullTunnelDescription = when {
+            !fullTunnelEnabled ->
+                "默认只观测 DNS；开启全隧道后 IPv4 全部流量经自研底座转发，可随时在本页回退。"
+            onlyOwnApp ->
+                "只有本应用流量经过自研底座，不影响其它 App 与 adb；适合安全验证。"
+            else ->
+                "全部 App 的 IPv4 流量经过自研底座；服务会在 60 秒后自动回退到仅 DNS。"
+        }
         return SettingsUiState(
             runtimeMode = runtimeMode,
             monitoringAvailable = false,
@@ -54,19 +89,23 @@ class SettingsViewModel(
             dataSource = dataSourceFor(events),
             footerNote = runtimeFooterFor(runtimeMode),
             ruleVersion = analysisService.ruleVersion,
+            fullTunnelEnabled = fullTunnelEnabled,
+            fullTunnelMode = fullTunnelMode,
+            fullTunnelDescription = fullTunnelDescription,
         )
     }
 
     class Factory(
         private val analysisService: EventAnalysisService,
         private val repository: PrivacyEventRepository,
+        private val vpnTunnelController: VpnTunnelController,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
                 "Unknown ViewModel class: ${modelClass.name}"
             }
-            return SettingsViewModel(analysisService, repository) as T
+            return SettingsViewModel(analysisService, repository, vpnTunnelController) as T
         }
     }
 }

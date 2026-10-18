@@ -38,6 +38,7 @@ import com.causalguard.core.model.NetworkObservation
 import com.causalguard.core.model.NetworkObservationRepository
 import com.causalguard.analysis.EventAnalysisResult
 import com.causalguard.analysis.EventAnalysisService
+import com.causalguard.data.network.selfhosted.VpnTunnelController
 import com.causalguard.ui.eventdetail.EventDetailScreen
 import com.causalguard.ui.eventdetail.EventDetailViewModel
 import com.causalguard.ui.home.HomeScreen
@@ -63,6 +64,7 @@ fun CausalGuardApp(
     mitigationExecutor: MitigationExecutor,
     mitigationRepository: MitigationRepository,
     networkObservationRepository: NetworkObservationRepository,
+    vpnTunnelController: VpnTunnelController,
     output: String,
     onOpenUsageSettings: () -> Unit,
     onCollectPackage: () -> Unit,
@@ -96,12 +98,18 @@ fun CausalGuardApp(
                 }
                 composable(SettingsRoute) {
                     val settingsViewModel: SettingsViewModel = viewModel(
-                        factory = SettingsViewModel.Factory(eventAnalysisService, privacyEventRepository),
+                        factory = SettingsViewModel.Factory(
+                            eventAnalysisService,
+                            privacyEventRepository,
+                            vpnTunnelController,
+                        ),
                     )
                     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
                     SettingsScreen(
                         state = settingsState,
                         onBack = { navController.popBackStack() },
+                        onEnableFullTunnel = settingsViewModel::enableFullTunnel,
+                        onRevertToDnsOnly = settingsViewModel::revertToDnsOnly,
                     )
                 }
                 composable(TimelineRoute) {
@@ -229,6 +237,7 @@ private fun CausalGuardAppPreview() {
         mitigationExecutor = PreviewMitigationExecutor,
         mitigationRepository = PreviewMitigationRepository,
         networkObservationRepository = PreviewNetworkObservationRepository,
+        vpnTunnelController = PreviewVpnTunnelController,
         output = "Spike / Debug output preview",
         onOpenUsageSettings = {},
         onCollectPackage = {},
@@ -240,8 +249,16 @@ private fun CausalGuardAppPreview() {
     )
 }
 
-private object PreviewPrivacyEventRepository : PrivacyEventRepository {
-    override suspend fun insert(event: PrivacyEvent) = Unit
+private object PreviewVpnTunnelController : VpnTunnelController {
+    override val fullTunnelEnabled: Boolean = false
+    override val fullTunnelOnlyOwnApp: Boolean = true
+
+    override fun enableFullTunnel(onlyOwnApp: Boolean) = Unit
+
+    override fun revertToDnsOnly() = Unit
+}
+
+private object PreviewPrivacyEventRepository : PrivacyEventRepository {    override suspend fun insert(event: PrivacyEvent) = Unit
 
     override suspend fun insertAll(events: List<PrivacyEvent>) = Unit
 

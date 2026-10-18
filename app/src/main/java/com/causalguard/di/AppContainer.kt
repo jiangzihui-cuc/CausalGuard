@@ -28,6 +28,8 @@ import com.causalguard.data.ingest.NetworkEventCollector
 import com.causalguard.data.ingest.NetworkEventIngestor
 import com.causalguard.data.ingest.NetworkMonitorController
 import com.causalguard.data.network.selfhosted.SelfHostedNetworkEventSource
+import com.causalguard.data.network.selfhosted.SelfHostedVpnTunnelController
+import com.causalguard.data.network.selfhosted.VpnTunnelController
 import com.causalguard.data.local.CausalGuardDatabase
 import com.causalguard.data.provider.PackageManagerProfileProvider
 import com.causalguard.data.provider.UsageStatsContextProvider
@@ -69,6 +71,9 @@ interface AppDependencies {
     val appProfileProvider: AppProfileProvider
     val usageContextProvider: UsageContextProvider
     val eventImporter: EventImporter
+
+    /** V1-7d：全隧道开关/回退（设置页使用）。 */
+    val vpnTunnelController: VpnTunnelController
 }
 
 /**
@@ -133,6 +138,9 @@ class AppContainer(
             Log.w("CausalGuardNet", "network monitor error: $throwable")
         }
     }
+    /** V1-7d：设置页的全隧道开关/回退。 */
+    override val vpnTunnelController: VpnTunnelController = SelfHostedVpnTunnelController(context)
+
     override val appProfileRepository: AppProfileRepository = RoomAppProfileRepository(database)
     override val usageContextRepository: UsageContextRepository = RoomUsageContextRepository(database)
     override val riskAssessmentRepository: RiskAssessmentRepository = RoomRiskAssessmentRepository(database)

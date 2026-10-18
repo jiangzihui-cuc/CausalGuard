@@ -322,7 +322,41 @@ https probe     : code=200（直连，无 tcp syn 日志 → 不再经过中继�
 
 安全边界与未验证项：
 
-- 目前只验证了**仅本应用全隧道**；**全应用全隧道未开启**，避免数据面缺陷导致整机断网。
+- 设置页已接入“仅本应用 / 全部应用（60 秒自动回退）/ 回退到仅 DNS”三个入口。
+- 全应用全隧道已做**短时**真机验证（见 8.2），60 秒看门狗自动回退成功，adb 未中断。
 - ICMP 未转发（`ping` 会失败）；IPv6 未做全隧道；分片重组/SACK/窗口缩放未实现。
-- 弱网切换、长时间耗电、吞吐稳定性未做量化；需在放开全应用前完成。
-- 生产启用前必须：全应用全隧道 + 回退开关接入 UI/守护逻辑 + 断网/切网/耗电验收。
+- 长时间稳定性、弱网切换、耗电未做量化；生产启用前需补 soak test 与断网/切网验收。
+
+### 8.1 设置页接入（2026-10-18）
+
+设置页新增「网络底座（验证）」：
+
+- 当前模式：仅 DNS（默认）/ 全隧道（仅本应用，验证模式）/ 全隧道（全部应用）；
+- 按钮：“开启全隧道（仅本应用，安全验证）”“开启全隧道（全部应用，60 秒自动回退）”；
+- 已开启时显示“回退到仅 DNS”。
+
+`VpnTunnelController` 经 `AppContainer` 注入 `SettingsViewModel`，按钮直接重建 TUN；
+`SettingsViewModel` 用 `combine(refresh)` 在开关后立即刷新 UI。
+
+### 8.2 全应用全隧道真机验证（2026-10-18）
+
+```text
+CausalGuardVpn: full tunnel safety watchdog armed: 60000ms
+CausalGuardVpn: tcp connected 106.120.178.9:443
+CausalGuardNet: ingested ... app=com.android.chrome blocked=false
+CausalGuardNet: ingested ... app=com.oplus.nearcomm blocked=false
+...
+CausalGuardVpn: full tunnel safety timeout; reverting to DNS-only
+CausalGuardVpn: causalguard self-hosted vpn started (routes=[])
+ip route: 无 default dev tun0
+adb: 仍在线
+```
+
+结论：全应用全隧道可工作，其它 App（Chrome/系统组件）的连接被捕获并按 UID 归属；
+60 秒看门狗自动回退成功，adb 未中断。
+
+### 8.3 仍未验证
+
+- 分钟级长时间全应用全隧道的稳定性、弱网切换、耗电；
+- ICMP（`ping`）不转发、IPv6 不做全隧道、分片/SACK/窗口缩放；
+- 生产启用前需更长 soak test + 断网/切网验收。

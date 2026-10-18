@@ -73,6 +73,7 @@ class MainActivity : ComponentActivity() {
                 mitigationExecutor = appDependencies.mitigationExecutor,
                 mitigationRepository = appDependencies.mitigationRepository,
                 networkObservationRepository = appDependencies.networkObservationRepository,
+                vpnTunnelController = appDependencies.vpnTunnelController,
                 output = outputText,
                 onOpenUsageSettings = {
                     startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
