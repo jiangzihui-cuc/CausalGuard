@@ -157,7 +157,7 @@ adb exec-out run-as com.causalguard cat databases/causalguard.db-wal > cg.db-wal
 
 ---
 
-## 5. V1-7a：UDP 用户态转发（代码完成，真机验证待设备重连）
+## 5. V1-7a：UDP 用户态转发（2026-10-18 真机验证通过）
 
 实现：
 
@@ -171,7 +171,7 @@ adb exec-out run-as com.causalguard cat databases/causalguard.db-wal > cg.db-wal
 
 单测：`UdpRelayTest` 3 项（响应回写报文、拒绝非 UDP/IPv6、流数上限），`net-core` 共 29 项全绿。
 
-真机步骤（设备恢复后执行）：
+真机复现步骤：
 
 ```bash
 # 启动监测（调试面板 Start Network Monitor）后，注入一条测试捕获路由
@@ -186,14 +186,20 @@ adb shell am broadcast -a com.causalguard.debug.UDP_PROBE \
 adb logcat -s CausalGuardDebug CausalGuardVpn CausalGuardNet
 ```
 
-预期证据：
+实测证据（2026-10-18，PJW110 / Android 16）：
 
 ```text
 CausalGuardDebug: add route=114.114.114.114/32 added=true routes=[114.114.114.114/32]
 CausalGuardVpn  : causalguard self-hosted vpn started (routes=[114.114.114.114/32])
-CausalGuardDebug: udp probe ok host=114.114.114.114 port=53 responseLength=...
-CausalGuardNet  : ingested ... app=com.causalguard blocked=false   # remoteIp=114.114.114.114:53
+ip route        : 114.114.114.114 dev tun0 table 1073 proto static scope link
+CausalGuardDebug: udp probe ok host=114.114.114.114 port=53 responseLength=61
+CausalGuardNet  : ingested id=...-10450-114.114.114.114:53 app=com.causalguard blocked=false
+CausalGuardDebug: status running=true adapterAvailable=true dropped=0
+DB              : ('...-114.114.114.114:53','com.causalguard',10450,'UDP','114.114.114.114',53,0,'vpn')
 ```
+
+结论：TUN 捕获 → `UdpRelay` protected 转发 → 响应回写 TUN → 应用收到响应（61 字节），
+且事件以 UID 10450 / `com.causalguard` 入库；DNS 对照组仍正常。**V1-7a 真机通过。**
 
 > 注意：测试路由只用于验证数据面，验证完应重启应用（`dataPlaneRoutes` 为进程内状态）恢复默认 DNS-only。
 > **在 V1-7b TCP 数据面就绪前，禁止注入 `0.0.0.0/0`。**
