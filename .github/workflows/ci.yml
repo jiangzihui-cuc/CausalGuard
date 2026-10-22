@@ -42,3 +42,22 @@ jobs:
         # because the committed wrapper points at a China mirror that can stall
         # on GitHub-hosted runners.
         run: gradle build --stacktrace
+
+  backend:
+    name: Backend gateway tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run gateway tests
+        working-directory: backend
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s tests -v

@@ -60,6 +60,8 @@ class FixtureEventAnalysisService(
      * 不影响 P0 断网可用；注入时模型输出仍经本地事实校验，不通过则回退本地模板。
      */
     aiExplanationProvider: AiExplanationProvider? = null,
+    /** 在线解释审计日志（只含状态/模型，不含正文）；默认不输出，便于纯 JVM 测试。 */
+    private val aiAuditLog: (String) -> Unit = {},
 ) : EventAnalysisService {
     private val ruleAsset = rules as? RuleAssetLoadResult.Success
         ?: error("Unable to load runtime rule asset")
@@ -76,17 +78,26 @@ class FixtureEventAnalysisService(
     override suspend fun analyze(eventId: String): EventAnalysisResult? {
         val events = repository.observeAll().first()
         val event = events.firstOrNull { it.eventId == eventId } ?: return null
-        return analyzeEvent(event, events)
+        return analyzeEvent(event, events, useAiExplanation = true)
     }
 
+    /**
+     * 批量概览（Home）只用本地确定性模板，**不逐事件调用在线模型**。
+     *
+     * 真机验证发现：事件库达到数百条时，逐条 AI 解释会让 Home 长时间停留在加载态，
+     * 并产生大量真实 API 请求。在线增强只用于用户打开的单条事件详情。
+     */
     override suspend fun analyzeAll(): List<EventAnalysisResult> {
         val events = repository.observeAll().first()
-        return events.map { event -> analyzeEvent(event, events) }
+        return events.map { event ->
+            analyzeEvent(event, events, useAiExplanation = false)
+        }
     }
 
     private suspend fun analyzeEvent(
         event: PrivacyEvent,
         events: List<PrivacyEvent>,
+        useAiExplanation: Boolean,
     ): EventAnalysisResult {
         val appProfile = inputContext.appProfiles.singleOrNull { it.packageName == event.appId }
         val explicitScenarioMatch = inputContext.scenarioMatches
@@ -125,8 +136,22 @@ class FixtureEventAnalysisService(
             evidenceSummary = event.evidenceSummary,
             recommendationTitle = evaluation.recommendationDecision.title,
         )
-        val explanation = templatesByEventId[event.eventId]?.toExplanationText()
-            ?: explanationService.explain(explanationContext).text
+        val templateExplanation = templatesByEventId[event.eventId]?.toExplanationText()
+        val onlineExplanation = if (templateExplanation == null && useAiExplanation) {
+            explanationService.explain(explanationContext)
+        } else {
+            null
+        }
+        onlineExplanation?.let { result ->
+            // 审计日志：只记录来源/状态/模型名与拒绝原因，不记录解释正文或输入事实。
+            aiAuditLog(
+                "explanation status=${result.aiStatus.name} source=${result.source.name} " +
+                    "model=${result.modelName ?: "none"} reasons=${result.rejectionReasons.joinToString("|")}",
+            )
+        }
+        val explanation = templateExplanation
+            ?: onlineExplanation?.text
+            ?: explanationService.localText(explanationContext)
         val evidence = assessment.evidenceIds.mapNotNull { evidenceId ->
             events.firstOrNull { it.eventId == evidenceId }
         }

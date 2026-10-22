@@ -2,6 +2,7 @@ package com.causalguard.di
 
 import android.content.Context
 import android.util.Log
+import com.causalguard.BuildConfig
 import com.causalguard.analysis.EventAnalysisService
 import com.causalguard.analysis.FixtureEventAnalysisService
 import com.causalguard.core.model.AppProfileProvider
@@ -109,6 +110,9 @@ class AppContainer(
         sceneConsistencyEvaluator = (RuntimeFixtureLoader.loadSceneKnowledge(context) as? SceneKnowledgeLoadResult.Success)
             ?.let { SceneConsistencyEvaluator(it.knowledge) },
         aiExplanationProvider = aiExplanationProvider,
+        aiAuditLog = { message ->
+            if (BuildConfig.DEBUG) Log.i("CausalGuardAI", message)
+        },
     )
 
     override val eventSink: EventSink = RoomEventSink(privacyEventRepository)

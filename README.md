@@ -2,7 +2,7 @@
 
 > 项目名称：**隐私因果哨兵 Privacy Sentinel**
 > 参赛方向：智能网联与智能终端赛道——移动互联网人工智能应用程序开发
-> 当前阶段：**P0 设计基线（v0.1）**
+> 当前阶段：**v2.0 阶段 2（最小模型网关 + 真机 A/B 已完成，尚未公网部署；端侧模型 PoC 未开始）**
 > 首版基线：Android 10 / API 29+
 
 > **新上手必读** → [docs/19-work-guide.md](docs/19-work-guide.md)：30 秒看清现状、下一步做什么、改哪个文件。
@@ -49,9 +49,15 @@ CausalGuard/
 │  ├─ 18-risk-register.md       风险清单
 │  ├─ 19-work-guide.md          工作导引（打开仓库先看）
 │  ├─ 20-open-source-reuse-guide.md        开源代码复用调研与接入建议
-│  └─ 21-parallel-work-allocation-plan.md  双人并行分工与 Git 协作规范
-└─ （后续）app/                 Android 工程（Kotlin + Room + Jetpack Compose）
-    （后续）demo-app/           自研 Demo App / 演示沙箱
+│  ├─ 21-parallel-work-allocation-plan.md  双人并行分工与 Git 协作规范
+│  ├─ 22-next-phase-readme.md              v2.0 路线图与阶段进展
+│  └─ v2-t2-minimal-gateway.md             v2 阶段 2：最小模型网关与密钥托管
+├─ app/                         Android 主工程（Kotlin + Room + Jetpack Compose）
+├─ core-model/                  跨模块契约与数据模型
+├─ net-core/                    自研网络底座（L3/L4、DNS、UID 归属、中继）
+├─ rule-engine/                 确定性规则、证据链、解释与复查
+├─ demo-app/                    自研 Demo App / 演示沙箱
+└─ backend/                     最小模型网关（Python 标准库，无第三方依赖）
 ```
 
 ## 构建与运行
@@ -70,6 +76,14 @@ scripts/build-release-rc.sh                     # 签名 release APK（需 keyst
 ```
 
 完整的环境与依赖版本、源码包与可复现说明见 [docs/a8-build-and-reproducibility.md](docs/a8-build-and-reproducibility.md)。
+
+最小模型网关（v2 阶段 2，未部署）见 [backend/README.md](backend/README.md)：
+
+```bash
+cd backend
+PYTHONPATH=. python3 -m unittest discover -s tests -v   # 22 项本地测试
+python3 -m causalguard_gateway                          # 需先配置上游密钥与 client token
+```
 
 ## 文档阅读顺序
 

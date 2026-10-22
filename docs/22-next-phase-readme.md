@@ -7,6 +7,7 @@
 > 决策冻结：2026-10-14（见第 3 节，9 项决策已定）
 > 阶段 0 完成：2026-10-16（真机验证 A/B/C 通过，见下方阶段 0 完成记录）
 > 阶段 1 进展：2026-10-16 自研底座核心 + 去 GPL + Apache-2.0 完成；2026-10-17 真机完成 DNS 观测面端到端验证；2026-10-18 V1-7a UDP、V1-7b TCP、V1-7c IPv6/健壮性完成，V1-7d 全隧道（设置页开关 + 仅本应用/全应用 60s 看门狗）真机通过。长时间/弱网/耗电待验，见下方阶段 1 进展记录。
+> 阶段 2 进展：2026-10-19 最小模型网关 + 密钥托管代码与自动化测试完成；同日真机 A/B 通过（网关在线 → AI_ENHANCED；网关不可达 → LOCAL_TEMPLATE），公网部署未完成。见下方阶段 2 进展记录。
 > 本文档回答一个问题：**从「竞赛 demo」到「成熟完整 app」，下一步做什么、先做什么、怎么验收。**
 
 ---
@@ -171,6 +172,40 @@ EOF
 
 **验收**：端侧模型离线可用；确定性规则行为不因模型引入而改变（同版本同输入输出稳定）；评测集新增端侧模型事实一致率。
 
+#### 阶段 2 进展记录（2026-10-19）
+
+已完成**最小后端代码、安全边界与真机 A/B**（公网部署未完成）：
+
+| 交付物 | 说明 |
+|---|---|
+| `backend/causalguard_gateway/` | Python 标准库实现的 OpenAI 兼容网关：client token 鉴权、每 token 限流、字段白名单重建、模型白名单、`max_tokens` 上限、请求/响应大小上限、上游密钥替换、错误脱敏、无正文日志 |
+| `backend/tests/test_server.py` | 22 项本地自动化测试（假上游，不消耗真实额度），覆盖鉴权/白名单/限流/超限/上游错误/配置校验 |
+| `backend/Dockerfile` + `backend/README.md` | 非 root 容器、healthcheck、配置与 App 接入说明 |
+| [v2-t2-minimal-gateway](v2-t2-minimal-gateway.md) | 契约、安全设计、真机 A/B 记录与未完成项 |
+
+**真机 A/B（2026-10-19，PJW110 / Android 16，624 条真机事件）**：
+
+- A：App → 本机网关 → DeepSeek 真实返回 200；单条事件详情 `status=SUCCEEDED source=AI_ENHANCED`；
+- B：网关不可达；事件详情 `status=FAILED source=LOCAL_TEMPLATE`，App 不闪退；
+- Home 概览不再逐条调用模型（修复 624 条事件导致的大量请求与长时间加载）。
+
+**真机发现并修复**：
+
+1. `analyzeAll()` 逐事件调用在线模型 → 改为批量概览只走本地模板，仅单条详情调用 AI；
+2. 本地事实校验把“未命中风险规则”中的子串“中风险”误判为风险升级 → 排除安全搭配后，AI 输出可正常通过；
+3. 新增审计日志（仅 debug 构建；只含 `status/source/model/reasons`，不含正文）。
+
+回归：`:app:testDebugUnitTest` 142/142，`:rule-engine:testDebugUnitTest` 141/141。
+
+**明确未完成**：
+
+1. 网关未部署到公网，未配置 TLS 反向代理；
+2. release merged manifest 已确认不含 debug 明文配置与 Debug receiver，但未用 release 构建重复真机 A/B；
+3. release 已切换为仅注入 gateway client token（`AI_GATEWAY_TOKEN`）；仍需用 release 构建完成真机 A/B 验证；
+4. 因此 DoD 第 4 项（最小后台上线、密钥不再构建期注入）**仍为未完成**。
+
+> 结论：阶段 2 的「代码与安全边界 + 真机 A/B」已完成，但「公网部署 + release 密钥托管切换」尚未完成，不能把阶段 2 标记为完成。
+
 ### 阶段 3（产品化）：从 demo 到 app
 
 **目标**：达到「成熟完整 app」标准，支撑「择机海外上架」（D0/D4）。
@@ -233,3 +268,4 @@ EOF
 6. 无 fixture 也能演示完整闭环，`docs/15-acceptance-checklist.md` 全项通过。
 
 > **阶段 1 状态（2026-10-18）**：第 2 项已完成——自研 `net-core` + 自研 `VpnService` 替代 TrackerControl，运行时无 GPL 依赖，许可证转为 Apache-2.0；真机验证见 [v2-t1 真机验证记录](v2-t1-real-device-verification.md)。第 1 项（真实模型）在阶段 0 完成。第 3–6 项仍属阶段 2/3。
+> **阶段 2 状态（2026-10-19）**：第 4 项仅完成代码与本地测试，网关尚未部署、未与真实上游联调，**不计为完成**；第 5 项已完成代码切换但尚待 release 真机验证；第 3 项端侧模型 PoC 尚未开始。详见 [最小网关记录](v2-t2-minimal-gateway.md)。

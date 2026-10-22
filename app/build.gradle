@@ -3,14 +3,15 @@ apply plugin: 'com.google.devtools.ksp'
 apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
 
-// A6-2：密钥通过本地配置/环境注入，仓库不得出现密钥。
-// 优先级：secrets.properties（已 .gitignore）> 环境变量 > 空（未配置，在线 AI 降级本地模板）。
+// A6-2：凭据通过本地配置/环境注入，仓库不得出现凭据。
+// v2 阶段 2：release 只允许 gateway client token，禁止把阶段 0 的上游模型密钥编进 APK。
 def aiSecrets = new Properties()
 def aiSecretsFile = rootProject.file('secrets.properties')
 if (aiSecretsFile.exists()) {
     aiSecretsFile.withInputStream { aiSecrets.load(it) }
 }
-def aiApiKey = aiSecrets.getProperty('AI_API_KEY', System.getenv('AI_API_KEY') ?: '')
+def legacyAiApiKey = aiSecrets.getProperty('AI_API_KEY', System.getenv('AI_API_KEY') ?: '')
+def gatewayToken = aiSecrets.getProperty('AI_GATEWAY_TOKEN', System.getenv('AI_GATEWAY_TOKEN') ?: '')
 def aiBaseUrl = aiSecrets.getProperty('AI_BASE_URL', System.getenv('AI_BASE_URL') ?: '')
 def aiModelName = aiSecrets.getProperty('AI_MODEL_NAME', System.getenv('AI_MODEL_NAME') ?: 'deepseek-chat')
 
@@ -25,7 +26,8 @@ android {
         versionCode 3
         versionName '1.0.0'
 
-        buildConfigField 'String', 'AI_API_KEY', "\"${aiApiKey}\""
+        // Default is intentionally empty. Each build type selects its own credential source.
+        buildConfigField 'String', 'AI_API_KEY', '""'
         buildConfigField 'String', 'AI_BASE_URL', "\"${aiBaseUrl}\""
         buildConfigField 'String', 'AI_MODEL_NAME', "\"${aiModelName}\""
     }
@@ -33,6 +35,12 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+            // Release must use a gateway token. AI_API_KEY is never read here.
+            buildConfigField 'String', 'AI_API_KEY', "\"${gatewayToken}\""
+        }
+        debug {
+            // Debug keeps the stage-0 local-demo path, while preferring the gateway token.
+            buildConfigField 'String', 'AI_API_KEY', "\"${gatewayToken ?: legacyAiApiKey}\""
         }
     }
 

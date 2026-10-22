@@ -40,6 +40,8 @@ data class ExplanationResult(
      * 这不表示请求一定已经到达远端。
      */
     val inputFields: List<String> = emptyList(),
+    /** 本地事实校验拒绝原因；仅在 [aiStatus] 为 REJECTED 时有值，用于校准与排查。 */
+    val rejectionReasons: List<String> = emptyList(),
 )
 
 /**
@@ -61,6 +63,10 @@ class ExplanationService(
     /** 在线 AI 是否实际可用（已配置且 Provider 可用）。 */
     val isAiAvailable: Boolean
         get() = aiProvider?.isAvailable == true
+
+    /** 仅使用本地确定性模板渲染解释；批量概览等不应触发在线调用的场景使用。 */
+    fun localText(context: ExplanationContext): ExplanationText =
+        localProvider.render(context)
 
     suspend fun explain(context: ExplanationContext): ExplanationResult {
         val provider = aiProvider
@@ -90,6 +96,7 @@ class ExplanationService(
                 context = context,
                 status = ExplanationAiStatus.REJECTED,
                 modelName = provider.modelName,
+                rejectionReasons = validation.reasons,
             )
         }
     }
@@ -110,11 +117,13 @@ class ExplanationService(
         context: ExplanationContext,
         status: ExplanationAiStatus,
         modelName: String?,
+        rejectionReasons: List<String> = emptyList(),
     ): ExplanationResult = ExplanationResult(
         text = localProvider.render(context),
         source = ExplanationSource.LOCAL_TEMPLATE,
         aiStatus = status,
         modelName = modelName,
         inputFields = AiExplanationRequest.WHITELIST_FIELDS,
+        rejectionReasons = rejectionReasons,
     )
 }

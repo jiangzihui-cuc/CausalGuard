@@ -15,7 +15,11 @@ import com.causalguard.rules.CausalChainNodeKind
 import com.causalguard.rules.SceneConsistencyEvaluator
 import com.causalguard.rules.SceneKnowledgeLoadResult
 import com.causalguard.rules.SceneKnowledgeLoader
+import com.causalguard.rules.explain.AiExplanationProvider
+import com.causalguard.rules.explain.AiExplanationRequest
+import com.causalguard.rules.explain.ExplanationText
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.ListSerializer
 import org.junit.Assert.assertEquals
@@ -111,6 +115,39 @@ class EventAnalysisServiceTest {
         val fromAll = service.analyzeAll().single { it.event.eventId == "e-20260921-0009" }
 
         assertEquals(fromAll, service.analyze("e-20260921-0009"))
+    }
+
+    @Test
+    fun batchAnalysisDoesNotCallOnlineAiButSingleEventDoes() = runTest {
+        val calls = AtomicInteger(0)
+        val provider = object : AiExplanationProvider {
+            override val isAvailable: Boolean = true
+            override val modelName: String = "fake-model"
+            override suspend fun explain(request: AiExplanationRequest): ExplanationText? {
+                calls.incrementAndGet()
+                return null
+            }
+        }
+        val rules = RuleAssetLoader("risk-rules-v0.2", "rules-v0.2").loadFromPath(
+            repoFile("docs/fixtures/risk-rules-v0.2.json").toPath(),
+        ) as RuleAssetLoadResult.Success
+        val context = ContractJson.instance.decodeFromString(
+            RuleInputContextAsset.serializer(),
+            repoFile("docs/fixtures/rule-input-context-v0.1.json").readText(),
+        )
+        val service = FixtureEventAnalysisService(
+            repository = FakePrivacyEventRepository(fixtureEvents()),
+            rules = rules,
+            inputContext = context,
+            templates = emptyList(),
+            aiExplanationProvider = provider,
+        )
+
+        service.analyzeAll()
+        assertEquals("batch overview must stay local", 0, calls.get())
+
+        requireNotNull(service.analyze("e-20260921-0009"))
+        assertEquals("single event detail may use online AI", 1, calls.get())
     }
 
     @Test

@@ -1,9 +1,11 @@
 # 19 工作导引（打开仓库先看这个）
 
-> 版本：`v0.5`
-> 最后更新：2026-10-07
+> 版本：`v0.6`
+> 最后更新：2026-10-19
 > 用途：两人打开仓库后，30 秒内知道“现在到哪一步、我下一步做什么、改哪个文件”。
-> 配套：[20 开源复用建议](20-open-source-reuse-guide.md)、[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)、[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
+> 配套：[20 开源复用建议](20-open-source-reuse-guide.md)、[21 并行分工与协作规范](21-parallel-work-allocation-plan.md)、[22 下一阶段 README](22-next-phase-readme.md)、[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
+>
+> **v2.0 状态（2026-10-19）**：v1.0.0 已冻结；v2.0 阶段 0（真实模型）与阶段 1（自研网络底座、去 GPL、Apache-2.0）已完成。阶段 2 的**最小模型网关代码、22 项本地测试与真机 A/B**已完成（网关在线 → AI_ENHANCED；网关不可达 → 本地模板），但**尚未公网部署**；端侧模型 PoC 未开始。最新路线与进度以 [22 下一阶段 README](22-next-phase-readme.md) 和 [17 任务看板](17-task-board.md) 的 v2.0 章节为准，下文阶段 0~8 记录为 v1.0 历史。
 
 ---
 

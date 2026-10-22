@@ -77,7 +77,9 @@ class ExplanationFactValidator {
         }
 
         val escalated = ESCALATION_TERMS
-            .filter { (term, level) -> joined.contains(term) && request.riskLevel != level }
+            .filter { (term, level) ->
+                containsRiskWording(joined, term) && request.riskLevel != level
+            }
             .map { it.first }
         if (escalated.isNotEmpty()) {
             reasons += "解释的风险等级与输入不一致：${escalated.joinToString()}。"
@@ -118,6 +120,17 @@ class ExplanationFactValidator {
 
     private fun numbersIn(value: String): List<String> = NUMBER_REGEX.findAll(value).map { it.value }.toList()
 
+    /**
+     * 风险等级词匹配需要排除常见非等级搭配：
+     * - “未命中风险规则”包含子串“中风险”（真机 2026-10-19 误拒绝）；
+     * - “降低风险 / 提高风险”包含“低风险 / 高风险”。
+     * 先归一化这些安全搭配，再做子串匹配；真正的等级词（如“这是中风险行为”）仍会被拒绝。
+     */
+    private fun containsRiskWording(text: String, term: String): Boolean {
+        val normalized = RISK_WORDING_SAFE_PHRASES.fold(text) { acc, (from, to) -> acc.replace(from, to) }
+        return normalized.contains(term)
+    }
+
     private fun packageTokens(value: String): List<String> =
         PACKAGE_REGEX.findAll(value.lowercase()).map { it.value }.toList()
 
@@ -146,6 +159,13 @@ class ExplanationFactValidator {
             "危急" to RiskLevel.HIGH.wire,
             "极度危险" to RiskLevel.CRITICAL.wire,
             "致命" to RiskLevel.CRITICAL.wire,
+        )
+
+        /** 包含等级词子串、但并非风险等级判断的安全搭配。长词在前。 */
+        private val RISK_WORDING_SAFE_PHRASES: List<Pair<String, String>> = listOf(
+            "命中风险" to "命中规则",
+            "降低风险" to "降低等级",
+            "提高风险" to "提高等级",
         )
 
         /** 违规措辞 → 中性表述（docs/11 §4）。长词在前避免部分替换。 */

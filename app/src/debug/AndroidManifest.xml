@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 仅 debug 构建：真机验收用的调试入口（不进入 release APK）。 -->
+<!--
+  仅 debug 构建：真机验收用的调试入口（不进入 release APK）。
+  另外允许通过 `adb reverse` 访问本机网关时使用明文 HTTP；
+  Release 构建不包含该配置，生产网关必须使用 HTTPS。
+-->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application>
+    <application android:networkSecurityConfig="@xml/network_security_config">
         <receiver
             android:name=".debug.DebugDomainBlockReceiver"
             android:exported="true">

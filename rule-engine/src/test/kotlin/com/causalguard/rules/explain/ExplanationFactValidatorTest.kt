@@ -67,6 +67,28 @@ class ExplanationFactValidatorTest {
     }
 
     @Test
+    fun `does not treat the phrase 未命中风险规则 as a medium risk claim`() {
+        // 真机 2026-10-19 回归：模型输出“未命中风险规则”包含子串“中风险”，
+        // 被误判为风险等级升级并整体拒绝。
+        val result = validate(
+            TestContexts.calculator(riskLevel = RiskLevel.LOW),
+            response(caveat = "说明：未命中风险规则，仅保留事件事实。"),
+        )
+
+        assertIs<ExplanationValidation.Accepted>(result)
+    }
+
+    @Test
+    fun `still rejects an explicit medium risk claim for low input`() {
+        val result = validate(
+            TestContexts.calculator(riskLevel = RiskLevel.LOW),
+            response(whyCare = "这是中风险行为。"),
+        )
+
+        assertIs<ExplanationValidation.Rejected>(result)
+    }
+
+    @Test
     fun `accepts but sanitizes forbidden wording`() {
         val result = validate(TestContexts.calculator(), response(summary = "该应用窃取了剪贴板。"))
 
